@@ -1,15 +1,24 @@
-name: Sincronizar Episodios AniList
+name: Sincronizar Episodios TMDB
 
 on:
   schedule:
     # Ejecutar cada 6 horas
     - cron: '0 */6 * * *'
   workflow_dispatch:
+    inputs:
+      modo_completo:
+        description: 'Re-escanear TODOS los episodios (true/false)'
+        required: false
+        default: 'false'
+      limite_animes:
+        description: 'Número máximo de animes a procesar'
+        required: false
+        default: '10'
 
 jobs:
   sync-episodes:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     
     steps:
       - name: Checkout
@@ -24,9 +33,11 @@ jobs:
         run: |
           pip install supabase requests
       
-      - name: Ejecutar sync
+      - name: Ejecutar sincronización
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          LIMITE_ANIMES: '15'
-        run: python sync_episodios_anilist.py
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+          LIMITE_ANIMES: ${{ github.event.inputs.limite_animes || '10' }}
+          MODO_COMPLETO: ${{ github.event.inputs.modo_completo || 'false' }}
+        run: python sync_episodios_tmdb.py
