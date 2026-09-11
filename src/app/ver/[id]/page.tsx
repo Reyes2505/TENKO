@@ -145,6 +145,9 @@ export default function Page({ params }: PageProps) {
   const prevEp = currentIndex > 0 ? mismaTemporada[currentIndex - 1] : null;
   const nextEp = currentIndex >= 0 && currentIndex < mismaTemporada.length - 1 ? mismaTemporada[currentIndex + 1] : null;
 
+  // Título para mostrar: prioriza titulo_episodio
+  const tituloEpisodio = episodio.titulo_episodio || episodio.titulo;
+
   return (
     <main className="min-h-screen bg-zinc-950 pb-16">
       <section className="w-full border-b border-zinc-800/80 bg-black/80 py-6">
@@ -178,7 +181,7 @@ export default function Page({ params }: PageProps) {
               src={streamUrl}
               episodeId={episodio.id}
               episodeNumber={episodio.numero}
-              title={episodio.titulo}
+              title={tituloEpisodio}
               animeId={anime?.id}
               animeTitulo={anime?.titulo}
               animePortada={anime?.portada_url}
@@ -213,19 +216,29 @@ export default function Page({ params }: PageProps) {
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
             {mismaTemporada.map((ep) => {
               const isCurrent = ep.id === episodio.id;
+              const tituloEp = ep.titulo_episodio && ep.titulo_episodio !== `Episodio ${ep.numero}` 
+                ? ep.titulo_episodio 
+                : null;
+              
               return (
                 <Link
                   key={ep.id}
                   href={`/ver/${ep.id}`}
+                  title={tituloEp ? `EP ${ep.numero}: ${tituloEp}` : `Episodio ${ep.numero}`}
                   className={`p-2 rounded-lg border text-center transition-all ${
                     isCurrent
                       ? 'border-blue-500 bg-blue-950/20 ring-1 ring-blue-500/50'
                       : 'border-zinc-800/80 bg-zinc-900/40 hover:border-zinc-700'
                   }`}
                 >
-                  <span className={`text-xs font-extrabold ${isCurrent ? 'text-blue-400' : 'text-zinc-400'}`}>
+                  <span className={`block text-xs font-extrabold ${isCurrent ? 'text-blue-400' : 'text-zinc-400'}`}>
                     EP {String(ep.numero).padStart(2, '0')}
                   </span>
+                  {tituloEp && (
+                    <span className={`block text-[9px] truncate mt-0.5 ${isCurrent ? 'text-blue-300' : 'text-zinc-500'}`}>
+                      {tituloEp}
+                    </span>
+                  )}
                 </Link>
               );
             })}

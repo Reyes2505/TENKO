@@ -86,6 +86,23 @@ export default function EpisodeCard({
   const paddedNumber = String(episodio.numero).padStart(2, '0');
   const thumbnailUrl = episodio.thumbnail_url || animePortada || '';
 
+  // Formatear fecha
+  const formatearFecha = (fecha: string | null | undefined) => {
+    if (!fecha) return null;
+    try {
+      const date = new Date(fecha + 'T00:00:00');
+      return date.toLocaleDateString('es-ES', { 
+        day: 'numeric', 
+        month: 'short', 
+        year: 'numeric' 
+      });
+    } catch {
+      return null;
+    }
+  };
+
+  const fechaFormateada = formatearFecha(episodio.fecha_emision);
+
   return (
     <Link
       href={`/ver/${episodio.id}`}
@@ -163,17 +180,49 @@ export default function EpisodeCard({
         </div>
       </div>
 
-      {/* Info */}
-      <div className="p-3">
-        <h3 className={`text-xs font-bold transition-colors line-clamp-1 ${
-          isWatched ? 'text-emerald-400' : 'text-zinc-100 group-hover:text-blue-400'
-        }`}>
-          {episodio.titulo || `Episodio ${episodio.numero}`}
-        </h3>
-        <p className="text-[10px] text-zinc-500 mt-0.5">
-          Cap. {episodio.numero}
-          {isWatched && ' · ✓ Visto'}
-        </p>
+      {/* Info mejorada */}
+      <div className="p-3 space-y-1">
+        {/* Número de episodio */}
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">
+            Episodio {paddedNumber}
+          </span>
+          {isWatched && (
+            <span className="text-[10px] text-emerald-400 font-mono">✓ Visto</span>
+          )}
+        </div>
+
+        {/* Nombre del episodio */}
+        {episodio.titulo_episodio ? (
+          <h3 className={`text-xs font-bold transition-colors line-clamp-2 leading-tight ${
+            isWatched ? 'text-emerald-400' : 'text-zinc-100 group-hover:text-blue-400'
+          }`}>
+            {episodio.titulo_episodio}
+          </h3>
+        ) : (
+          <h3 className={`text-xs font-bold transition-colors line-clamp-1 ${
+            isWatched ? 'text-emerald-400' : 'text-zinc-100 group-hover:text-blue-400'
+          }`}>
+            {episodio.titulo || `Episodio ${episodio.numero}`}
+          </h3>
+        )}
+
+        {/* Fecha de emisión */}
+        {fechaFormateada && (
+          <div className="flex items-center gap-1 text-[10px] text-zinc-500">
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+            </svg>
+            <span>{fechaFormateada}</span>
+          </div>
+        )}
+
+        {/* Duración si existe */}
+        {episodio.duracion_total && episodio.duracion_total > 0 && (
+          <div className="text-[10px] text-zinc-600 font-mono">
+            {Math.floor(episodio.duracion_total / 60)} min
+          </div>
+        )}
       </div>
     </Link>
   );

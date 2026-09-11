@@ -2,8 +2,11 @@ export type StreamType = 'local' | 'online';
 
 export interface Temporada {
   id: string;
+  anime_id?: string | null;
   nombre: string;
   descripcion?: string | null;
+  orden?: number | null;
+  anio_lanzamiento?: number | null;
   created_at?: string | null;
 }
 
@@ -15,6 +18,9 @@ export interface Anime {
   banner_url?: string | null;
   trailer_url?: string | null;
   trailer_type?: StreamType;
+  estado_emision?: string | null;
+  fecha_estreno?: string | null;
+  generos?: string[] | null;
   created_at?: string | null;
 }
 
@@ -24,10 +30,16 @@ export interface Episodio {
   temporada_id?: string | null;
   numero: number;
   titulo: string;
+  titulo_episodio?: string | null;   // ← NUEVO: nombre del episodio (ej: "El encuentro")
+  descripcion?: string | null;        // ← NUEVO: descripción del episodio
   url_stream: string;
   tipo_stream?: StreamType;
   duracion?: string | number | null;
+  duracion_total?: number | null;     // ← NUEVO: duración en segundos
+  segundo_actual?: number | null;     // ← NUEVO: progreso de visualización
   thumbnail_url?: string | null;
+  fecha_emision?: string | null;      // ← NUEVO: fecha de emisión (YYYY-MM-DD)
+  visto?: boolean | null;
   created_at?: string | null;
 }
 

@@ -1,15 +1,15 @@
-name: Bot Ectosimbionte - Sincronización
+name: Sincronizar Episodios AniList
 
 on:
   schedule:
-    # Ejecutar cada 30 minutos, las 24 horas
-    - cron: '0,30 * * * *'
+    # Ejecutar cada 6 horas
+    - cron: '0 */6 * * *'
   workflow_dispatch:
 
 jobs:
-  sync:
+  sync-episodes:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
     
     steps:
       - name: Checkout
@@ -18,13 +18,15 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       
-      - name: Install dependencies
-        run: pip install requests beautifulsoup4 supabase
+      - name: Instalar dependencias
+        run: |
+          pip install supabase requests
       
-      - name: Run bot
+      - name: Ejecutar sync
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: python bot_jkanime.py
+          LIMITE_ANIMES: '15'
+        run: python sync_episodios_anilist.py
