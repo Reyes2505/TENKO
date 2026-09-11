@@ -2,9 +2,8 @@ name: Bot Ectosimbionte - Sincronización
 
 on:
   schedule:
-    # Ejecutar cada 30 minutos entre 10:00 AM y 3:00 PM Perú (UTC-5)
-    # UTC: 15:00-19:59
-    - cron: '0,30 15-19 * * *'
+    # Ejecutar cada 30 minutos, las 24 horas
+    - cron: '0,30 * * * *'
   workflow_dispatch:
 
 jobs:
@@ -26,5 +25,5 @@ jobs:
       - name: Run bot
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: python bot_jkanime.py

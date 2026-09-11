@@ -30,9 +30,17 @@ logger = logging.getLogger(__name__)
 class EctosimbionteBot:
     def __init__(self) -> None:
         self.config: Dict[str, str] = self._load_config()
+        
+        # CORREGIDO: Usar SERVICE_ROLE_KEY para escritura
+        supabase_key = (
+            self.config.get('SUPABASE_SERVICE_ROLE_KEY', '') or
+            self.config.get('SUPABASE_ANON_KEY', '') or
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmdGZiaWR6b2JmdGpib256aXFsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjI0MDUzMCwiZXhwIjoyMTAxODE2NTMwfQ.y4JcvFdtQJDAVeerP9Om4VWO_edEGZhr1ffxKp5Ck-A'
+        )
+        
         self.supabase: Client = create_client(
-            self.config.get('SUPABASE_URL', ''),
-            self.config.get('SUPABASE_ANON_KEY', '')
+            self.config.get('SUPABASE_URL', 'https://uftfbidzobftjbonziql.supabase.co'),
+            supabase_key
         )
         
         self.session = requests.Session()
@@ -58,10 +66,16 @@ class EctosimbionteBot:
 
     def _load_config(self) -> Dict[str, str]:
         config = {
-            'SUPABASE_URL': os.environ.get('SUPABASE_URL', ''),
+            'SUPABASE_URL': os.environ.get('SUPABASE_URL', 'https://uftfbidzobftjbonziql.supabase.co'),
+            'SUPABASE_SERVICE_ROLE_KEY': os.environ.get('SUPABASE_SERVICE_ROLE_KEY', ''),
             'SUPABASE_ANON_KEY': os.environ.get('SUPABASE_ANON_KEY', ''),
         }
-        if not config['SUPABASE_URL'] and os.path.exists('.env.local'):
+        
+        # Si no hay key en env, usar la hardcodeada
+        if not config['SUPABASE_SERVICE_ROLE_KEY']:
+            config['SUPABASE_SERVICE_ROLE_KEY'] = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmdGZiaWR6b2JmdGpib256aXFsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjI0MDUzMCwiZXhwIjoyMTAxODE2NTMwfQ.y4JcvFdtQJDAVeerP9Om4VWO_edEGZhr1ffxKp5Ck-A'
+        
+        if os.path.exists('.env.local'):
             try:
                 with open('.env.local', 'r', encoding='utf-8') as f:
                     for line in f:
@@ -255,7 +269,8 @@ class EctosimbionteBot:
                     'titulo': titulo,
                     'sinopsis': anime_info.get('sinopsis', ''),
                     'portada_url': anime_info.get('portada_url', ''),
-                    'banner_url': anime_info.get('portada_url', '')
+                    'banner_url': anime_info.get('portada_url', ''),
+                    'estado_emision': 'emitido' if anime_info.get('estado') == 'currently' else 'terminado'
                 }).execute()
                 if res.data:
                     anime_id = res.data[0]['id']
@@ -324,8 +339,7 @@ class EctosimbionteBot:
         existentes = self.obtener_animes_existentes()
         logger.info(f"📊 Registros actuales en Supabase: {len(existentes)} animes")
 
-        # 1. DESCUBRIMIENTO ESTOCÁSTICO (Resuelve el desfase de inventario 90 -> 109+)
-        # Escanea páginas principales y añade aleatoriedad para explorar el índice oculto
+        # 1. DESCUBRIMIENTO ESTOCÁSTICO (Resuelve el desfase de inventario)
         paginas_fijas = [1, 2, 3]
         paginas_aleatorias = random.sample(range(4, 18), 3)
         paginas_a_escanear = paginas_fijas + paginas_aleatorias
