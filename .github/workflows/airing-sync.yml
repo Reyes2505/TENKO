@@ -1,43 +1,15 @@
-name: Airing Sync - Animes en Emisión
+name: Airing Sync - AniList + JK Anime
 
 on:
   schedule:
-    # ===== MAÑANA (10:00 - 11:00 UTC-5 = 15:00 - 16:00 UTC) =====
-    - cron: '0 15 * * *'   # 10:00 AM Perú
-    - cron: '15 15 * * *'  # 10:15 AM Perú
-    - cron: '30 15 * * *'  # 10:30 AM Perú
-    - cron: '45 15 * * *'  # 10:45 AM Perú
-    - cron: '0 16 * * *'   # 11:00 AM Perú
-    
-    # ===== TARDE (14:00 - 15:00 UTC-5 = 19:00 - 20:00 UTC) =====
-    - cron: '0 19 * * *'   # 2:00 PM Perú
-    - cron: '15 19 * * *'  # 2:15 PM Perú
-    - cron: '30 19 * * *'  # 2:30 PM Perú
-    - cron: '45 19 * * *'  # 2:45 PM Perú
-    - cron: '0 20 * * *'   # 3:00 PM Perú
-    
-    # ===== NOCHE (20:00 - 21:00 UTC-5 = 01:00 - 02:00 UTC) =====
-    - cron: '0 1 * * *'    # 8:00 PM Perú
-    - cron: '15 1 * * *'   # 8:15 PM Perú
-    - cron: '30 1 * * *'   # 8:30 PM Perú
-    - cron: '45 1 * * *'   # 8:45 PM Perú
-    - cron: '0 2 * * *'    # 9:00 PM Perú
-
+    # Cada 30 minutos, 24/7
+    - cron: '0,30 * * * *'
   workflow_dispatch:
-    inputs:
-      forzar_dia:
-        description: 'Forzar procesamiento de TODOS los animes en emisión'
-        required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
 
 jobs:
   airing-sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     
     steps:
       - name: Checkout
@@ -49,11 +21,10 @@ jobs:
           python-version: '3.11'
       
       - name: Instalar dependencias
-        run: |
-          pip install requests beautifulsoup4 supabase
+        run: pip install requests beautifulsoup4 supabase
       
-      - name: Ejecutar Airing Sync
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: python bot_airing.py
+      - name: 1. Actualizar calendario desde AniList
+        run: python anilist_airing.py
+      
+      - name: 2. Sincronizar solo animes de hoy
+        run: python bot_jkanime_airing.py
