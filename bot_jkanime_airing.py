@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Bot Ectosimbionte v12 - Solo procesa animes que emiten HOY.
-Usa el calendario de Supabase para ser eficiente.
+Bot Airing Sync - Solo procesa animes que emiten HOY.
+Usa la tabla calendario_emision de Supabase.
 """
 
 import os
@@ -25,11 +25,11 @@ logger = logging.getLogger(__name__)
 
 
 class AiringBot:
-    def __init__(self) -> None:
-        self.supabase_url = 'https://uftfbidzobftjbonziql.supabase.co'
-        self.supabase_key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmdGZiaWR6b2JmdGpib256aXFsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjI0MDUzMCwiZXhwIjoyMTAxODE2NTMwfQ.y4JcvFdtQJDAVeerP9Om4VWO_edEGZhr1ffxKp5Ck-A'
-        
-        self.supabase = create_client(self.supabase_url, self.supabase_key)
+    def __init__(self):
+        self.supabase = create_client(
+            'https://uftfbidzobftjbonziql.supabase.co',
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmdGZiaWR6b2JmdGpib256aXFsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjI0MDUzMCwiZXhwIjoyMTAxODE2NTMwfQ.y4JcvFdtQJDAVeerP9Om4VWO_edEGZhr1ffxKp5Ck-A'
+        )
         
         self.session = requests.Session()
         self.session.headers.update({
@@ -37,12 +37,7 @@ class AiringBot:
         })
         
         self.base_url = "https://jkanime.net"
-        self.stats = {
-            'animes_procesados': 0,
-            'episodios_nuevos': 0,
-            'sin_cambios': 0,
-            'errores': 0,
-        }
+        self.stats = {'procesados': 0, 'nuevos': 0, 'sin_cambios': 0, 'errores': 0}
 
     def obtener_animes_hoy(self) -> List[Dict]:
         """Obtiene animes que emiten HOY desde el calendario."""
@@ -51,7 +46,7 @@ class AiringBot:
         logger.info(f"📅 Consultando calendario para {['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'][hoy]}")
         
         response = self.supabase.table('calendario_emision').select(
-            'anime_id, titulo, hora_emision, proximo_episodio'
+            'anilist_id, titulo, dia_semana, hora_emision, proximo_episodio, anime_id, en_bd, portada_url'
         ).eq('dia_semana', hoy).eq('activo', True).execute()
         
         return response.data or []
@@ -146,6 +141,7 @@ class AiringBot:
         """Sincroniza un anime del calendario."""
         titulo = anime.get('titulo', '')
         anime_id = anime.get('anime_id')
+        en_bd = anime.get('en_bd', False)
         
         logger.info(f"🎬 {titulo}")
         
@@ -155,17 +151,39 @@ class AiringBot:
             logger.info(f"  ⏭️ No encontrado en JK Anime")
             return {'nuevos': 0, 'sin_cambios': 1}
         
-        # Obtener episodios de JK Anime
+        # Obtener episodios
         episodios_web = self.obtener_episodios_jk(slug)
         if not episodios_web:
             logger.info(f"  ⏭️ Sin episodios")
             return {'nuevos': 0, 'sin_cambios': 1}
         
-        # Obtener temporada
+        # Si no está en BD, insertarlo
+        if not en_bd or not anime_id:
+            logger.info(f"  ➕ Anime no está en BD, insertando...")
+            
+            result = self.supabase.table('animes').insert({
+                'titulo': titulo,
+                'estado_emision': 'emitido',
+                'portada_url': anime.get('portada_url', ''),
+            }).execute()
+            
+            if result.data:
+                anime_id = result.data[0]['id']
+                
+                # Actualizar calendario
+                self.supabase.table('calendario_emision').update({
+                    'anime_id': anime_id,
+                    'en_bd': True,
+                }).eq('anilist_id', anime['anilist_id']).execute()
+                
+                logger.info(f"  ✅ Anime insertado: {anime_id}")
+            else:
+                return {'nuevos': 0, 'sin_cambios': 1}
+        
+        # Obtener/crear temporada
         temps = self.supabase.table('temporadas').select('id').eq('anime_id', anime_id).limit(1).execute()
         
         if not temps.data:
-            # Crear temporada
             temp_res = self.supabase.table('temporadas').insert({
                 'anime_id': anime_id,
                 'nombre': 'Temporada 1',
@@ -208,9 +226,9 @@ class AiringBot:
         logger.info(f"  ✅ +{insertados} episodios nuevos")
         return {'nuevos': insertados, 'sin_cambios': 0}
 
-    def run(self) -> None:
+    def run(self):
         logger.info("=" * 60)
-        logger.info("🤖 Bot Airing Sync - Solo animes de HOY")
+        logger.info("🤖 Bot Airing Sync - Animes de HOY")
         logger.info(f"📅 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         logger.info("=" * 60)
         
@@ -227,19 +245,18 @@ class AiringBot:
             
             resultado = self.sincronizar_anime(anime)
             
-            self.stats['animes_procesados'] += 1
-            self.stats['episodios_nuevos'] += resultado['nuevos']
+            self.stats['procesados'] += 1
+            self.stats['nuevos'] += resultado['nuevos']
             self.stats['sin_cambios'] += resultado['sin_cambios']
             
             logger.info("")
             time.sleep(random.uniform(0.5, 1.0))
         
-        # Estadísticas
         logger.info("=" * 60)
         logger.info("📊 ESTADÍSTICAS FINALES")
         logger.info("=" * 60)
-        logger.info(f"  📺 Animes procesados: {self.stats['animes_procesados']}")
-        logger.info(f"  📥 Episodios nuevos: {self.stats['episodios_nuevos']}")
+        logger.info(f"  📺 Procesados: {self.stats['procesados']}")
+        logger.info(f"  📥 Nuevos: {self.stats['nuevos']}")
         logger.info(f"  ⏭️ Sin cambios: {self.stats['sin_cambios']}")
         logger.info("=" * 60)
 
