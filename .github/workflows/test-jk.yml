@@ -1,0 +1,24 @@
+name: Test JK Anime Búsqueda
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      
+      - name: Instalar dependencias
+        run: pip install requests beautifulsoup4
+      
+      - name: Ejecutar test
+        run: python test_jk_busqueda.py
