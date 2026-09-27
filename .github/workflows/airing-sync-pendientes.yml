@@ -1,0 +1,24 @@
+name: Airing Sync - Pendientes
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - run: pip install requests beautifulsoup4 supabase
+      - name: Reintentar animes PENDIENTES
+        env:
+          MODO: pendientes
+          LIMITE_ANIMES: '50'
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python bot_jkanime_airing.py
