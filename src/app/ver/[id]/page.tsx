@@ -63,7 +63,13 @@ export default function Page({ params }: PageProps) {
         const data = await res.json();
 
         if (data.success && data.streamUrl) {
+          // ✅ Actualizar el episodio con la nueva URL
           setEpisodio({ ...episodio, url_stream: data.streamUrl });
+          // ✅ NO llamar a setStreamUrl → dejar que VideoPlayer use url_stream
+          setStreamLoading(false);
+          return;
+        } else {
+          console.warn('Resolver no devolvió streamUrl:', data.error);
         }
       } catch (err) {
         console.error('Error resolviendo stream:', err);

@@ -36,10 +36,23 @@ export default function VideoPlayer({ episodio }: VideoPlayerProps) {
   // HLS (m3u8 directo o Zilla proxeado)
   // ═══════════════════════════════════════════════════
   if (stream.type === 'hls') {
-    const src = stream.requiresProxy && stream.proxiedUrl
-      ? stream.proxiedUrl
-      : stream.url;
+    // ✅ Si es Zilla → NO intentar reproducir (bloqueado por CORS)
+    if (stream.serverName === 'Zilla') {
+      return (
+        <div className="w-full max-w-5xl mx-auto">
+          <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black flex items-center justify-center">
+            <div className="text-center p-6">
+              <div className="animate-spin h-10 w-10 border-2 border-t-[#6c00f4] border-white/10 rounded-full mx-auto mb-4" />
+              <p className="font-mono text-[11px] tracking-widest text-[var(--tenko-text-muted)]">
+                // RESOLVIENDO FUENTE ALTERNATIVA...
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
+    const src = stream.url;
     return (
       <div className="w-full max-w-5xl mx-auto">
         <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black">
@@ -50,13 +63,6 @@ export default function VideoPlayer({ episodio }: VideoPlayerProps) {
             title={episodio.titulo || `Episodio ${episodio.numero}`}
           />
         </div>
-        {stream.serverName === 'Zilla' && (
-          <div className="mt-2 text-center">
-            <p className="font-mono text-[10px] tracking-widest text-[var(--tenko-text-muted)]">
-              // FUENTE: {stream.serverName.toUpperCase()} (puede fallar por CORS)
-            </p>
-          </div>
-        )}
       </div>
     );
   }
