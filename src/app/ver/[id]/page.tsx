@@ -37,9 +37,10 @@ export default function Page({ params }: PageProps) {
   }, []);
 
   useEffect(() => {
+    if (!episodio?.url_stream) return;
+
     async function getStream() {
-      if (!episodio?.url_stream) return;
-      const url = episodio.url_stream;
+      const url = episodio!.url_stream!;
 
       // ✅ Si ya es UPNShare/Voe → usar directo
       if (
@@ -58,14 +59,12 @@ export default function Page({ params }: PageProps) {
         const res = await fetch('/api/resolve-stream', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ episodioId: episodio.id }),
+          body: JSON.stringify({ episodioId: episodio!.id }),
         });
         const data = await res.json();
 
         if (data.success && data.streamUrl) {
-          // ✅ Actualizar el episodio con la nueva URL
-          setEpisodio({ ...episodio, url_stream: data.streamUrl });
-          // ✅ NO llamar a setStreamUrl → dejar que VideoPlayer use url_stream
+          setEpisodio({ ...episodio!, url_stream: data.streamUrl });
           setStreamLoading(false);
           return;
         } else {
@@ -77,7 +76,9 @@ export default function Page({ params }: PageProps) {
         setStreamLoading(false);
       }
     }
-    }, [episodio]);
+
+    getStream();
+  }, [episodio?.id, episodio?.url_stream]);
 
   useEffect(() => {
     let mounted = true;
