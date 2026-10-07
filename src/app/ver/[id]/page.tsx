@@ -40,26 +40,28 @@ export default function Page({ params }: PageProps) {
     async function getStream() {
       if (!episodio?.url_stream) return;
 
-      // ✅ BYPASS: si ya es un .m3u8 directo, usarlo sin llamar al API
-      const url = episodio.url_stream;
-      if (url.includes('.m3u8') || url.includes('zilla-networks')) {
-        setStreamUrl(url);
-        return;
-      }
-
       setStreamLoading(true);
       try {
-        const res = await fetch(`/api/stream?url=${encodeURIComponent(url)}`);
+        // Siempre pasar por el API, que decide si proxear o resolver
+        const res = await fetch(`/api/stream?url=${encodeURIComponent(episodio.url_stream)}`);
         const data = await res.json();
-        if (data.success && data.streamUrl) setStreamUrl(data.streamUrl);
+        if (data.success && data.streamUrl) {
+          // data.streamUrl puede ser:
+          // - "/api/proxy-video?url=..." (proxeado)
+          // - "https://..." (HLS directo de otro server)
+          setStreamUrl(data.streamUrl);
+        }
       } catch (err) {
         console.error('Error obteniendo stream:', err);
       } finally {
         setStreamLoading(false);
       }
     }
-    if (episodio) getStream();
-  }, [episodio]);
+
+    if (episodio) {
+      getStream();
+    }
+    }, [episodio]);
 
   useEffect(() => {
     let mounted = true;
