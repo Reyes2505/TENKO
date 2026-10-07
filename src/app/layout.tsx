@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Unbounded, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
+import HeaderWrapper from "@/components/HeaderWrapper";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 const unbounded = Unbounded({
@@ -38,7 +38,7 @@ export default function RootLayout({
         className={`${unbounded.variable} ${spaceGrotesk.variable} ${jetbrains.variable} bg-[var(--tenko-bg-page)] text-[var(--tenko-text-primary)] antialiased`}
       >
         <ThemeProvider>
-          <Header />
+          <HeaderWrapper />
           <main className="min-h-screen pt-20">{children}</main>
         </ThemeProvider>
       </body>

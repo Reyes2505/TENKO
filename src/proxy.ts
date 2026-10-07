@@ -8,17 +8,17 @@ export function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Rutas que SÍ se permiten en mantenimiento
+  // Rutas permitidas durante mantenimiento
   const permitidas =
     pathname === '/mantenimiento' ||
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/api/admin') ||
+    pathname.startsWith('/api') ||        // ← ¡AHORA TODAS las API!
     pathname.startsWith('/admin') ||
-    pathname === '/favicon.ico';
+    pathname === '/favicon.ico' ||
+    pathname.startsWith('/.well-known');  // ← por si Vercel necesita
 
   if (permitidas) return NextResponse.next();
 
-  // Todo lo demás → redirige a mantenimiento
   return NextResponse.redirect(new URL('/mantenimiento', request.url));
 }
 

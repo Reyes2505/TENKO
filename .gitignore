@@ -49,3 +49,39 @@ ARRAY[Hentai]::text[]
 # Backups locales
 *.legacy.*
 src.backup.*
+.vercel
+.env*
+.env.local
+.env*.local
+
+# ═══════════════════════════════════════════════════════
+# TENKO — ignores adicionales
+# ═══════════════════════════════════════════════════════
+
+# Backups de DB
+backups/
+
+# Backups de código
+src.backup.*
+*.backup
+*.backup.*
+
+# Scripts temporales de diagnóstico
+scripts/tmp/
+
+# Node
+node_modules/
+.next/
+out/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Vercel
+.vercel
+
+# OS
+.DS_Store
+Thumbs.db
