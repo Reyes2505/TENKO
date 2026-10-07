@@ -5,19 +5,21 @@ import { createClient } from '@supabase/supabase-js';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const sb = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
-
 export async function POST(req: NextRequest) {
   try {
+    // ✅ Crear el cliente DENTRO del handler
+    const sb = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     const { episodioId } = await req.json();
 
     if (!episodioId) {
       return NextResponse.json({ error: 'Falta episodioId' }, { status: 400 });
     }
 
+    // 1. Obtener el episodio
     const { data: ep } = await sb
       .from('episodios')
       .select('id, numero, url_stream, temporada_id')
@@ -28,7 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Episodio no encontrado' }, { status: 404 });
     }
 
-    // Si ya es embed → devolver directo
+    // 2. Si ya es embed → devolver
     if (
       ep.url_stream?.includes('uns.bio') ||
       ep.url_stream?.includes('voe.sx') ||
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, streamUrl: ep.url_stream, cached: true });
     }
 
-    // Buscar slug del anime
+    // 3. Buscar slug
     const { data: temp } = await sb
       .from('temporadas')
       .select('anime_id')
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Slug no encontrado' }, { status: 404 });
     }
 
-    // Resolver en AnimeAV1
+    // 4. Resolver en AnimeAV1
     const epDetalle = await getEpisode(anime.animeav1_slug, ep.numero);
     const embedsSub = epDetalle?.embeds?.SUB || [];
     const embedsDub = epDetalle?.embeds?.DUB || [];
@@ -82,7 +84,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Sin UPNShare/Voe' }, { status: 404 });
     }
 
-    // Guardar en DB (para no repetir)
+    // 5. Guardar en DB
     await sb
       .from('episodios')
       .update({ url_stream: streamUrl, fuente: 'animeav1' })
