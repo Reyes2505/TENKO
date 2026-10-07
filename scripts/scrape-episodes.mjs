@@ -184,16 +184,18 @@ async function main() {
 
         if (!hlsUrl) continue;
 
-        const { error: insertError } = await sb.from('episodios').insert({
+        const { error: upsertError } = await sb.from('episodios').upsert({
           temporada_id: temp.id,
           numero: ep.number,
           titulo: epDetalle?.title || `Episodio ${ep.number}`,
           url_stream: hlsUrl,
           fuente: 'animeav1',
+        }, {
+          onConflict: 'temporada_id,numero',
         });
 
-        if (insertError) {
-          console.log(`  ❌ Error insertando ep ${ep.number}: ${insertError.message}`);
+        if (upsertError) {
+          console.log(`  ❌ Error en ep ${ep.number}: ${upsertError.message}`);
           continue;
         }
 
