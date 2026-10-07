@@ -39,40 +39,43 @@ export async function GET(req: NextRequest) {
 
     const contentType = res.headers.get('content-type') || 'application/octet-stream';
 
-    // Si es un m3u8 (playlist), reescribir las URLs de los segmentos
-    if (url.endsWith('.m3u8') || contentType.includes('mpegurl')) {
-      let text = await res.text();
+    // ✅ Leer como texto para verificar si es un m3u8 (sin importar el content-type)
+    const buffer = await res.arrayBuffer();
+    const text = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
 
+    // ✅ Detectar m3u8 por CONTENIDO, no por extensión
+    const esM3U8 = text.trimStart().startsWith('#EXTM3U');
+
+    if (esM3U8) {
       // Reescribir URLs absolutas
-      text = text.replace(
+      let rewritten = text.replace(
         /(https?:\/\/player\.zilla-networks\.com\/[^\s"']+)/g,
         (m) => `${PROXY_PREFIX}${encodeURIComponent(m)}`
       );
 
-      // Reescribir URLs relativas (líneas que no empiezan con #)
-      text = text.split('\n').map(line => {
+      // Reescribir URLs relativas
+      rewritten = rewritten.split('\n').map(line => {
         const trimmed = line.trim();
-        if (trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('http')) {
-          // Es una ruta relativa al m3u8 original
+        if (trimmed && !trimmed.startsWith('#') && !trimmed.startsWith('http') && !trimmed.startsWith('/api/')) {
           const absolute = new URL(trimmed, url).toString();
           return `${PROXY_PREFIX}${encodeURIComponent(absolute)}`;
         }
         return line;
       }).join('\n');
 
-      return new NextResponse(text, {
+      return new NextResponse(rewritten, {
         status: 200,
         headers: {
           'Content-Type': 'application/vnd.apple.mpegurl',
           'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
           'Cache-Control': 'public, max-age=300',
         },
       });
     }
 
-    // Para segmentos (.ts, .html, .jpg) → passthrough binario
-    const body = res.body;
-    return new NextResponse(body, {
+    // Para segmentos binarios (.ts, .html, .jpg) → passthrough
+    return new NextResponse(buffer, {
       status: 200,
       headers: {
         'Content-Type': contentType,
