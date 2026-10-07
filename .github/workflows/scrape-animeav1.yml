@@ -1,28 +1,39 @@
-name: Scrape AnimeAV1 → Supabase
+name: Scrape AnimeAV1 (Catálogo + Episodios)
 
 on:
   schedule:
+    # Cada 6 horas
     - cron: '0 */6 * * *'
 
   workflow_dispatch:
     inputs:
-      limit:
-        description: 'Límite de animes (vacío = todos)'
-        required: false
-        default: ''
-      only_new:
-        description: 'Solo animes sin animeav1_slug'
-        required: false
-        default: 'true'
+      mode:
+        description: 'Qué scrapear'
+        required: true
+        default: 'both'
         type: choice
         options:
-          - 'true'
-          - 'false'
+          - 'catalog'
+          - 'episodes'
+          - 'both'
+      limit:
+        description: 'Límite de animes para episodios'
+        required: false
+        default: '100'
+      max_pages:
+        description: 'Páginas del catálogo (vacío = 100)'
+        required: false
+        default: '100'
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
     timeout-minutes: 350
+
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      CI: 'true'
 
     steps:
       - name: Checkout
@@ -37,25 +48,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run scraper
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          CI: 'true'
+      - name: Scrape catálogo (nuevos animes)
+        if: ${{ inputs.mode == 'catalog' || inputs.mode == 'both' || github.event_name == 'schedule' }}
         run: |
-          ARGS="--limit 100 --only-new"
-          if [ -n "${{ inputs.limit }}" ]; then
-            ARGS="$ARGS --limit ${{ inputs.limit }}"
-          fi
-          if [ "${{ inputs.only_new }}" = "true" ]; then
-            ARGS="$ARGS --only-new"
-          fi
-          echo "Ejecutando: node scripts/scrape-animeav1.mjs $ARGS"
-          node scripts/scrape-animeav1.mjs $ARGS
+          node scripts/scrape-catalog.mjs --max-pages ${{ inputs.max_pages || '100' }}
+
+      - name: Scrape episodios (de animes pendientes)
+        if: ${{ inputs.mode == 'episodes' || inputs.mode == 'both' || github.event_name == 'schedule' }}
+        run: |
+          node scripts/scrape-episodes.mjs --limit ${{ inputs.limit || '100' }}
 
       - name: Summary
         if: always()
         run: |
-          echo "## Resultado del scraping" >> $GITHUB_STEP_SUMMARY
+          echo "## Scraping AnimeAV1" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Modo: ${{ inputs.mode || 'both' }}" >> $GITHUB_STEP_SUMMARY
           echo "- Estado: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
           echo "- Fecha: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
