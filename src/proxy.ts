@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const maintenance = process.env.TENKO_MAINTENANCE === 'true';
 
   if (!maintenance) return NextResponse.next();
