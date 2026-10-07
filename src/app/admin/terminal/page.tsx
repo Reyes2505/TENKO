@@ -40,7 +40,7 @@ export default function TerminalPage() {
         }]);
       } else if (cmd.startsWith('sync')) {
         setLogs(prev => [...prev, { id: Date.now(), type: 'system', text: 'Ejecutando sincronización con AniList...' }]);
-        const res = await fetch('/api/anilist-sync', { method: 'POST' });
+        const res = await fetch('/api/anilist-sync'); // GET
         const data = await res.json();
         setLogs(prev => [...prev, { id: Date.now(), type: 'output', text: JSON.stringify(data, null, 2) }]);
       } else if (cmd.startsWith('scrape')) {

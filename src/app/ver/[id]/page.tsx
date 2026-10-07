@@ -40,15 +40,25 @@ export default function Page({ params }: PageProps) {
     async function getStream() {
       if (!episodio?.url_stream) return;
 
+      const url = episodio.url_stream;
+
+      // ✅ BYPASS: UPNShare, Voe, Byse, MP4Upload → iframe directo
+      if (
+        url.includes('uns.bio') ||
+        url.includes('voe.sx') ||
+        url.includes('byselapuix') ||
+        url.includes('mp4upload')
+      ) {
+        setStreamLoading(false);
+        return;
+      }
+
+      // ✅ Zilla → proxear a través de /api/stream
       setStreamLoading(true);
       try {
-        // Siempre pasar por el API, que decide si proxear o resolver
-        const res = await fetch(`/api/stream?url=${encodeURIComponent(episodio.url_stream)}`);
+        const res = await fetch(`/api/stream?url=${encodeURIComponent(url)}`);
         const data = await res.json();
         if (data.success && data.streamUrl) {
-          // data.streamUrl puede ser:
-          // - "/api/proxy-video?url=..." (proxeado)
-          // - "https://..." (HLS directo de otro server)
           setStreamUrl(data.streamUrl);
         }
       } catch (err) {
@@ -61,7 +71,7 @@ export default function Page({ params }: PageProps) {
     if (episodio) {
       getStream();
     }
-    }, [episodio]);
+  }, [episodio]);
 
   useEffect(() => {
     let mounted = true;

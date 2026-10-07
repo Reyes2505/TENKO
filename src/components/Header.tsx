@@ -37,11 +37,17 @@ export default function Header() {
       const email = u.email || "";
       const defaultName = email.split("@")[0];
 
-      const { data: perfil } = await supabase
-        .from("perfiles")
-        .select("username, is_admin")
-        .eq("user_id", u.id)
-        .maybeSingle();
+      let perfil = null;
+      try {
+        const { data, error: perfilError } = await supabase
+          .from("perfiles")
+          .select("username, is_admin")
+          .eq("user_id", u.id)
+          .maybeSingle();
+        if (!perfilError) perfil = data;
+      } catch (e) {
+        // Silenciar 401 de RLS
+      }
 
       const username = perfil?.username || defaultName;
       const esAdminMaster = email.toLowerCase().trim() === "aaronreyesabantoj3@gmail.com";
