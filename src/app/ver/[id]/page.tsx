@@ -39,10 +39,9 @@ export default function Page({ params }: PageProps) {
   useEffect(() => {
     async function getStream() {
       if (!episodio?.url_stream) return;
-
       const url = episodio.url_stream;
 
-      // ✅ BYPASS: UPNShare, Voe, Byse, MP4Upload → iframe directo
+      // ✅ Si ya es UPNShare/Voe → usar directo
       if (
         url.includes('uns.bio') ||
         url.includes('voe.sx') ||
@@ -53,25 +52,26 @@ export default function Page({ params }: PageProps) {
         return;
       }
 
-      // ✅ Zilla → proxear a través de /api/stream
+      // ✅ Si es Zilla → resolver al vuelo
       setStreamLoading(true);
       try {
-        const res = await fetch(`/api/stream?url=${encodeURIComponent(url)}`);
+        const res = await fetch('/api/resolve-stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ episodioId: episodio.id }),
+        });
         const data = await res.json();
+
         if (data.success && data.streamUrl) {
-          setStreamUrl(data.streamUrl);
+          setEpisodio({ ...episodio, url_stream: data.streamUrl });
         }
       } catch (err) {
-        console.error('Error obteniendo stream:', err);
+        console.error('Error resolviendo stream:', err);
       } finally {
         setStreamLoading(false);
       }
     }
-
-    if (episodio) {
-      getStream();
-    }
-  }, [episodio]);
+    }, [episodio]);
 
   useEffect(() => {
     let mounted = true;
