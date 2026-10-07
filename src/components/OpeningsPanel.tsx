@@ -152,7 +152,7 @@ export default function OpeningsPanel() {
           <div className="rounded-[1.5rem] border border-[var(--tenko-border)] bg-black/60/80 p-5 shadow-inner shadow-black/20">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h3 className="text-lg font-semibold text-white">Spotify</h3>
+                <h3 className="text-lg font-semibold text-[var(--tenko-text-primary)]">Spotify</h3>
                 <p className="text-sm text-zinc-400">
                   Pega un enlace de Spotify para ver el reproductor integrado y abrirlo desde el navegador.
                 </p>
@@ -221,7 +221,7 @@ export default function OpeningsPanel() {
           <div className="rounded-[1.5rem] border border-[var(--tenko-border)] bg-black/60/80 p-5 shadow-inner shadow-black/20">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h3 className="text-lg font-semibold text-white">Local MP3</h3>
+                <h3 className="text-lg font-semibold text-[var(--tenko-text-primary)]">Local MP3</h3>
                 <p className="text-sm text-zinc-400">
                   Sube tus archivos MP3 para escucharlos sin conexión en el navegador.
                 </p>
@@ -247,7 +247,7 @@ export default function OpeningsPanel() {
 
               <div className="rounded-[1.5rem] border border-[var(--tenko-border)] bg-black/60/70 p-4">
                 <div className="mb-3 flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-white">Archivos locales</p>
+                  <p className="text-sm font-semibold text-[var(--tenko-text-primary)]">Archivos locales</p>
                   <span className="text-xs text-zinc-500">{localFiles.length} guardado(s)</span>
                 </div>
                 {localFiles.length > 0 ? (
@@ -263,7 +263,7 @@ export default function OpeningsPanel() {
                           }`}
                         >
                           <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-white">{name}</p>
+                            <p className="truncate text-sm font-semibold text-[var(--tenko-text-primary)]">{name}</p>
                             <p className="text-xs text-zinc-500">{isSelected ? 'Reproduciendo' : 'Listo para reproducir'}</p>
                           </div>
                           <div className="flex items-center gap-2">
@@ -290,7 +290,7 @@ export default function OpeningsPanel() {
               </div>
 
               <div className="rounded-[1.5rem] border border-[var(--tenko-border)] bg-black/60/80 p-4">
-                <p className="mb-3 text-sm font-semibold text-white">Reproductor</p>
+                <p className="mb-3 text-sm font-semibold text-[var(--tenko-text-primary)]">Reproductor</p>
                 <audio
                   ref={audioRef}
                   controls

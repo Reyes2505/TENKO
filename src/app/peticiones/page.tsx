@@ -134,7 +134,7 @@ export default function PeticionesPage() {
           <span className="font-mono text-[10px] tracking-[0.3em] text-[#6c00f4] font-bold block mb-2">
             // COMUNIDAD · SOLICITUDES
           </span>
-          <h1 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl font-black uppercase tracking-tight text-white">
+          <h1 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
             Peticiones al Bot
           </h1>
           <p className="font-mono text-[11px] tracking-widest text-[var(--tenko-text-muted)] mt-2">
@@ -172,7 +172,7 @@ export default function PeticionesPage() {
         {resultados.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-baseline gap-3 mb-4">
-              <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black uppercase tracking-tight text-white">
+              <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
                 Resultados
               </h2>
               <span className="font-mono text-[10px] tracking-widest text-[#6c00f4] font-bold">
@@ -202,7 +202,7 @@ export default function PeticionesPage() {
                     </div>
                   )}
                   <div>
-                    <h3 className="font-[family-name:var(--font-unbounded)] text-sm font-bold text-white">
+                    <h3 className="font-[family-name:var(--font-unbounded)] text-sm font-bold text-[var(--tenko-text-primary)]">
                       {resultado.nombre}
                     </h3>
                     {resultado.enBD && resultado.encontrado ? (

@@ -44,7 +44,7 @@ export default function AdminPage() {
 
   if (!isAdmin) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[var(--tenko-bg-page)] text-white">
+      <main className="flex min-h-screen items-center justify-center bg-[var(--tenko-bg-page)] text-[var(--tenko-text-primary)]">
         <div className="text-center border border-red-500/30 bg-red-950/20 rounded-2xl p-12">
           <div className="text-5xl mb-4">🔒</div>
           <p className="font-[family-name:var(--font-unbounded)] text-lg font-bold mb-2">

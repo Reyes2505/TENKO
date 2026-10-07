@@ -247,7 +247,7 @@ export default function PerfilPage() {
                 ) : (
                   <button
                     onClick={() => setEditing(true)}
-                    className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white/70 hover:text-[var(--tenko-text-primary)] font-mono text-[11px] tracking-widest font-bold rounded-md transition-all border border-[var(--tenko-border)]"
+                    className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-[var(--tenko-text-primary)]/70 hover:text-[var(--tenko-text-primary)] font-mono text-[11px] tracking-widest font-bold rounded-md transition-all border border-[var(--tenko-border)]"
                   >
                     EDITAR PERFIL
                   </button>
@@ -257,7 +257,7 @@ export default function PerfilPage() {
 
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <h1 className="font-[family-name:var(--font-unbounded)] text-2xl font-black tracking-tight text-white">
+                <h1 className="font-[family-name:var(--font-unbounded)] text-2xl font-black tracking-tight text-[var(--tenko-text-primary)]">
                   {username}
                 </h1>
                 {isAdmin && (
@@ -277,7 +277,7 @@ export default function PerfilPage() {
                   <button
                     type="button"
                     onClick={() => setShowEmail(!showEmail)}
-                    className="ml-2 font-mono text-[9px] tracking-widest bg-white/5 hover:bg-white/10 text-white/60 border border-[var(--tenko-border)] px-2 py-0.5 rounded transition-all"
+                    className="ml-2 font-mono text-[9px] tracking-widest bg-white/5 hover:bg-white/10 text-[var(--tenko-text-primary)]/60 border border-[var(--tenko-border)] px-2 py-0.5 rounded transition-all"
                   >
                     {showEmail ? 'HACER PRIVADO' : 'HACER PÚBLICO'}
                   </button>
@@ -328,7 +328,7 @@ export default function PerfilPage() {
                   </div>
                 </div>
               ) : (
-                <p className="font-[family-name:var(--font-space-grotesk)] text-sm text-white/60 pt-2 leading-relaxed max-w-2xl">
+                <p className="font-[family-name:var(--font-space-grotesk)] text-sm text-[var(--tenko-text-primary)]/60 pt-2 leading-relaxed max-w-2xl">
                   {bio}
                 </p>
               )}
@@ -356,7 +356,7 @@ export default function PerfilPage() {
           <div className="bg-white/[0.02] border border-[var(--tenko-border)] rounded-3xl p-6 sm:p-8">
             <div className="flex items-center gap-3 mb-5">
               <span className="h-2 w-2 rounded-full bg-[#6c00f4]" />
-              <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black uppercase tracking-tight text-white">
+              <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
                 Continuar viendo
               </h2>
             </div>

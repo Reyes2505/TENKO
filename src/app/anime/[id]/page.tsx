@@ -171,7 +171,7 @@ export default function AnimeDetailPage() {
       <main className="flex min-h-screen items-center justify-center bg-[var(--tenko-bg-page)]">
         <div className="text-center">
           <div className="text-6xl mb-4">😢</div>
-          <p className="font-[family-name:var(--font-unbounded)] text-lg font-bold text-white">
+          <p className="font-[family-name:var(--font-unbounded)] text-lg font-bold text-[var(--tenko-text-primary)]">
             Anime no encontrado
           </p>
           <Link href="/" className="font-mono text-[11px] tracking-widest text-[#6c00f4] hover:text-[var(--tenko-text-primary)] text-xs mt-3 inline-block transition-colors">
@@ -223,7 +223,7 @@ export default function AnimeDetailPage() {
 
         <button
           onClick={() => router.back()}
-          className="absolute top-6 left-6 z-20 flex items-center gap-2 rounded-md bg-black/60 backdrop-blur-md border border-[var(--tenko-border)] px-4 py-2 font-mono text-[11px] tracking-widest text-white/70 hover:text-[var(--tenko-text-primary)] hover:border-[#6c00f4]/60 transition-all"
+          className="absolute top-6 left-6 z-20 flex items-center gap-2 rounded-md bg-black/60 backdrop-blur-md border border-[var(--tenko-border)] px-4 py-2 font-mono text-[11px] tracking-widest text-[var(--tenko-text-primary)]/70 hover:text-[var(--tenko-text-primary)] hover:border-[#6c00f4]/60 transition-all"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
@@ -284,7 +284,7 @@ export default function AnimeDetailPage() {
             </div>
 
             {anime.sinopsis && (
-              <p className="mt-5 font-[family-name:var(--font-space-grotesk)] text-sm md:text-base text-white/70 max-w-3xl leading-relaxed">
+              <p className="mt-5 font-[family-name:var(--font-space-grotesk)] text-sm md:text-base text-[var(--tenko-text-primary)]/70 max-w-3xl leading-relaxed">
                 {anime.sinopsis}
               </p>
             )}
@@ -294,7 +294,7 @@ export default function AnimeDetailPage() {
                 {anime.generos.map((genero) => (
                   <span
                     key={genero}
-                    className="font-mono px-3 py-1 rounded-md bg-white/5 border border-[var(--tenko-border)] text-white/60 text-[10px] tracking-widest font-bold uppercase hover:border-[#6c00f4]/40 hover:text-[#6c00f4] transition-all cursor-default"
+                    className="font-mono px-3 py-1 rounded-md bg-white/5 border border-[var(--tenko-border)] text-[var(--tenko-text-primary)]/60 text-[10px] tracking-widest font-bold uppercase hover:border-[#6c00f4]/40 hover:text-[#6c00f4] transition-all cursor-default"
                   >
                     {genero}
                   </span>
@@ -324,7 +324,7 @@ export default function AnimeDetailPage() {
                 <div className="flex items-center justify-between mb-5 border-b border-[var(--tenko-border)] pb-3">
                   <div className="flex items-center gap-3">
                     <span className="h-2 w-2 rounded-full bg-[#6c00f4]" />
-                    <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black uppercase tracking-tight text-white">
+                    <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
                       Temporadas
                     </h2>
                   </div>
@@ -345,18 +345,18 @@ export default function AnimeDetailPage() {
                         className={`group relative shrink-0 px-5 py-3 rounded-lg transition-all duration-300 ${
                           esActiva
                             ? 'bg-[#6c00f4] text-[var(--tenko-text-primary)] shadow-lg shadow-[#6c00f4]/40 scale-[1.02]'
-                            : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-[var(--tenko-text-primary)] border border-[var(--tenko-border)] hover:border-[#6c00f4]/40'
+                            : 'bg-white/5 text-[var(--tenko-text-primary)]/60 hover:bg-white/10 hover:text-[var(--tenko-text-primary)] border border-[var(--tenko-border)] hover:border-[#6c00f4]/40'
                         }`}
                       >
                         <div className="flex items-center gap-2">
-                          <span className={`font-mono text-[10px] tracking-widest ${esActiva ? 'text-white/70' : 'text-[var(--tenko-text-muted)]'}`}>
+                          <span className={`font-mono text-[10px] tracking-widest ${esActiva ? 'text-[var(--tenko-text-primary)]/70' : 'text-[var(--tenko-text-muted)]'}`}>
                             {String(index + 1).padStart(2, '0')}
                           </span>
                           <span className="font-[family-name:var(--font-unbounded)] text-xs font-bold whitespace-nowrap uppercase">
                             {temp.nombre.length > 30 ? `${temp.nombre.substring(0, 30)}...` : temp.nombre}
                           </span>
                         </div>
-                        <div className={`mt-1 font-mono text-[9px] tracking-widest ${esActiva ? 'text-white/60' : 'text-[var(--tenko-text-muted)]'}`}>
+                        <div className={`mt-1 font-mono text-[9px] tracking-widest ${esActiva ? 'text-[var(--tenko-text-primary)]/60' : 'text-[var(--tenko-text-muted)]'}`}>
                           {epsDeTemp.length} {epsDeTemp.length === 1 ? 'EP' : 'EPS'}
                         </div>
                       </button>

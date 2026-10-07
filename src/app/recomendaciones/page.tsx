@@ -40,7 +40,7 @@ export default function RecomendacionesPage() {
           <span className="font-mono text-[10px] tracking-[0.3em] text-[#6c00f4] font-bold block mb-2">
             // MOTOR DE DESCUBRIMIENTO
           </span>
-          <h1 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl font-black uppercase tracking-tight text-white">
+          <h1 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
             Tendencias <span className="text-[#6c00f4]">IA</span>
           </h1>
           <p className="font-mono text-[11px] tracking-widest text-[var(--tenko-text-muted)] mt-2">
@@ -55,7 +55,7 @@ export default function RecomendacionesPage() {
                 // TU PERFIL
               </span>
             </div>
-            <div className="flex flex-wrap gap-6 font-mono text-xs text-white/60">
+            <div className="flex flex-wrap gap-6 font-mono text-xs text-[var(--tenko-text-primary)]/60">
               <span>📺 <span className="text-[var(--tenko-text-primary)] font-bold">{estadisticas.animesVistos}</span> animes</span>
               <span>🎬 <span className="text-[var(--tenko-text-primary)] font-bold">{estadisticas.episodiosVistos}</span> episodios</span>
               <span>⏱️ <span className="text-[var(--tenko-text-primary)] font-bold">{estadisticas.tiempoTotalMinutos}</span> min</span>

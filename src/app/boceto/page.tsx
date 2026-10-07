@@ -26,7 +26,7 @@ export default function TenkoBocetoPage() {
   const [activeFilter, setActiveFilter] = useState<string>('TODOS');
 
   return (
-    <div className="min-h-screen bg-[var(--tenko-bg-page)] text-[var(--tenko-text-primary)] antialiased selection:bg-[#6c00f4] selection:text-white">
+    <div className="min-h-screen bg-[var(--tenko-bg-page)] text-[var(--tenko-text-primary)] antialiased selection:bg-[#6c00f4] selection:text-[var(--tenko-text-primary)]">
       <main className="relative">
         {/* HERO */}
         <section className="relative w-full h-[70vh] min-h-[500px] bg-black overflow-hidden border-b border-[var(--tenko-border)] flex items-end">
@@ -42,10 +42,10 @@ export default function TenkoBocetoPage() {
               <span className="text-[var(--tenko-text-secondary)]">• {MOCK_HERO.year}</span>
             </div>
             <span className="font-serif text-[15px] text-[var(--tenko-text-muted)] tracking-widest mb-1 italic">{MOCK_HERO.titleJap}</span>
-            <h1 className="font-[family-name:var(--font-unbounded)] text-[32px] md:text-[50px] font-black uppercase leading-[0.98] tracking-tight max-w-4xl mb-4 text-white">
+            <h1 className="font-[family-name:var(--font-unbounded)] text-[32px] md:text-[50px] font-black uppercase leading-[0.98] tracking-tight max-w-4xl mb-4 text-[var(--tenko-text-primary)]">
               {MOCK_HERO.title}
             </h1>
-            <p className="font-[family-name:var(--font-space-grotesk)] text-[14px] text-white/70 max-w-2xl leading-relaxed mb-8">
+            <p className="font-[family-name:var(--font-space-grotesk)] text-[14px] text-[var(--tenko-text-primary)]/70 max-w-2xl leading-relaxed mb-8">
               {MOCK_HERO.synopsis}
             </p>
             <div>
@@ -90,7 +90,7 @@ export default function TenkoBocetoPage() {
               <div key={item.id} className="group cursor-pointer border border-[var(--tenko-border)] bg-white/[0.02] p-4 transition-all duration-300 hover:-translate-y-1 hover:border-[#6c00f4] hover:shadow-2xl hover:shadow-[#6c00f4]/20">
                 <div className="flex justify-between items-center font-mono text-[10px] mb-3 text-[var(--tenko-text-muted)]">
                   <span className="text-[#6c00f4] font-bold">#{item.id}</span>
-                  <span className="bg-white/5 px-2 py-0.5 font-bold uppercase tracking-widest text-white/60">{item.status}</span>
+                  <span className="bg-white/5 px-2 py-0.5 font-bold uppercase tracking-widest text-[var(--tenko-text-primary)]/60">{item.status}</span>
                 </div>
                 <div className="aspect-[2/3] w-full overflow-hidden bg-black relative mb-4 rounded">
                   <img src={item.cover} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />

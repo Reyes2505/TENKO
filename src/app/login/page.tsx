@@ -49,7 +49,7 @@ export default function LoginPage() {
 
           <div className="relative text-center mb-8">
             <div className="inline-flex items-center justify-center gap-2 mb-4">
-              <span className="font-[family-name:var(--font-unbounded)] text-3xl font-black tracking-tight text-white">
+              <span className="font-[family-name:var(--font-unbounded)] text-3xl font-black tracking-tight text-[var(--tenko-text-primary)]">
                 TENKO
               </span>
               <span className="text-[#6c00f4] text-lg font-mono">天狐</span>

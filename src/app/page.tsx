@@ -52,7 +52,7 @@ export default function Home() {
           <span className="font-mono text-[10px] tracking-[0.3em] text-[#6c00f4] font-bold block mb-2">
             // EXPLORACIÓN DE CONTENIDO
           </span>
-          <h2 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl font-black uppercase tracking-tight text-white">
+          <h2 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
             Catálogo Principal
           </h2>
         </div>
@@ -83,7 +83,7 @@ export default function Home() {
             <button
               onClick={() => setPagina(Math.max(1, pagina - 1))}
               disabled={pagina === 1}
-              className="px-4 py-2 rounded-md bg-white/5 font-mono text-[11px] tracking-widest text-white/60 hover:bg-white/10 hover:text-[var(--tenko-text-primary)] disabled:opacity-30 transition-all"
+              className="px-4 py-2 rounded-md bg-white/5 font-mono text-[11px] tracking-widest text-[var(--tenko-text-primary)]/60 hover:bg-white/10 hover:text-[var(--tenko-text-primary)] disabled:opacity-30 transition-all"
             >
               ← PREV
             </button>
@@ -99,7 +99,7 @@ export default function Home() {
                     className={`h-9 w-9 rounded-md font-mono text-[11px] font-bold transition-all ${
                       pagina === num
                         ? 'bg-[#6c00f4] text-[var(--tenko-text-primary)] shadow-md shadow-[#6c00f4]/30'
-                        : 'bg-white/5 text-[var(--tenko-text-secondary)] hover:bg-white/10 hover:text-white'
+                        : 'bg-white/5 text-[var(--tenko-text-secondary)] hover:bg-white/10 hover:text-[var(--tenko-text-primary)]'
                     }`}
                   >
                     {num}
@@ -109,7 +109,7 @@ export default function Home() {
             <button
               onClick={() => setPagina(Math.min(totalPaginas, pagina + 1))}
               disabled={pagina === totalPaginas}
-              className="px-4 py-2 rounded-md bg-white/5 font-mono text-[11px] tracking-widest text-white/60 hover:bg-white/10 hover:text-[var(--tenko-text-primary)] disabled:opacity-30 transition-all"
+              className="px-4 py-2 rounded-md bg-white/5 font-mono text-[11px] tracking-widest text-[var(--tenko-text-primary)]/60 hover:bg-white/10 hover:text-[var(--tenko-text-primary)] disabled:opacity-30 transition-all"
             >
               SIG →
             </button>

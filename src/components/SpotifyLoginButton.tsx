@@ -25,7 +25,7 @@ export default function SpotifyLoginButton() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.35em] text-green-400">Spotify Premium</p>
-          <h3 className="mt-1 text-lg font-semibold text-white">Inicia sesión con Spotify</h3>
+          <h3 className="mt-1 text-lg font-semibold text-[var(--tenko-text-primary)]">Inicia sesión con Spotify</h3>
           <p className="mt-2 text-sm text-zinc-400">
             Si tienes Spotify Premium puedes reproducir tu playlist o canción desde Spotify Web Player.
           </p>

@@ -88,7 +88,7 @@ export default function HeroCarousel({ animes }: HeroCarouselProps) {
               {anime.titulo}
             </h1>
 
-            <p className="font-[family-name:var(--font-space-grotesk)] text-sm sm:text-base text-white/70 max-w-2xl line-clamp-2 leading-relaxed">
+            <p className="font-[family-name:var(--font-space-grotesk)] text-sm sm:text-base text-[var(--tenko-text-primary)]/70 max-w-2xl line-clamp-2 leading-relaxed">
               {anime.sinopsis || 'Sin descripción disponible'}
             </p>
 
@@ -125,7 +125,7 @@ export default function HeroCarousel({ animes }: HeroCarouselProps) {
           <button
             onClick={prevSlide}
             aria-label="Anterior"
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/50 p-2 text-white/60 hover:bg-[#6c00f4] hover:text-[var(--tenko-text-primary)] backdrop-blur-sm transition-all border border-[var(--tenko-border)]"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/50 p-2 text-[var(--tenko-text-primary)]/60 hover:bg-[#6c00f4] hover:text-[var(--tenko-text-primary)] backdrop-blur-sm transition-all border border-[var(--tenko-border)]"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -134,7 +134,7 @@ export default function HeroCarousel({ animes }: HeroCarouselProps) {
           <button
             onClick={nextSlide}
             aria-label="Siguiente"
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/50 p-2 text-white/60 hover:bg-[#6c00f4] hover:text-[var(--tenko-text-primary)] backdrop-blur-sm transition-all border border-[var(--tenko-border)]"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/50 p-2 text-[var(--tenko-text-primary)]/60 hover:bg-[#6c00f4] hover:text-[var(--tenko-text-primary)] backdrop-blur-sm transition-all border border-[var(--tenko-border)]"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />

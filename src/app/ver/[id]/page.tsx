@@ -118,7 +118,7 @@ export default function Page({ params }: PageProps) {
 
   if (!episodio) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[var(--tenko-bg-page)] text-white">
+      <main className="flex min-h-screen items-center justify-center bg-[var(--tenko-bg-page)] text-[var(--tenko-text-primary)]">
         <span className="font-mono text-xs tracking-widest text-[var(--tenko-text-muted)]">
           // EPISODIO NO ENCONTRADO
         </span>
@@ -145,11 +145,12 @@ export default function Page({ params }: PageProps) {
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
         {ambientImage && (
           <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-[120%] h-[70vh] opacity-30 blur-[140px]"
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-[120%] h-[70vh] opacity-30 dark:opacity-30 blur-[140px]"
             style={{
               backgroundImage: `url(${ambientImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
+              opacity: 0.15,
             }}
           />
         )}
@@ -170,7 +171,7 @@ export default function Page({ params }: PageProps) {
               {prevEp ? (
                 <Link
                   href={`/ver/${prevEp.id}`}
-                  className="font-mono rounded-md border border-[var(--tenko-border)] bg-white/5 px-3 py-1.5 text-[11px] tracking-widest text-white/60 hover:bg-white/10 hover:text-[var(--tenko-text-primary)] transition-all"
+                  className="font-mono rounded-md border border-[var(--tenko-border)] bg-white/5 px-3 py-1.5 text-[11px] tracking-widest text-[var(--tenko-text-primary)]/60 hover:bg-white/10 hover:text-[var(--tenko-text-primary)] transition-all"
                 >
                   ← EP {String(prevEp.numero).padStart(2, '0')}
                 </Link>

@@ -131,7 +131,7 @@ export default function CalendarioPage() {
           <span className="font-mono text-[10px] tracking-[0.3em] text-[#6c00f4] font-bold block mb-2">
             // SIMULCAST & ESTRENOS
           </span>
-          <h1 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl font-black uppercase tracking-tight text-white">
+          <h1 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
             Calendario de Estrenos
           </h1>
           <p className="font-mono text-[11px] tracking-widest text-[var(--tenko-text-muted)] mt-2">
@@ -163,7 +163,7 @@ export default function CalendarioPage() {
                 {dia}
                 {cantidad > 0 && (
                   <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${
-                    isActive ? 'bg-white/20' : 'bg-white/10 text-white/60'
+                    isActive ? 'bg-white/20' : 'bg-white/10 text-[var(--tenko-text-primary)]/60'
                   }`}>
                     {cantidad}
                   </span>
@@ -174,7 +174,7 @@ export default function CalendarioPage() {
         </div>
 
         <div className="mb-6 flex items-baseline gap-3">
-          <h2 className="font-[family-name:var(--font-unbounded)] text-xl font-black uppercase tracking-tight text-white">
+          <h2 className="font-[family-name:var(--font-unbounded)] text-xl font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
             {DIAS_SEMANA[diaSeleccionado]}
           </h2>
           <span className="font-mono text-[11px] tracking-widest text-[#6c00f4] font-bold">

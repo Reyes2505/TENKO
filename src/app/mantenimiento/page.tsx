@@ -136,7 +136,7 @@ export default function MantenimientoPage() {
   }, []);
 
   return (
-    <main className="relative min-h-screen bg-black overflow-hidden text-white">
+    <main className="relative min-h-screen bg-black overflow-hidden text-[var(--tenko-text-primary)]">
 
       {/* CANVAS DE LA RED NEURONAL */}
       <canvas
@@ -183,7 +183,7 @@ export default function MantenimientoPage() {
           {/* Logo */}
           <div className="mb-8 flex items-center justify-center gap-3">
             <span
-              className="font-[family-name:var(--font-unbounded)] text-5xl md:text-7xl font-black tracking-tighter text-white"
+              className="font-[family-name:var(--font-unbounded)] text-5xl md:text-7xl font-black tracking-tighter text-[var(--tenko-text-primary)]"
               style={{
                 textShadow:
                   '0 0 20px rgba(108,0,244,0.9), 0 0 45px rgba(108,0,244,0.6), 0 0 80px rgba(108,0,244,0.4)',
@@ -213,7 +213,7 @@ export default function MantenimientoPage() {
           </h1>
 
           {/* Descripción */}
-          <p className="font-[family-name:var(--font-space-grotesk)] text-base md:text-lg text-white/60 mb-10 leading-relaxed max-w-xl mx-auto">
+          <p className="font-[family-name:var(--font-space-grotesk)] text-base md:text-lg text-[var(--tenko-text-primary)]/60 mb-10 leading-relaxed max-w-xl mx-auto">
             Migrando todo el catálogo a una nueva fuente de streaming.
             <br />
             Volveremos pronto con mejor calidad y más títulos.
@@ -222,7 +222,7 @@ export default function MantenimientoPage() {
           {/* Barra de progreso */}
           <div className="max-w-md mx-auto">
             <div className="flex justify-between items-center mb-2">
-              <span className="font-mono text-[10px] tracking-widest text-white/40">
+              <span className="font-mono text-[10px] tracking-widest text-[var(--tenko-text-primary)]/40">
                 MIGRACIÓN EN PROGRESO
               </span>
               <span className="font-mono text-[10px] tracking-widest text-[#6c00f4] font-bold">

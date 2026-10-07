@@ -145,7 +145,7 @@ export default function Header() {
               <Link
                 href="/admin"
                 title="Panel Admin"
-                className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full bg-[#6c00f4]/15 border border-[#6c00f4]/40 text-[#6c00f4] hover:bg-[#6c00f4] hover:text-white transition-all"
+                className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full bg-[#6c00f4]/15 border border-[#6c00f4]/40 text-[#6c00f4] hover:bg-[#6c00f4] hover:text-[var(--tenko-text-primary)] transition-all"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
@@ -154,7 +154,7 @@ export default function Header() {
             )}
             <Link
               href="/perfil"
-              className="h-8 w-8 rounded-full bg-[#6c00f4] flex items-center justify-center font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-white hover:scale-110 transition-transform"
+              className="h-8 w-8 rounded-full bg-[#6c00f4] flex items-center justify-center font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-[var(--tenko-text-primary)] hover:scale-110 transition-transform"
               title={`@${user.username}`}
             >
               {user.initials}
@@ -163,7 +163,7 @@ export default function Header() {
         ) : (
           <Link
             href="/login"
-            className="shrink-0 px-4 py-2 rounded-full bg-[#6c00f4] font-mono text-[11px] tracking-widest font-bold text-white hover:bg-white hover:text-black transition-all"
+            className="shrink-0 px-4 py-2 rounded-full bg-[#6c00f4] font-mono text-[11px] tracking-widest font-bold text-[var(--tenko-text-primary)] hover:bg-white hover:text-black transition-all"
           >
             ENTRAR
           </Link>

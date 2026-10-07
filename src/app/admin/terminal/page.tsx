@@ -59,7 +59,7 @@ export default function TerminalPage() {
   };
 
   return (
-    <main className="min-h-screen bg-black text-[#6c00f4] font-mono p-4 sm:p-6 pb-20 selection:bg-[#6c00f4]/30 selection:text-white">
+    <main className="min-h-screen bg-black text-[#6c00f4] font-mono p-4 sm:p-6 pb-20 selection:bg-[#6c00f4]/30 selection:text-[var(--tenko-text-primary)]">
       <div className="max-w-5xl mx-auto">
         <div className="rounded-2xl border border-[#6c00f4]/30 bg-[var(--tenko-bg-page)] shadow-2xl shadow-[#6c00f4]/10 overflow-hidden">
           {/* Barra superior tipo terminal */}
@@ -78,7 +78,7 @@ export default function TerminalPage() {
               <div
                 key={log.id}
                 className={`whitespace-pre-wrap leading-relaxed ${
-                  log.type === 'input' ? 'text-white' :
+                  log.type === 'input' ? 'text-[var(--tenko-text-primary)]' :
                   log.type === 'error' ? 'text-red-400' :
                   log.type === 'system' ? 'text-amber-400/90' :
                   'text-[#6c00f4]/80'

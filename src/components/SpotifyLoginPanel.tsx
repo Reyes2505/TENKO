@@ -42,7 +42,7 @@ export default function SpotifyLoginPanel() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.35em] text-green-400">Spotify Premium</p>
-          <h3 className="mt-1 text-lg font-semibold text-white">Reproductor para suscriptores</h3>
+          <h3 className="mt-1 text-lg font-semibold text-[var(--tenko-text-primary)]">Reproductor para suscriptores</h3>
           <p className="mt-2 text-sm text-zinc-400">
             Inicia sesión con Spotify para reproducir tu propia playlist o canción directamente desde tu cuenta.
           </p>

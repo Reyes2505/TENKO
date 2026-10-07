@@ -219,7 +219,7 @@ export default function M3U8Player({
       {showResume && currentTime > 5 && (
         <div className="p-4 rounded-2xl border border-[#6c00f4]/40 bg-[#6c00f4]/15 flex items-center justify-between animate-fade-in">
           <div>
-            <p className="text-sm font-bold text-white">
+            <p className="text-sm font-bold text-[var(--tenko-text-primary)]">
               Continuar desde {formatTime(currentTime)}
             </p>
             <p className="text-xs text-zinc-400">
@@ -279,7 +279,7 @@ export default function M3U8Player({
 
       {/* Info */}
       <div className="p-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40">
-        <h2 className="text-base font-bold text-white">
+        <h2 className="text-base font-bold text-[var(--tenko-text-primary)]">
           Episodio {episodeNumber} {title && `- ${title}`}
         </h2>
       </div>

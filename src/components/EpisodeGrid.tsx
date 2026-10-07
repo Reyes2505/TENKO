@@ -71,13 +71,13 @@ export default function EpisodeGrid({ episodios, thumbnails = {} }: EpisodeGridP
           <div className="flex items-center gap-1.5 rounded-xl border border-[var(--tenko-border)] bg-black/40 p-1">
             <button
               onClick={() => setSortOrder('asc')}
-              className={`rounded-lg px-2.5 py-1 text-xs font-medium ${sortOrder === 'asc' ? 'bg-[#6c00f4] text-white' : 'text-[var(--tenko-text-secondary)]'}`}
+              className={`rounded-lg px-2.5 py-1 text-xs font-medium ${sortOrder === 'asc' ? 'bg-[#6c00f4] text-[var(--tenko-text-primary)]' : 'text-[var(--tenko-text-secondary)]'}`}
             >
               1 → {episodios.length}
             </button>
             <button
               onClick={() => setSortOrder('desc')}
-              className={`rounded-lg px-2.5 py-1 text-xs font-medium ${sortOrder === 'desc' ? 'bg-[#6c00f4] text-white' : 'text-[var(--tenko-text-secondary)]'}`}
+              className={`rounded-lg px-2.5 py-1 text-xs font-medium ${sortOrder === 'desc' ? 'bg-[#6c00f4] text-[var(--tenko-text-primary)]' : 'text-[var(--tenko-text-secondary)]'}`}
             >
               {episodios.length} → 1
             </button>

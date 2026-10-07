@@ -44,7 +44,7 @@ export default function ContinueWatchingSection() {
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
               
-              <div className="absolute top-2 left-2 rounded-md bg-zinc-950/80 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white">
+              <div className="absolute top-2 left-2 rounded-md bg-zinc-950/80 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-[var(--tenko-text-primary)]">
                 EP {String(item.episodeNumber).padStart(2, '0')}
               </div>
 

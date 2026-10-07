@@ -95,7 +95,7 @@ export default function AnimeEditorModal({
           </h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-900 hover:text-white"
+            className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-900 hover:text-[var(--tenko-text-primary)]"
           >
             <svg
               className="h-5 w-5"
@@ -191,7 +191,7 @@ export default function AnimeEditorModal({
                 className={`flex-1 rounded-xl py-2 px-3 text-xs font-semibold transition-all border ${
                   trailerType === 'local'
                     ? 'border-[#6c00f4] bg-[#6c00f4] text-[var(--tenko-text-primary)] shadow-md'
-                    : 'border-[var(--tenko-border)] bg-zinc-900 text-zinc-400 hover:text-white'
+                    : 'border-[var(--tenko-border)] bg-zinc-900 text-zinc-400 hover:text-[var(--tenko-text-primary)]'
                 }`}
               >
                 📁 Modo Local (.MP4)
@@ -202,7 +202,7 @@ export default function AnimeEditorModal({
                 className={`flex-1 rounded-xl py-2 px-3 text-xs font-semibold transition-all border ${
                   trailerType === 'online'
                     ? 'border-[#6c00f4] bg-[#6c00f4] text-[var(--tenko-text-primary)] shadow-md'
-                    : 'border-[var(--tenko-border)] bg-zinc-900 text-zinc-400 hover:text-white'
+                    : 'border-[var(--tenko-border)] bg-zinc-900 text-zinc-400 hover:text-[var(--tenko-text-primary)]'
                 }`}
               >
                 🌐 Modo Online (URL Link)

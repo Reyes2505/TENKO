@@ -55,7 +55,7 @@ export default function MiListaPage() {
       <div className="mb-5 flex items-center justify-between border-b border-[var(--tenko-border)] pb-3">
         <div className="flex items-center gap-3">
           <span className="h-2 w-2 rounded-full" style={{ background: acento, boxShadow: `0 0 10px ${acento}` }} />
-          <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black uppercase tracking-tight text-white">
+          <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
             {titulo}
           </h2>
           <span className="font-mono text-[10px] tracking-widest text-[var(--tenko-text-muted)]">
@@ -82,7 +82,7 @@ export default function MiListaPage() {
           <span className="font-mono text-[10px] tracking-[0.3em] text-[#6c00f4] font-bold block mb-2">
             // TU COLECCIÓN
           </span>
-          <h1 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl font-black uppercase tracking-tight text-white">
+          <h1 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
             Mi Lista
           </h1>
         </div>

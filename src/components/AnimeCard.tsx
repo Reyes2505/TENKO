@@ -48,7 +48,7 @@ export default function AnimeCard({ anime }: AnimeCardProps) {
         {/* Estado (badge mono) */}
         <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-md bg-black/70 backdrop-blur-md px-2 py-1 border border-[var(--tenko-border)]">
           <span className={`h-2 w-2 rounded-full ${dotColor} animate-pulse`} />
-          <span className="font-mono text-[9px] font-bold tracking-widest text-white">
+          <span className="font-mono text-[9px] font-bold tracking-widest text-[var(--tenko-text-primary)]">
             {estadoLabel}
           </span>
         </div>
@@ -63,7 +63,7 @@ export default function AnimeCard({ anime }: AnimeCardProps) {
         </div>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent dark:from-black dark:via-black/80 dark:to-transparent">
         <h3 className="font-[family-name:var(--font-unbounded)] text-xs font-bold text-[var(--tenko-text-primary)] line-clamp-2 leading-snug group-hover:text-[#6c00f4] transition-colors">
           {anime.titulo}
         </h3>

@@ -50,7 +50,7 @@ export default function InventarioPage() {
       <div className="mx-auto max-w-7xl px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-black text-white">Inventario</h1>
+            <h1 className="text-2xl font-black text-[var(--tenko-text-primary)]">Inventario</h1>
             <p className="text-xs text-zinc-500 mt-1">
               Datos sincronizados con AniList
             </p>
@@ -67,7 +67,7 @@ export default function InventarioPage() {
         {/* Stats */}
         <div className="grid grid-cols-6 gap-3 mb-6">
           <div className="rounded-xl border border-zinc-800 p-3 text-center">
-            <div className="text-2xl font-black text-white">{stats.total}</div>
+            <div className="text-2xl font-black text-[var(--tenko-text-primary)]">{stats.total}</div>
             <div className="text-[10px] text-zinc-500">Total</div>
           </div>
           <div className="rounded-xl border border-green-500/30 p-3 text-center">
@@ -128,7 +128,7 @@ export default function InventarioPage() {
                   <div className="h-12 w-9 rounded bg-zinc-800" />
                 )}
                 <div className="flex-1">
-                  <h3 className="text-sm font-bold text-white">{anime.titulo}</h3>
+                  <h3 className="text-sm font-bold text-[var(--tenko-text-primary)]">{anime.titulo}</h3>
                   <p className="text-xs text-zinc-500">
                     {anime.totalEpisodios > 0 && `${anime.totalEpisodios} eps · `}
                     Score: {anime.score} · Pop: {anime.popularidad}
