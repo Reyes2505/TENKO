@@ -1,0 +1,55 @@
+name: Fix Zilla → UPNShare
+
+on:
+  # Ejecutar cada 6 horas (a la hora 2, 8, 14, 20)
+  # 1 hora después del scrape principal
+  schedule:
+    - cron: '0 2,8,14,20 * * *'
+
+  # Permite ejecutarlo manualmente desde GitHub UI
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Límite de episodios a procesar (vacío = todos)'
+        required: false
+        default: ''
+
+jobs:
+  fix-zilla:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      CI: 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run fix-zilla
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.limit }}" ]; then
+            ARGS="$ARGS --limit ${{ inputs.limit }}"
+          fi
+          echo "Ejecutando: node scripts/fix-zilla.mjs $ARGS"
+          node scripts/fix-zilla.mjs $ARGS
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Fix Zilla → UPNShare" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Estado: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Fecha: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
