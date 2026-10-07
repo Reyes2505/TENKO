@@ -213,23 +213,6 @@ export default function Page({ params }: PageProps) {
               <div className="flex items-center justify-center py-20 bg-black">
                 <div className="animate-spin h-10 w-10 border-2 border-t-[#6c00f4] border-[var(--tenko-border)] rounded-full" />
               </div>
-            ) : streamUrl ? (
-              <M3U8Player
-                src={streamUrl}
-                episodeId={episodio.id}
-                episodeNumber={episodio.numero}
-                title={tituloEpisodio}
-                animeId={anime?.id}
-                animeTitulo={anime?.titulo}
-                animePortada={anime?.portada_url}
-                temporadaId={episodio.temporada_id ?? undefined}
-                onNextEpisode={() => {
-                  if (nextEp) window.location.href = `/ver/${nextEp.id}`;
-                }}
-                onPrevEpisode={() => {
-                  if (prevEp) window.location.href = `/ver/${prevEp.id}`;
-                }}
-              />
             ) : (
               <VideoPlayer episodio={episodio} />
             )}

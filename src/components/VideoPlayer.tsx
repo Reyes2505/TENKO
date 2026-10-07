@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Episodio } from '@/types/database';
-import { supabase } from '@/lib/supabase';
+import { resolveStream } from '@/lib/stream-resolver';
+import M3U8Player from './M3U8Player';
 
 interface VideoPlayerProps {
   episodio: Episodio;
@@ -10,103 +10,111 @@ interface VideoPlayerProps {
   onPrevEpisode?: () => void;
 }
 
-export default function VideoPlayer({ episodio, onNextEpisode, onPrevEpisode }: VideoPlayerProps) {
-  const [animeSlug, setAnimeSlug] = useState('');
-
+export default function VideoPlayer({ episodio }: VideoPlayerProps) {
   const url = episodio.url_stream || '';
-  const isLocal = url.startsWith('/videos/');
-  const isM3U8 = url.includes('.m3u8');
-  const isJkPlayer = url.includes('jkplayer') || url.includes('jkanime.net');
+  const stream = resolveStream(url);
 
-  // Obtener slug del anime
-  useEffect(() => {
-    async function getAnimeSlug() {
-      try {
-        const { data: temporada } = await supabase
-          .from('temporadas')
-          .select('anime_id')
-          .eq('id', episodio.temporada_id)
-          .single();
-
-        if (temporada) {
-          const { data: anime } = await supabase
-            .from('animes')
-            .select('titulo')
-            .eq('id', temporada.anime_id)
-            .single();
-
-          if (anime) {
-            const slug = anime.titulo
-              .toLowerCase()
-              .replace(/[^a-z0-9\s]/g, '')
-              .replace(/\s+/g, '-');
-            setAnimeSlug(slug);
-          }
-        }
-      } catch (err) {
-        console.error('Error:', err);
-      }
-    }
-
-    if (isM3U8) {
-      getAnimeSlug();
-    }
-  }, [episodio.temporada_id, isM3U8]);
-
-  // Video local
-  if (isLocal) {
+  // ═══════════════════════════════════════════════════
+  // LOCAL (archivos locales)
+  // ═══════════════════════════════════════════════════
+  if (stream.type === 'local') {
     return (
       <div className="w-full max-w-5xl mx-auto">
-        <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-zinc-800 bg-black">
-          <video src={url} controls playsInline className="h-full w-full object-contain" />
-        </div>
-      </div>
-    );
-  }
-
-  // Para M3U8 - construir URL de la página del episodio
-  if (isM3U8 && animeSlug) {
-    const episodePageUrl = `https://jkanime.net/${animeSlug}/${episodio.numero}/`;
-    
-    return (
-      <div className="w-full max-w-5xl mx-auto">
-        <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-zinc-800 bg-black">
-          <iframe
-            key={episodio.id}
-            src={`/api/player?url=${encodeURIComponent(episodePageUrl)}`}
-            className="h-full w-full"
-            allowFullScreen
-            allow="autoplay; encrypted-media; fullscreen"
-            title={`Episodio ${episodio.numero}`}
+        <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black">
+          <video
+            src={stream.url}
+            controls
+            playsInline
+            className="h-full w-full object-contain"
           />
         </div>
       </div>
     );
   }
 
-  // Para JK Player directo
-  if (isJkPlayer) {
+  // ═══════════════════════════════════════════════════
+  // HLS (m3u8 directo o Zilla proxeado)
+  // ═══════════════════════════════════════════════════
+  if (stream.type === 'hls') {
+    const src = stream.requiresProxy && stream.proxiedUrl
+      ? stream.proxiedUrl
+      : stream.url;
+
     return (
       <div className="w-full max-w-5xl mx-auto">
-        <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-zinc-800 bg-black">
+        <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black">
+          <M3U8Player src={src} />
+        </div>
+        {stream.serverName === 'Zilla' && (
+          <div className="mt-2 text-center">
+            <p className="font-mono text-[10px] tracking-widest text-[var(--tenko-text-muted)]">
+              // FUENTE: {stream.serverName.toUpperCase()} (puede fallar por CORS)
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════
+  // IFRAME (UPNShare, Voe, Byse, MP4Upload)
+  // ═══════════════════════════════════════════════════
+  if (stream.type === 'iframe' || stream.type === 'mp4-embed') {
+    return (
+      <div className="w-full max-w-5xl mx-auto">
+        <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black">
           <iframe
             key={episodio.id}
-            src={`/api/player?url=${encodeURIComponent(url)}`}
+            src={stream.embedUrl || stream.url}
             className="h-full w-full"
             allowFullScreen
-            allow="autoplay; encrypted-media; fullscreen"
-            title={`Episodio ${episodio.numero}`}
+            allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write"
+            referrerPolicy="no-referrer"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-forms"
+            title={episodio.titulo || `Episodio ${episodio.numero}`}
+          />
+        </div>
+        <div className="mt-2 text-center">
+          <p className="font-mono text-[10px] tracking-widest text-[var(--tenko-text-muted)]">
+            // FUENTE: {stream.serverName.toUpperCase()}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════
+  // MP4 DIRECTO
+  // ═══════════════════════════════════════════════════
+  if (stream.type === 'direct-mp4') {
+    return (
+      <div className="w-full max-w-5xl mx-auto">
+        <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black">
+          <video
+            src={stream.url}
+            controls
+            playsInline
+            className="h-full w-full object-contain"
           />
         </div>
       </div>
     );
   }
 
-  // Fallback
+  // ═══════════════════════════════════════════════════
+  // FALLBACK
+  // ═══════════════════════════════════════════════════
   return (
     <div className="w-full max-w-5xl mx-auto">
-      <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-zinc-800 bg-black flex items-center justify-center">
-        <p className="text-sm text-zinc-500">Video no disponible</p>
+      <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black flex items-center justify-center">
+        <div className="text-center p-6">
+          <p className="font-mono text-[11px] tracking-widest text-[var(--tenko-text-muted)] mb-2">
+            // FORMATO NO SOPORTADO
+          </p>
+          <p className="font-[family-name:var(--font-space-grotesk)] text-sm text-[var(--tenko-text-secondary)]">
+            {stream.serverName}
+          </p>
+        </div>
       </div>
     </div>
   );
