@@ -1,0 +1,61 @@
+name: Scrape AnimeAV1 → Supabase
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Límite de animes (vacío = todos)'
+        required: false
+        default: ''
+      only_new:
+        description: 'Solo animes sin animeav1_slug'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run scraper
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CI: 'true'
+        run: |
+          ARGS=""
+          if [ -n "${{ inputs.limit }}" ]; then
+            ARGS="$ARGS --limit ${{ inputs.limit }}"
+          fi
+          if [ "${{ inputs.only_new }}" = "true" ]; then
+            ARGS="$ARGS --only-new"
+          fi
+          echo "Ejecutando: node scripts/scrape-animeav1.mjs $ARGS"
+          node scripts/scrape-animeav1.mjs $ARGS
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Resultado del scraping" >> $GITHUB_STEP_SUMMARY
+          echo "- Estado: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Fecha: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY

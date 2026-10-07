@@ -198,6 +198,15 @@ async function scrapeAnime(anime) {
 }
 
 async function main() {
+  console.log('═══════════════════════════════════════');
+  console.log('🚀 TENKO Scraper — AnimeAV1 → Supabase');
+  console.log('═══════════════════════════════════════');
+  console.log('Node:', process.version);
+  console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅' : '❌');
+  console.log('Service key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅' : '❌');
+  console.log('CI mode:', process.env.CI === 'true' ? '✅' : 'local');
+  console.log('═══════════════════════════════════════');
+  console.log('');
   console.log('🚀 Scraper AnimeAV1 → Supabase');
   console.log(`   Limit: ${LIMIT === Infinity ? '∞' : LIMIT}`);
   console.log(`   Search: ${SEARCH || 'todos'}`);
