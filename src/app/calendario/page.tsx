@@ -211,7 +211,7 @@ export default function CalendarioPage() {
                     )}
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent">
-                    <h3 className="font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-[var(--tenko-text-primary)] line-clamp-2 group-hover:text-[#6c00f4] transition-colors leading-snug">
+                    <h3 className="font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-white line-clamp-2 group-hover:text-[#6c00f4] transition-colors leading-snug">
                       {anime.titulo}
                     </h3>
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">

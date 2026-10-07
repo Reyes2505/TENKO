@@ -260,7 +260,7 @@ export default function AnimeDetailPage() {
 
           <div className="flex-1 pt-2 md:pt-24">
             <div className="flex items-start gap-3">
-              <h1 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl lg:text-5xl font-black text-[var(--tenko-text-primary)] leading-[1.05] uppercase tracking-tight">
+              <h1 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl lg:text-5xl font-black text-white leading-[1.05] uppercase tracking-tight drop-shadow-lg">
                 {anime.titulo}
               </h1>
               <span className={`mt-2 h-3 w-3 rounded-full ${estadoDot} animate-pulse shrink-0`} />

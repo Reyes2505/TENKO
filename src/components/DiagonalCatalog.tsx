@@ -103,7 +103,7 @@ function DiagonalCard({ anime }: { anime: Anime }) {
 
       {/* Info */}
       <div className="absolute bottom-0 left-0 right-0 p-3">
-        <h3 className="font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-[var(--tenko-text-primary)] line-clamp-2 leading-snug group-hover:text-[#6c00f4] transition-colors">
+        <h3 className="font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-white line-clamp-2 leading-snug group-hover:text-[#6c00f4] transition-colors">
           {anime.titulo}
         </h3>
         {anime.estado_emision && (

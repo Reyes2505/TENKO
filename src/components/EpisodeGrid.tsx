@@ -50,7 +50,7 @@ export default function EpisodeGrid({ episodios, thumbnails = {} }: EpisodeGridP
       {/* Controles */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 rounded-2xl border border-zinc-800/60 bg-zinc-900/40 backdrop-blur-md">
         <div className="relative flex-1">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[var(--tenko-text-secondary)]">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-white/70">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
@@ -65,19 +65,19 @@ export default function EpisodeGrid({ episodios, thumbnails = {} }: EpisodeGridP
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold text-[var(--tenko-text-secondary)]">
+          <span className="text-xs font-semibold text-white/70">
             {filteredEpisodios.length} eps
           </span>
           <div className="flex items-center gap-1.5 rounded-xl border border-[var(--tenko-border)] bg-black/40 p-1">
             <button
               onClick={() => setSortOrder('asc')}
-              className={`rounded-lg px-2.5 py-1 text-xs font-medium ${sortOrder === 'asc' ? 'bg-[#6c00f4] text-[var(--tenko-text-primary)]' : 'text-[var(--tenko-text-secondary)]'}`}
+              className={`rounded-lg px-2.5 py-1 text-xs font-medium ${sortOrder === 'asc' ? 'bg-[#6c00f4] text-[var(--tenko-text-primary)]' : 'text-white/70'}`}
             >
               1 → {episodios.length}
             </button>
             <button
               onClick={() => setSortOrder('desc')}
-              className={`rounded-lg px-2.5 py-1 text-xs font-medium ${sortOrder === 'desc' ? 'bg-[#6c00f4] text-[var(--tenko-text-primary)]' : 'text-[var(--tenko-text-secondary)]'}`}
+              className={`rounded-lg px-2.5 py-1 text-xs font-medium ${sortOrder === 'desc' ? 'bg-[#6c00f4] text-[var(--tenko-text-primary)]' : 'text-white/70'}`}
             >
               {episodios.length} → 1
             </button>

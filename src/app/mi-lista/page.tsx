@@ -103,7 +103,7 @@ export default function MiListaPage() {
                 )}
               </div>
               <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent">
-                <h3 className="font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-[var(--tenko-text-primary)] line-clamp-2 leading-snug">
+                <h3 className="font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-white line-clamp-2 leading-snug">
                   {anime.titulo}
                 </h3>
                 <p className="font-mono text-[10px] text-[#6c00f4] mt-1 tracking-wider">
@@ -130,7 +130,7 @@ export default function MiListaPage() {
                 )}
               </div>
               <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent">
-                <h3 className="font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-[var(--tenko-text-primary)] line-clamp-2 leading-snug">
+                <h3 className="font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-white line-clamp-2 leading-snug">
                   {anime.titulo}
                 </h3>
               </div>
@@ -154,7 +154,7 @@ export default function MiListaPage() {
                 )}
               </div>
               <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent">
-                <h3 className="font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-[var(--tenko-text-primary)] line-clamp-2 leading-snug">
+                <h3 className="font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-white line-clamp-2 leading-snug">
                   {anime.titulo}
                 </h3>
               </div>
