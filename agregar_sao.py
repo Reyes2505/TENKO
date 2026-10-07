@@ -14,7 +14,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 def agregar_sao():
     """Agrega toda la saga de Sword Art Online."""
     
-    print('🏯 Santuario Anime - Agregando Sword Art Online')
+    print('🏯 TENKO - Agregando Sword Art Online')
     print('=' * 60)
     
     # ========== DEFINICIÓN DE TEMPORADAS ==========

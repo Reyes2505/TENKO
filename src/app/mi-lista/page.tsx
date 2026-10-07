@@ -14,8 +14,6 @@ export default function MiListaPage() {
   useEffect(() => {
     async function cargar() {
       setLoading(true);
-      
-      // ✅ CON AWAIT
       const trackingData = await getTracking();
       setTracking(trackingData);
 
@@ -32,112 +30,137 @@ export default function MiListaPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <div className="animate-spin h-8 w-8 border-2 border-t-transparent border-white rounded-full" />
+      <main className="flex min-h-screen items-center justify-center bg-[var(--tenko-bg-page)]">
+        <div className="animate-spin h-12 w-12 border-2 border-t-[#6c00f4] border-[var(--tenko-border)] rounded-full" />
       </main>
     );
   }
 
+  const Seccion = ({
+    titulo,
+    acento,
+    items,
+    vacio,
+    contador,
+    children,
+  }: {
+    titulo: string;
+    acento: string;
+    items: number;
+    vacio: string;
+    contador?: (a: Anime) => string | null;
+    children: React.ReactNode;
+  }) => (
+    <section className="mb-12">
+      <div className="mb-5 flex items-center justify-between border-b border-[var(--tenko-border)] pb-3">
+        <div className="flex items-center gap-3">
+          <span className="h-2 w-2 rounded-full" style={{ background: acento, boxShadow: `0 0 10px ${acento}` }} />
+          <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black uppercase tracking-tight text-white">
+            {titulo}
+          </h2>
+          <span className="font-mono text-[10px] tracking-widest text-[var(--tenko-text-muted)]">
+            {items} {items === 1 ? 'TÍTULO' : 'TÍTULOS'}
+          </span>
+        </div>
+      </div>
+      {items > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {children}
+        </div>
+      ) : (
+        <div className="text-center py-12 border border-[var(--tenko-border)] rounded-xl bg-white/[0.02]">
+          <p className="font-mono text-xs tracking-widest text-[var(--tenko-text-muted)]">{vacio}</p>
+        </div>
+      )}
+    </section>
+  );
+
   return (
-    <main className="min-h-screen bg-zinc-950 pb-16">
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        <h1 className="text-2xl font-black text-white mb-6">📋 Mi Lista</h1>
+    <main className="min-h-screen bg-[var(--tenko-bg-page)] pb-16">
+      <div className="mx-auto max-w-7xl px-6 py-12">
+        <div className="mb-10 border-b border-[var(--tenko-border)] pb-6">
+          <span className="font-mono text-[10px] tracking-[0.3em] text-[#6c00f4] font-bold block mb-2">
+            // TU COLECCIÓN
+          </span>
+          <h1 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl font-black uppercase tracking-tight text-white">
+            Mi Lista
+          </h1>
+        </div>
 
-        {/* Viendo */}
-        <section className="mb-10">
-          <h2 className="text-lg font-bold text-blue-400 mb-4">
-            👁️ Viendo ({animesViendo.length})
-          </h2>
-          {animesViendo.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {animesViendo.map((anime) => (
-                <Link
-                  key={anime.id}
-                  href={`/anime/${anime.id}`}
-                  className="group relative overflow-hidden rounded-xl border border-zinc-800/60 bg-zinc-900/40 hover:border-blue-500/50 transition-all"
-                >
-                  <div className="aspect-[3/4] overflow-hidden">
-                    {anime.portada_url ? (
-                      <img src={anime.portada_url} alt={anime.titulo} className="h-full w-full object-cover" loading="lazy" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-zinc-800 text-3xl">🎬</div>
-                    )}
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black to-transparent">
-                    <h3 className="text-xs font-bold text-white line-clamp-2">{anime.titulo}</h3>
-                    <p className="text-[10px] text-blue-400 mt-1">
-                      EP {tracking[anime.id]?.ultimoEpisodio || 0}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-zinc-500">No hay animes en progreso.</p>
-          )}
-        </section>
+        {/* VIENDO */}
+        <Seccion titulo="Viendo" acento="#6c00f4" items={animesViendo.length} vacio="// NADA EN PROGRESO">
+          {animesViendo.map((anime) => (
+            <Link
+              key={anime.id}
+              href={`/anime/${anime.id}`}
+              className="group relative overflow-hidden rounded-xl border border-[var(--tenko-border)] bg-white/5 hover:border-[#6c00f4]/60 transition-all hover:-translate-y-1"
+            >
+              <div className="aspect-[3/4] overflow-hidden">
+                {anime.portada_url ? (
+                  <img src={anime.portada_url} alt={anime.titulo} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-zinc-800 text-3xl">🎬</div>
+                )}
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent">
+                <h3 className="font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-[var(--tenko-text-primary)] line-clamp-2 leading-snug">
+                  {anime.titulo}
+                </h3>
+                <p className="font-mono text-[10px] text-[#6c00f4] mt-1 tracking-wider">
+                  EP {tracking[anime.id]?.ultimoEpisodio || 0}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </Seccion>
 
-        {/* Vistos */}
-        <section className="mb-10">
-          <h2 className="text-lg font-bold text-green-400 mb-4">
-            ✅ Vistos ({animesVistos.length})
-          </h2>
-          {animesVistos.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {animesVistos.map((anime) => (
-                <Link
-                  key={anime.id}
-                  href={`/anime/${anime.id}`}
-                  className="group relative overflow-hidden rounded-xl border border-zinc-800/60 bg-zinc-900/40 hover:border-green-500/50 transition-all"
-                >
-                  <div className="aspect-[3/4] overflow-hidden">
-                    {anime.portada_url ? (
-                      <img src={anime.portada_url} alt={anime.titulo} className="h-full w-full object-cover" loading="lazy" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-zinc-800 text-3xl">🎬</div>
-                    )}
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black to-transparent">
-                    <h3 className="text-xs font-bold text-white line-clamp-2">{anime.titulo}</h3>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-zinc-500">No has completado ningún anime.</p>
-          )}
-        </section>
+        {/* VISTOS */}
+        <Seccion titulo="Vistos" acento="#22c55e" items={animesVistos.length} vacio="// NADA COMPLETADO">
+          {animesVistos.map((anime) => (
+            <Link
+              key={anime.id}
+              href={`/anime/${anime.id}`}
+              className="group relative overflow-hidden rounded-xl border border-[var(--tenko-border)] bg-white/5 hover:border-emerald-500/60 transition-all hover:-translate-y-1"
+            >
+              <div className="aspect-[3/4] overflow-hidden">
+                {anime.portada_url ? (
+                  <img src={anime.portada_url} alt={anime.titulo} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-zinc-800 text-3xl">🎬</div>
+                )}
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent">
+                <h3 className="font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-[var(--tenko-text-primary)] line-clamp-2 leading-snug">
+                  {anime.titulo}
+                </h3>
+              </div>
+            </Link>
+          ))}
+        </Seccion>
 
-        {/* Por ver */}
-        <section>
-          <h2 className="text-lg font-bold text-yellow-400 mb-4">
-            📌 Por ver ({animesPorVer.length})
-          </h2>
-          {animesPorVer.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {animesPorVer.map((anime) => (
-                <Link
-                  key={anime.id}
-                  href={`/anime/${anime.id}`}
-                  className="group relative overflow-hidden rounded-xl border border-zinc-800/60 bg-zinc-900/40 hover:border-yellow-500/50 transition-all"
-                >
-                  <div className="aspect-[3/4] overflow-hidden">
-                    {anime.portada_url ? (
-                      <img src={anime.portada_url} alt={anime.titulo} className="h-full w-full object-cover" loading="lazy" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-zinc-800 text-3xl">🎬</div>
-                    )}
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black to-transparent">
-                    <h3 className="text-xs font-bold text-white line-clamp-2">{anime.titulo}</h3>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-zinc-500">No hay animes pendientes.</p>
-          )}
-        </section>
+        {/* POR VER */}
+        <Seccion titulo="Por ver" acento="#eab308" items={animesPorVer.length} vacio="// NADA PENDIENTE">
+          {animesPorVer.map((anime) => (
+            <Link
+              key={anime.id}
+              href={`/anime/${anime.id}`}
+              className="group relative overflow-hidden rounded-xl border border-[var(--tenko-border)] bg-white/5 hover:border-yellow-500/60 transition-all hover:-translate-y-1"
+            >
+              <div className="aspect-[3/4] overflow-hidden">
+                {anime.portada_url ? (
+                  <img src={anime.portada_url} alt={anime.titulo} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-zinc-800 text-3xl">🎬</div>
+                )}
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent">
+                <h3 className="font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-[var(--tenko-text-primary)] line-clamp-2 leading-snug">
+                  {anime.titulo}
+                </h3>
+              </div>
+            </Link>
+          ))}
+        </Seccion>
       </div>
     </main>
   );

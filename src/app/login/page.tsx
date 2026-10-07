@@ -17,26 +17,17 @@ export default function LoginPage() {
 
     try {
       if (isRegistering) {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
+        const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
         setError('✅ Cuenta creada. Revisa tu email para confirmar.');
         setIsLoading(false);
         return;
       } else {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
 
         if (data.session) {
-          // Esperar a que la sesión se propague
           await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Redirigir al lobby usando window.location
           window.location.href = '/';
         } else {
           setError('No se pudo iniciar sesión.');
@@ -50,48 +41,59 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+    <main className="min-h-screen bg-[var(--tenko-bg-page)] flex items-center justify-center px-4 py-16">
       <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-zinc-800/60 bg-zinc-900/60 backdrop-blur-xl p-8 shadow-2xl">
-          <div className="text-center mb-6">
-            <div className="text-5xl mb-3">🏯</div>
-            <h1 className="text-2xl font-black text-white">
-              Santuario <span className="text-blue-400">Anime</span>
-            </h1>
-            <p className="text-xs text-zinc-500 mt-2">
-              {isRegistering ? 'Crear cuenta' : 'Iniciar sesión'}
+        <div className="rounded-2xl border border-[var(--tenko-border)] bg-white/[0.02] backdrop-blur-xl p-8 shadow-2xl shadow-black/60 relative overflow-hidden">
+          {/* Glow morado decorativo */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-32 bg-[#6c00f4]/20 blur-[100px] pointer-events-none" />
+
+          <div className="relative text-center mb-8">
+            <div className="inline-flex items-center justify-center gap-2 mb-4">
+              <span className="font-[family-name:var(--font-unbounded)] text-3xl font-black tracking-tight text-white">
+                TENKO
+              </span>
+              <span className="text-[#6c00f4] text-lg font-mono">天狐</span>
+            </div>
+            <p className="font-mono text-[11px] tracking-[0.3em] text-[#6c00f4] font-bold uppercase">
+              // {isRegistering ? 'NUEVO ACCESO' : 'ACCESO AL SISTEMA'}
             </p>
           </div>
 
           {error && (
-            <div className={`mb-4 rounded-lg p-3 text-xs ${
-              error.startsWith('✅') ? 'bg-green-950/50 text-green-300' : 'bg-red-950/50 text-red-300'
+            <div className={`mb-5 rounded-lg p-3 font-mono text-[11px] tracking-wider ${
+              error.startsWith('✅')
+                ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-500/30'
+                : 'bg-red-950/40 text-red-300 border border-red-500/30'
             }`}>
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="relative space-y-5">
             <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">Email</label>
+              <label className="block font-mono text-[10px] tracking-[0.2em] font-bold text-[var(--tenko-text-secondary)] uppercase mb-2">
+                // Email
+              </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--tenko-border)] bg-black/40 px-4 py-3 font-mono text-sm text-[var(--tenko-text-primary)] placeholder-white/30 outline-none transition-all focus:border-[#6c00f4] focus:ring-2 focus:ring-[#6c00f4]/40"
                 placeholder="tu@email.com"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-zinc-300 mb-1">Contraseña</label>
+              <label className="block font-mono text-[10px] tracking-[0.2em] font-bold text-[var(--tenko-text-secondary)] uppercase mb-2">
+                // Contraseña
+              </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-4 py-3 text-sm text-white focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-lg border border-[var(--tenko-border)] bg-black/40 px-4 py-3 font-mono text-sm text-[var(--tenko-text-primary)] placeholder-white/30 outline-none transition-all focus:border-[#6c00f4] focus:ring-2 focus:ring-[#6c00f4]/40"
                 placeholder="••••••••"
               />
             </div>
@@ -99,18 +101,18 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-blue-600/30 hover:shadow-purple-600/30 transition-all active:scale-95 disabled:opacity-50"
+              className="w-full rounded-md bg-[#6c00f4] px-4 py-3 font-mono text-xs font-bold tracking-widest uppercase text-[var(--tenko-text-primary)] shadow-lg shadow-[#6c00f4]/30 hover:bg-white hover:text-black transition-all active:scale-95 disabled:opacity-50"
             >
-              {isLoading ? 'Cargando...' : isRegistering ? 'Crear Cuenta' : 'Entrar'}
+              {isLoading ? 'PROCESANDO...' : isRegistering ? 'CREAR CUENTA' : 'ENTRAR'}
             </button>
           </form>
 
-          <p className="text-center text-xs text-zinc-500 mt-4">
+          <p className="relative text-center mt-6">
             <button
               onClick={() => setIsRegistering(!isRegistering)}
-              className="text-blue-400 hover:text-blue-300 font-semibold"
+              className="font-mono text-[10px] tracking-widest text-[var(--tenko-text-muted)] hover:text-[#6c00f4] transition-colors uppercase"
             >
-              {isRegistering ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
+              {isRegistering ? '→ YA TENGO CUENTA' : '→ NO TENGO CUENTA'}
             </button>
           </p>
         </div>

@@ -31,3 +31,21 @@ public/videos/*.webm
 
 # Backups
 backup_*/
+
+# ==== Caché del bot ====
+.airing_cache.json
+
+# ==== Backups locales ====
+backups/
+
+# ==== Archivos basura generados ====
+reporte_*.json
+ARRAY[Hentai]::text[]
+
+# ==== Scripts legacy (si no quieres conservarlos) ====
+# anilist_airing_OLD.py
+.env*.local
+
+# Backups locales
+*.legacy.*
+src.backup.*

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Agrega Darling in the FranXX a la base de datos de Santuario Anime.
+Agrega Darling in the FranXX a la base de datos de TENKO.
 """
 
 from supabase import create_client
@@ -14,7 +14,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 def agregar_darling():
     """Agrega Darling in the FranXX con 24 episodios."""
     
-    print('🏯 Santuario Anime - Agregando Darling in the FranXX')
+    print('🏯 TENKO - Agregando Darling in the FranXX')
     print('=' * 60)
     
     # 1. Crear el anime

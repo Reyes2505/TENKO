@@ -93,9 +93,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Santuario Anime',
+  title: 'TENKO',
   description: 'Plataforma de streaming de anime',
-  keywords: ['Anime', 'Stream', 'Santuario Anime'],
+  keywords: ['Anime', 'Stream', 'TENKO'],
 };
 
 export default function RootLayout({

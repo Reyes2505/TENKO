@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Agrega Suzume (película) a la base de datos de Santuario Anime.
+Agrega Suzume (película) a la base de datos de TENKO.
 """
 
 from supabase import create_client
@@ -14,7 +14,7 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 def agregar_suzume():
     """Agrega Suzume no Tojimari (película)."""
     
-    print('🏯 Santuario Anime - Agregando Suzume')
+    print('🏯 TENKO - Agregando Suzume')
     print('=' * 60)
     
     # 1. Crear el anime (película)

@@ -68,7 +68,7 @@ export default function M3U8Player({
       hlsRef.current = hls;
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        setDuration(hls.levels[0]?.duration || video.duration || 0);
+        setDuration((hls.levels[0] as any)?.duration || video.duration || 0);
       });
 
       hls.on(Hls.Events.ERROR, (event, data) => {
@@ -217,7 +217,7 @@ export default function M3U8Player({
     <div className="w-full max-w-5xl mx-auto space-y-4">
       {/* Modal de reanudar */}
       {showResume && currentTime > 5 && (
-        <div className="p-4 rounded-2xl border border-blue-500/40 bg-blue-950/40 flex items-center justify-between animate-fade-in">
+        <div className="p-4 rounded-2xl border border-[#6c00f4]/40 bg-[#6c00f4]/15 flex items-center justify-between animate-fade-in">
           <div>
             <p className="text-sm font-bold text-white">
               Continuar desde {formatTime(currentTime)}
@@ -235,7 +235,7 @@ export default function M3U8Player({
             </button>
             <button
               onClick={handleResume}
-              className="px-4 py-2 rounded-xl bg-blue-600 text-xs font-bold text-white hover:bg-blue-500"
+              className="px-4 py-2 rounded-xl bg-[#6c00f4] text-xs font-bold text-[var(--tenko-text-primary)] hover:bg-white hover:text-black"
             >
               ▶ Reanudar
             </button>
@@ -248,7 +248,7 @@ export default function M3U8Player({
         {error ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <div className="text-6xl mb-4">😢</div>
-            <p className="text-white font-bold">{error}</p>
+            <p className="text-[var(--tenko-text-primary)] font-bold">{error}</p>
           </div>
         ) : (
           <video
@@ -269,7 +269,7 @@ export default function M3U8Player({
           <span className="font-mono">{formatTime(currentTime)}</span>
           <div className="flex-1 h-1 bg-zinc-800 rounded-full overflow-hidden">
             <div
-              className="h-full bg-blue-500 transition-all"
+              className="h-full bg-[#6c00f4] transition-all"
               style={{ width: `${(currentTime / duration) * 100}%` }}
             />
           </div>

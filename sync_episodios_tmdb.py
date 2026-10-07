@@ -429,7 +429,7 @@ def procesar_anime(anime: Dict, cache: Dict) -> Dict[str, int]:
 # ========== MAIN ==========
 def main():
     print('=' * 60)
-    print('📺 Santuario Anime - Sync Episodios TMDB')
+    print('📺 TENKO - Sync Episodios TMDB')
     print(f'📅 {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f'🎯 Límite: {LIMITE_ANIMES} animes')
     print(f'🔄 Modo completo: {"SÍ" if MODO_COMPLETO else "NO"}')

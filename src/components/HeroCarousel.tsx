@@ -17,9 +17,7 @@ export default function HeroCarousel({ animes }: HeroCarouselProps) {
 
   const goToSlide = useCallback((index: number) => {
     setIsVisible(false);
-    
     if (timerRef.current) clearTimeout(timerRef.current);
-    
     timerRef.current = setTimeout(() => {
       setCurrentIndex(index);
       setIsVisible(true);
@@ -36,7 +34,7 @@ export default function HeroCarousel({ animes }: HeroCarouselProps) {
 
   useEffect(() => {
     if (isPaused || destacados.length <= 1) return;
-    const interval = setInterval(nextSlide, 5000);
+    const interval = setInterval(nextSlide, 6000);
     return () => clearInterval(interval);
   }, [isPaused, destacados.length, nextSlide]);
 
@@ -46,11 +44,11 @@ export default function HeroCarousel({ animes }: HeroCarouselProps) {
 
   return (
     <section
-      className="relative w-full overflow-hidden border-b border-zinc-800/80 bg-zinc-950 text-white min-h-[380px] lg:min-h-[420px] flex items-center"
+      className="relative w-full overflow-hidden border-b border-[var(--tenko-border)] bg-[var(--tenko-bg-page)] text-[var(--tenko-text-primary)] min-h-[420px] lg:min-h-[520px] flex items-center"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Background con crossfade suave */}
+      {/* Background con crossfade */}
       <div className="absolute inset-0 z-0">
         {destacados.map((a, i) => (
           <div
@@ -63,48 +61,50 @@ export default function HeroCarousel({ animes }: HeroCarouselProps) {
             }}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/50 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f] via-[#0a0a0f]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent to-transparent" />
+        {/* Glow morado sutil de fondo */}
+        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-[#6c00f4]/10 blur-[120px] pointer-events-none" />
       </div>
 
-      {/* Content con fade */}
-      <div className={`relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 w-full transition-all duration-500 ease-out ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-      }`}>
+      {/* Content */}
+      <div
+        className={`relative z-10 mx-auto max-w-7xl px-6 py-12 lg:px-8 w-full transition-all duration-500 ease-out ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+      >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          {/* Left: Info */}
-          <div className="lg:col-span-8 space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="rounded-full border border-blue-500/40 bg-blue-500/10 px-3 py-0.5 text-[10px] font-bold text-blue-400 uppercase tracking-wider">
-                ✨ Destacado
+          <div className="lg:col-span-8 space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="font-mono rounded-full border border-[#6c00f4]/40 bg-[#6c00f4]/15 px-3 py-1 text-[10px] font-bold tracking-widest text-[#6c00f4]">
+                ✦ TENKO SPOTLIGHT
               </span>
-              <span className="rounded-full bg-zinc-800/80 px-2 py-0.5 text-[10px] text-zinc-400">
-                {currentIndex + 1} / {destacados.length}
+              <span className="font-mono text-[10px] tracking-widest text-[var(--tenko-text-muted)]">
+                {String(currentIndex + 1).padStart(2, '0')} / {String(destacados.length).padStart(2, '0')}
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white drop-shadow-md line-clamp-2">
+            <h1 className="font-[family-name:var(--font-unbounded)] text-3xl sm:text-5xl font-black uppercase tracking-tight text-[var(--tenko-text-primary)] drop-shadow-md line-clamp-2 leading-[1.05]">
               {anime.titulo}
             </h1>
 
-            <p className="text-xs sm:text-sm text-zinc-300 max-w-2xl line-clamp-2 leading-relaxed">
+            <p className="font-[family-name:var(--font-space-grotesk)] text-sm sm:text-base text-white/70 max-w-2xl line-clamp-2 leading-relaxed">
               {anime.sinopsis || 'Sin descripción disponible'}
             </p>
 
             <Link
               href={`/anime/${anime.id}`}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-blue-600/30 hover:bg-blue-500 transition-all active:scale-95"
+              className="inline-flex items-center gap-2 rounded-md bg-[#6c00f4] px-6 py-3 font-mono text-xs font-bold tracking-widest text-[var(--tenko-text-primary)] shadow-xl shadow-[#6c00f4]/30 hover:bg-white hover:text-black transition-all active:scale-95"
             >
               <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
               </svg>
-              Ver Anime
+              REPRODUCIR EN TENKO
             </Link>
           </div>
 
-          {/* Right: Mini poster */}
           <div className="hidden lg:flex justify-end lg:col-span-4">
-            <div className="relative aspect-[3/4] w-40 overflow-hidden rounded-xl border border-zinc-700/50 shadow-2xl shadow-black/50">
+            <div className="relative aspect-[3/4] w-44 overflow-hidden rounded-xl border border-[var(--tenko-border)] shadow-2xl shadow-black/60 ring-1 ring-[#6c00f4]/20">
               {anime.portada_url ? (
                 <img
                   src={anime.portada_url}
@@ -124,7 +124,8 @@ export default function HeroCarousel({ animes }: HeroCarouselProps) {
         <>
           <button
             onClick={prevSlide}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 rounded-full bg-zinc-900/50 p-1.5 text-white/50 hover:bg-zinc-800 hover:text-white backdrop-blur-sm transition-all"
+            aria-label="Anterior"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/50 p-2 text-white/60 hover:bg-[#6c00f4] hover:text-[var(--tenko-text-primary)] backdrop-blur-sm transition-all border border-[var(--tenko-border)]"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -132,7 +133,8 @@ export default function HeroCarousel({ animes }: HeroCarouselProps) {
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 rounded-full bg-zinc-900/50 p-1.5 text-white/50 hover:bg-zinc-800 hover:text-white backdrop-blur-sm transition-all"
+            aria-label="Siguiente"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/50 p-2 text-white/60 hover:bg-[#6c00f4] hover:text-[var(--tenko-text-primary)] backdrop-blur-sm transition-all border border-[var(--tenko-border)]"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -143,13 +145,16 @@ export default function HeroCarousel({ animes }: HeroCarouselProps) {
 
       {/* Dots */}
       {destacados.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
           {destacados.map((_, i) => (
             <button
               key={i}
               onClick={() => goToSlide(i)}
+              aria-label={`Ir a slide ${i + 1}`}
               className={`h-1.5 rounded-full transition-all duration-500 ${
-                i === currentIndex ? 'w-6 bg-blue-500' : 'w-1.5 bg-zinc-600 hover:bg-zinc-400'
+                i === currentIndex
+                  ? 'w-8 bg-[#6c00f4] shadow-[0_0_10px_rgba(108,0,244,0.8)]'
+                  : 'w-1.5 bg-white/30 hover:bg-white/60'
               }`}
             />
           ))}

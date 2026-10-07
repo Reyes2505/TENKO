@@ -124,8 +124,8 @@ export function deleteLocalEpisode(episodeId: string): Episodio[] {
 export const DEFAULT_PROFILE: UserProfile = {
   id: 'user-default',
   username: 'Anime Otaku Offline',
-  avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=SantuarioOtaku',
-  bio: 'Coleccionista de anime local y explorador del Santuario.',
+  avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=TenkoOtaku',
+  bio: 'Coleccionista de anime local y explorador del universo TENKO.',
   favorite_genre: 'Isekai / Fantasía',
   joined_date: new Date().toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }),
 };

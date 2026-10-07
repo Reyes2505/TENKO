@@ -26,12 +26,12 @@ export default function ErrorState({
           />
         </svg>
       </div>
-      <h3 className="text-lg font-bold text-white mb-1">{title}</h3>
+      <h3 className="text-lg font-bold text-[var(--tenko-text-primary)] mb-1">{title}</h3>
       <p className="text-xs text-red-300/80 max-w-md mb-6">{message}</p>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 transition-all active:scale-95 shadow-lg shadow-blue-600/20"
+          className="inline-flex items-center gap-2 rounded-xl bg-[#6c00f4] px-4 py-2 text-xs font-semibold text-[var(--tenko-text-primary)] hover:bg-white hover:text-black transition-all active:scale-95 shadow-lg shadow-[#6c00f4]/30"
         >
           <svg
             className="h-4 w-4"

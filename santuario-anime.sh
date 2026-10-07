@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ==============================================================================
-# Santuario Anime - Lanzador Nativo para Linux
+# TENKO - Lanzador Nativo para Linux
 # ==============================================================================
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -19,7 +19,7 @@ NC='\033[0m' # No Color
 print_banner() {
     echo -e "${BLUE}"
     echo "========================================================"
-    echo "    ⛩️  Santuario Anime - Version Nativa Linux  ⛩️"
+    echo "    ⛩️  TENKO - Version Nativa Linux  ⛩️"
     echo "========================================================"
     echo -e "${NC}"
 }
@@ -51,12 +51,12 @@ start_app() {
     check_dependencies
 
     if is_running; then
-        echo -e "${YELLOW}⚠️ Santuario Anime ya se encuentra ejecutandose (PID: $(cat "$PID_FILE")).${NC}"
+        echo -e "${YELLOW}⚠️ TENKO ya se encuentra ejecutandose (PID: $(cat "$PID_FILE")).${NC}"
         open_browser
         exit 0
     fi
 
-    echo -e "${GREEN}🚀 Iniciando Santuario Anime en modo local...${NC}"
+    echo -e "${GREEN}🚀 Iniciando TENKO en modo local...${NC}"
     cd "$APP_DIR" || exit 1
 
     # Iniciar la aplicación de escritorio (Electron), que a su vez arranca el servidor Next
@@ -89,7 +89,7 @@ stop_app() {
     print_banner
     if is_running; then
         PID=$(cat "$PID_FILE")
-        echo -e "${YELLOW}🛑 Deteniendo servicio de Santuario Anime (PID: ${PID})...${NC}"
+        echo -e "${YELLOW}🛑 Deteniendo servicio de TENKO (PID: ${PID})...${NC}"
         kill "$PID" 2>/dev/null
         rm -f "$PID_FILE"
         echo -e "${GREEN}✅ Servicio detenido correctamente.${NC}"
@@ -101,10 +101,10 @@ stop_app() {
 status_app() {
     print_banner
     if is_running; then
-        echo -e "${GREEN}🟢 ESTADO: Santuario Anime esta ACTIVO (PID: $(cat "$PID_FILE"))${NC}"
+        echo -e "${GREEN}🟢 ESTADO: TENKO esta ACTIVO (PID: $(cat "$PID_FILE"))${NC}"
         echo -e "Accede en: http://localhost:${PORT}"
     else
-        echo -e "${RED}🔴 ESTADO: Santuario Anime esta DETENIDO.${NC}"
+        echo -e "${RED}🔴 ESTADO: TENKO esta DETENIDO.${NC}"
     fi
 }
 

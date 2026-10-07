@@ -23,56 +23,40 @@ export default function Page({ params }: PageProps) {
   const [streamLoading, setStreamLoading] = useState(false);
   const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Tracking
   useEffect(() => {
-    if (id) {
-      markEpisodeAsWatched(id);
-    }
+    if (id) markEpisodeAsWatched(id);
   }, [id]);
 
   useEffect(() => {
     heartbeatRef.current = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        addWatchTime(10);
-      }
+      if (document.visibilityState === 'visible') addWatchTime(10);
     }, 10000);
-
     return () => {
       if (heartbeatRef.current) clearInterval(heartbeatRef.current);
     };
   }, []);
 
-  // Obtener stream M3U8
   useEffect(() => {
     async function getStream() {
       if (!episodio?.url_stream) return;
-      
       setStreamLoading(true);
       try {
         const res = await fetch(`/api/stream?url=${encodeURIComponent(episodio.url_stream)}`);
         const data = await res.json();
-        
-        if (data.success && data.streamUrl) {
-          setStreamUrl(data.streamUrl);
-        }
+        if (data.success && data.streamUrl) setStreamUrl(data.streamUrl);
       } catch (err) {
         console.error('Error obteniendo stream:', err);
       } finally {
         setStreamLoading(false);
       }
     }
-
-    if (episodio) {
-      getStream();
-    }
+    if (episodio) getStream();
   }, [episodio]);
 
   useEffect(() => {
     let mounted = true;
-
     async function load() {
       setLoading(true);
-
       try {
         const { data: epData } = await supabase
           .from('episodios')
@@ -118,7 +102,6 @@ export default function Page({ params }: PageProps) {
         if (mounted) setLoading(false);
       }
     }
-
     load();
     return () => {
       mounted = false;
@@ -127,99 +110,141 @@ export default function Page({ params }: PageProps) {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950">
-        <div className="animate-spin h-12 w-12 border-2 border-t-blue-500 border-zinc-800 rounded-full" />
+      <main className="flex min-h-screen items-center justify-center bg-[var(--tenko-bg-page)]">
+        <div className="animate-spin h-12 w-12 border-2 border-t-[#6c00f4] border-[var(--tenko-border)] rounded-full" />
       </main>
     );
   }
 
   if (!episodio) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950 text-white">
-        Episodio no encontrado
+      <main className="flex min-h-screen items-center justify-center bg-[var(--tenko-bg-page)] text-white">
+        <span className="font-mono text-xs tracking-widest text-[var(--tenko-text-muted)]">
+          // EPISODIO NO ENCONTRADO
+        </span>
       </main>
     );
   }
 
   const currentIndex = mismaTemporada.findIndex((e) => e.id === episodio.id);
   const prevEp = currentIndex > 0 ? mismaTemporada[currentIndex - 1] : null;
-  const nextEp = currentIndex >= 0 && currentIndex < mismaTemporada.length - 1 ? mismaTemporada[currentIndex + 1] : null;
+  const nextEp =
+    currentIndex >= 0 && currentIndex < mismaTemporada.length - 1
+      ? mismaTemporada[currentIndex + 1]
+      : null;
 
-  // Título para mostrar: prioriza titulo_episodio
   const tituloEpisodio = episodio.titulo_episodio || episodio.titulo;
+  const ambientImage = anime?.banner_url || anime?.portada_url || '';
 
   return (
-    <main className="min-h-screen bg-zinc-950 pb-16">
-      <section className="w-full border-b border-zinc-800/80 bg-black/80 py-6">
+    <main className="relative min-h-screen bg-[var(--tenko-bg-page)] pb-16 overflow-hidden">
+      {/* ═══════════════════════════════════════════════════════════
+          🔮 AMBIENT GLOW — SOLO EN ESTA RUTA (/ver/[id])
+          Proyecta la paleta del banner detrás del reproductor.
+      ═══════════════════════════════════════════════════════════ */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+        {ambientImage && (
+          <div
+            className="absolute top-0 left-1/2 -translate-x-1/2 w-[120%] h-[70vh] opacity-30 blur-[140px]"
+            style={{
+              backgroundImage: `url(${ambientImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
+          />
+        )}
+        <div className="absolute top-0 left-0 w-full h-[50vh] bg-gradient-to-b from-[#6c00f4]/20 via-transparent to-transparent" />
+      </div>
+
+      <section className="w-full border-b border-[var(--tenko-border)] bg-black/60 backdrop-blur-xl py-6 relative">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
           {/* Navegación */}
-          <div className="flex items-center justify-between">
-            <Link href={anime ? `/anime/${anime.id}` : '/'} className="text-xs font-semibold text-zinc-400 hover:text-blue-400">
-              ← {anime ? anime.titulo : 'Volver'}
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <Link
+              href={anime ? `/anime/${anime.id}` : '/'}
+              className="font-mono text-[11px] tracking-widest text-[var(--tenko-text-secondary)] hover:text-[#6c00f4] transition-colors"
+            >
+              ← {anime ? anime.titulo.toUpperCase() : 'VOLVER'}
             </Link>
             <div className="flex gap-2">
               {prevEp ? (
-                <Link href={`/ver/${prevEp.id}`} className="rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800">
-                  ← EP {prevEp.numero}
+                <Link
+                  href={`/ver/${prevEp.id}`}
+                  className="font-mono rounded-md border border-[var(--tenko-border)] bg-white/5 px-3 py-1.5 text-[11px] tracking-widest text-white/60 hover:bg-white/10 hover:text-[var(--tenko-text-primary)] transition-all"
+                >
+                  ← EP {String(prevEp.numero).padStart(2, '0')}
                 </Link>
               ) : null}
               {nextEp ? (
-                <Link href={`/ver/${nextEp.id}`} className="rounded-lg border border-blue-600/40 bg-blue-600/20 px-3 py-1.5 text-xs text-blue-300 hover:bg-blue-600 hover:text-white">
-                  EP {nextEp.numero} →
+                <Link
+                  href={`/ver/${nextEp.id}`}
+                  className="font-mono rounded-md border border-[#6c00f4]/40 bg-[#6c00f4]/20 px-3 py-1.5 text-[11px] tracking-widest text-[#6c00f4] hover:bg-[#6c00f4] hover:text-[var(--tenko-text-primary)] transition-all"
+                >
+                  EP {String(nextEp.numero).padStart(2, '0')} →
                 </Link>
               ) : null}
             </div>
           </div>
 
+          {/* Título del episodio */}
+          <div>
+            <span className="font-mono text-[10px] tracking-[0.3em] text-[#6c00f4] font-bold block mb-1">
+              // EPISODIO {String(episodio.numero).padStart(2, '0')}
+            </span>
+            <h1 className="font-[family-name:var(--font-unbounded)] text-xl sm:text-3xl font-black text-[var(--tenko-text-primary)] tracking-tight leading-tight">
+              {tituloEpisodio}
+            </h1>
+          </div>
+
           {/* Reproductor */}
-          {streamLoading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin h-10 w-10 border-2 border-t-blue-500 border-zinc-800 rounded-full" />
-            </div>
-          ) : streamUrl ? (
-            <M3U8Player
-              src={streamUrl}
-              episodeId={episodio.id}
-              episodeNumber={episodio.numero}
-              title={tituloEpisodio}
-              animeId={anime?.id}
-              animeTitulo={anime?.titulo}
-              animePortada={anime?.portada_url}
-              temporadaId={episodio.temporada_id}
-              onNextEpisode={() => {
-                if (nextEp) window.location.href = `/ver/${nextEp.id}`;
-              }}
-              onPrevEpisode={() => {
-                if (prevEp) window.location.href = `/ver/${prevEp.id}`;
-              }}
-            />
-          ) : (
-            <VideoPlayer
-              episodio={episodio}
-              onNextEpisode={() => {
-                if (nextEp) window.location.href = `/ver/${nextEp.id}`;
-              }}
-              onPrevEpisode={() => {
-                if (prevEp) window.location.href = `/ver/${prevEp.id}`;
-              }}
-            />
-          )}
+          <div className="rounded-xl overflow-hidden border border-[var(--tenko-border)] shadow-2xl shadow-black/50">
+            {streamLoading ? (
+              <div className="flex items-center justify-center py-20 bg-black">
+                <div className="animate-spin h-10 w-10 border-2 border-t-[#6c00f4] border-[var(--tenko-border)] rounded-full" />
+              </div>
+            ) : streamUrl ? (
+              <M3U8Player
+                src={streamUrl}
+                episodeId={episodio.id}
+                episodeNumber={episodio.numero}
+                title={tituloEpisodio}
+                animeId={anime?.id}
+                animeTitulo={anime?.titulo}
+                animePortada={anime?.portada_url}
+                temporadaId={episodio.temporada_id ?? undefined}
+                onNextEpisode={() => {
+                  if (nextEp) window.location.href = `/ver/${nextEp.id}`;
+                }}
+                onPrevEpisode={() => {
+                  if (prevEp) window.location.href = `/ver/${prevEp.id}`;
+                }}
+              />
+            ) : (
+              <VideoPlayer episodio={episodio} />
+            )}
+          </div>
         </div>
       </section>
 
       {/* Lista de episodios */}
       {mismaTemporada.length > 0 && (
-        <section className="mx-auto max-w-7xl px-4 pt-8">
-          <h2 className="text-lg font-bold text-white mb-4">
-            Episodios de esta temporada
-          </h2>
+        <section className="mx-auto max-w-7xl px-4 pt-10">
+          <div className="mb-6 border-b border-[var(--tenko-border)] pb-4">
+            <span className="font-mono text-[10px] tracking-[0.3em] text-[#6c00f4] font-bold block mb-1">
+              // TEMPORADA COMPLETA
+            </span>
+            <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black text-[var(--tenko-text-primary)] uppercase tracking-tight">
+              Episodios de esta temporada
+            </h2>
+          </div>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
             {mismaTemporada.map((ep) => {
               const isCurrent = ep.id === episodio.id;
-              const tituloEp = ep.titulo_episodio && ep.titulo_episodio !== `Episodio ${ep.numero}` 
-                ? ep.titulo_episodio 
-                : null;
-              
+              const tituloEp =
+                ep.titulo_episodio && ep.titulo_episodio !== `Episodio ${ep.numero}`
+                  ? ep.titulo_episodio
+                  : null;
+
               return (
                 <Link
                   key={ep.id}
@@ -227,15 +252,23 @@ export default function Page({ params }: PageProps) {
                   title={tituloEp ? `EP ${ep.numero}: ${tituloEp}` : `Episodio ${ep.numero}`}
                   className={`p-2 rounded-lg border text-center transition-all ${
                     isCurrent
-                      ? 'border-blue-500 bg-blue-950/20 ring-1 ring-blue-500/50'
-                      : 'border-zinc-800/80 bg-zinc-900/40 hover:border-zinc-700'
+                      ? 'border-[#6c00f4] bg-[#6c00f4]/15 ring-1 ring-[#6c00f4]/50 shadow-[0_0_20px_-5px_rgba(108,0,244,0.5)]'
+                      : 'border-[var(--tenko-border)] bg-white/5 hover:border-[#6c00f4]/40 hover:bg-white/10'
                   }`}
                 >
-                  <span className={`block text-xs font-extrabold ${isCurrent ? 'text-blue-400' : 'text-zinc-400'}`}>
+                  <span
+                    className={`block font-mono text-xs font-extrabold tracking-wider ${
+                      isCurrent ? 'text-[#6c00f4]' : 'text-[var(--tenko-text-secondary)]'
+                    }`}
+                  >
                     EP {String(ep.numero).padStart(2, '0')}
                   </span>
                   {tituloEp && (
-                    <span className={`block text-[9px] truncate mt-0.5 ${isCurrent ? 'text-blue-300' : 'text-zinc-500'}`}>
+                    <span
+                      className={`block text-[9px] truncate mt-0.5 ${
+                        isCurrent ? 'text-[#6c00f4]/80' : 'text-[var(--tenko-text-muted)]'
+                      }`}
+                    >
                       {tituloEp}
                     </span>
                   )}

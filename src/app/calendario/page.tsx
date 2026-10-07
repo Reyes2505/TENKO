@@ -15,10 +15,7 @@ query {
       id
       title { romaji }
       coverImage { large }
-      nextAiringEpisode {
-        episode
-        airingAt
-      }
+      nextAiringEpisode { episode airingAt }
       format
     }
   }
@@ -81,8 +78,7 @@ export default function CalendarioPage() {
               id: anime.id,
               titulo: anime.title.romaji,
               portada: anime.coverImage.large,
-              hora: fecha.getHours().toString().padStart(2, '0') + ':' + 
-                    fecha.getMinutes().toString().padStart(2, '0'),
+              hora: fecha.getHours().toString().padStart(2, '0') + ':' + fecha.getMinutes().toString().padStart(2, '0'),
               dia: (fecha.getDay() + 6) % 7,
               episodio: anime.nextAiringEpisode.episode,
               formato: anime.format || 'TV',
@@ -90,10 +86,7 @@ export default function CalendarioPage() {
           });
 
         setAnimesEnEmision(animes);
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-          data: animes,
-          timestamp: Date.now(),
-        }));
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ data: animes, timestamp: Date.now() }));
       } catch (err) {
         setError('Error al conectar con AniList.');
       } finally {
@@ -110,74 +103,67 @@ export default function CalendarioPage() {
 
   const encontrarEnBD = (tituloAniList: string) => {
     const tituloNormalizado = tituloAniList.toLowerCase().replace(/[^a-z0-9\s]/g, '');
-    
-    // 1. Coincidencia exacta
     const exacta = animesEnBD.find(a => {
       const tituloBD = a.titulo.toLowerCase().replace(/[^a-z0-9\s]/g, '');
       return tituloBD === tituloNormalizado;
     });
     if (exacta) return exacta;
 
-    // 2. Coincidencia por primeras 2 palabras significativas
     const palabrasAniList = tituloNormalizado.split(' ').filter(p => p.length > 2);
-    
     return animesEnBD.find(a => {
       const tituloBD = a.titulo.toLowerCase().replace(/[^a-z0-9\s]/g, '');
-      
-      // Si comparten las PRIMERAS 2 palabras clave
       const primeras2 = palabrasAniList.slice(0, 2);
-      const coinciden = primeras2.every(p => tituloBD.includes(p));
-      
-      if (coinciden) return true;
-      
-      // Para "Mushoku Tensei" - buscar "mushoku" y "tensei" juntos
+      if (primeras2.every(p => tituloBD.includes(p))) return true;
       if (palabrasAniList.includes('mushoku') && palabrasAniList.includes('tensei')) {
         return tituloBD.includes('mushoku') && tituloBD.includes('tensei');
       }
-      
-      // Para "Re:Zero" - buscar "re:zero" o "rezero"
       if (tituloNormalizado.includes('re:zero') || tituloNormalizado.includes('rezero')) {
         return tituloBD.includes('re:zero') || tituloBD.includes('rezero');
       }
-      
       return false;
     });
   };
 
   return (
-    <main className="min-h-screen bg-zinc-950 pb-16">
-      <div className="mx-auto max-w-7xl px-4 py-8">
-        <h1 className="text-2xl font-black text-white mb-2">
-          📅 Calendario de <span className="text-emerald-400">Estrenos</span>
-        </h1>
-        <p className="text-xs text-zinc-500 mb-6">
-          Animes en emisión con próximos episodios
-        </p>
+    <main className="min-h-screen bg-[var(--tenko-bg-page)] pb-16">
+      <div className="mx-auto max-w-7xl px-6 py-12">
+        <div className="mb-10 border-b border-[var(--tenko-border)] pb-6">
+          <span className="font-mono text-[10px] tracking-[0.3em] text-[#6c00f4] font-bold block mb-2">
+            // SIMULCAST & ESTRENOS
+          </span>
+          <h1 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl font-black uppercase tracking-tight text-white">
+            Calendario de Estrenos
+          </h1>
+          <p className="font-mono text-[11px] tracking-widest text-[var(--tenko-text-muted)] mt-2">
+            Animes en emisión con próximos episodios
+          </p>
+        </div>
 
         {error && (
-          <div className="mb-4 rounded-xl border border-yellow-800/60 bg-yellow-950/40 p-3 text-xs text-yellow-300">
+          <div className="mb-6 rounded-lg border border-yellow-500/30 bg-yellow-950/30 p-3 font-mono text-xs text-yellow-300">
             ⚠️ {error}
           </div>
         )}
 
         {/* Selector de días */}
-        <div className="flex gap-2 mb-8 overflow-x-auto pb-2">
+        <div className="flex gap-2 mb-10 overflow-x-auto pb-2">
           {DIAS_SEMANA.map((dia, i) => {
             const cantidad = animesEnEmision.filter(a => a.dia === i).length;
+            const isActive = diaSeleccionado === i;
             return (
               <button
                 key={dia}
                 onClick={() => setDiaSeleccionado(i)}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 ${
-                  diaSeleccionado === i
-                    ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
-                    : 'bg-zinc-900 text-zinc-400 hover:bg-zinc-800 border border-zinc-800'
+                className={`px-4 py-2.5 rounded-md font-mono text-[11px] font-bold tracking-widest uppercase whitespace-nowrap transition-all flex items-center gap-2 ${
+                  isActive
+                    ? 'bg-[#6c00f4] text-[var(--tenko-text-primary)] shadow-md shadow-[#6c00f4]/30'
+                    : 'bg-white/5 text-[var(--tenko-text-secondary)] hover:bg-white/10 hover:text-[var(--tenko-text-primary)] border border-[var(--tenko-border)]'
                 }`}
               >
                 {dia}
                 {cantidad > 0 && (
                   <span className={`px-1.5 py-0.5 rounded-md text-[10px] ${
-                    diaSeleccionado === i ? 'bg-white/20' : 'bg-zinc-800 text-zinc-500'
+                    isActive ? 'bg-white/20' : 'bg-white/10 text-white/60'
                   }`}>
                     {cantidad}
                   </span>
@@ -187,18 +173,19 @@ export default function CalendarioPage() {
           })}
         </div>
 
-        {/* Animes del día */}
-        <h2 className="text-lg font-bold text-white mb-4">
-          {DIAS_SEMANA[diaSeleccionado]}
-          <span className="text-xs font-normal text-zinc-500 ml-2">
-            {animesDelDia.length} estrenos
+        <div className="mb-6 flex items-baseline gap-3">
+          <h2 className="font-[family-name:var(--font-unbounded)] text-xl font-black uppercase tracking-tight text-white">
+            {DIAS_SEMANA[diaSeleccionado]}
+          </h2>
+          <span className="font-mono text-[11px] tracking-widest text-[#6c00f4] font-bold">
+            {animesDelDia.length} ESTRENOS
           </span>
-        </h2>
+        </div>
 
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="aspect-[3/4] rounded-xl bg-zinc-900/60 animate-pulse" />
+              <div key={i} className="aspect-[3/4] rounded-xl bg-white/5 animate-pulse" />
             ))}
           </div>
         ) : animesDelDia.length > 0 ? (
@@ -214,30 +201,30 @@ export default function CalendarioPage() {
                   href={href}
                   target={esExterno ? '_blank' : undefined}
                   rel={esExterno ? 'noopener noreferrer' : undefined}
-                  className="group relative overflow-hidden rounded-xl border border-zinc-800/60 bg-zinc-900/40 hover:border-emerald-500/50 transition-all hover:scale-[1.03]"
+                  className="group relative overflow-hidden rounded-xl border border-[var(--tenko-border)] bg-white/5 hover:border-[#6c00f4]/60 transition-all hover:-translate-y-1 hover:shadow-[0_0_30px_-10px_rgba(108,0,244,0.5)]"
                 >
                   <div className="aspect-[3/4] overflow-hidden">
                     {anime.portada ? (
-                      <img src={anime.portada} alt={anime.titulo} className="h-full w-full object-cover" loading="lazy" />
+                      <img src={anime.portada} alt={anime.titulo} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-zinc-800 text-3xl">🎬</div>
                     )}
                   </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 to-transparent">
-                    <h3 className="text-xs font-bold text-white line-clamp-2 group-hover:text-emerald-300 transition-colors">
+                  <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent">
+                    <h3 className="font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-[var(--tenko-text-primary)] line-clamp-2 group-hover:text-[#6c00f4] transition-colors leading-snug">
                       {anime.titulo}
                     </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-bold text-emerald-400">
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <span className="font-mono text-[10px] font-bold text-[#6c00f4] tracking-wider">
                         EP {anime.episodio}
                       </span>
-                      <span className="text-[10px] text-zinc-400">{anime.hora} hrs</span>
+                      <span className="font-mono text-[10px] text-[var(--tenko-text-secondary)]">{anime.hora} HRS</span>
                       {enBD ? (
-                        <span className="text-[10px] font-bold text-blue-400 bg-blue-950/60 px-1.5 py-0.5 rounded">
-                          ✓ Disponible
+                        <span className="font-mono text-[9px] tracking-widest font-bold text-[#6c00f4] bg-[#6c00f4]/15 border border-[#6c00f4]/30 px-1.5 py-0.5 rounded">
+                          ✓ DISPONIBLE
                         </span>
                       ) : (
-                        <span className="text-[10px] text-zinc-600">AniList ↗</span>
+                        <span className="font-mono text-[9px] tracking-widest text-[var(--tenko-text-muted)]">ANILIST ↗</span>
                       )}
                     </div>
                   </div>
@@ -246,7 +233,11 @@ export default function CalendarioPage() {
             })}
           </div>
         ) : (
-          <p className="text-sm text-zinc-500">No hay estrenos programados para este día.</p>
+          <div className="text-center py-16 border border-[var(--tenko-border)] rounded-xl bg-white/[0.02]">
+            <p className="font-mono text-xs tracking-widest text-[var(--tenko-text-muted)]">
+              // SIN ESTRENOS PROGRAMADOS
+            </p>
+          </div>
         )}
       </div>
     </main>

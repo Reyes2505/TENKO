@@ -74,12 +74,12 @@ export default function InventarioPage() {
             <div className="text-2xl font-black text-green-400">{stats.enEmision}</div>
             <div className="text-[10px] text-green-300">Emisión</div>
           </div>
-          <div className="rounded-xl border border-blue-500/30 p-3 text-center">
-            <div className="text-2xl font-black text-blue-400">{stats.finalizados}</div>
-            <div className="text-[10px] text-blue-300">Finalizados</div>
+          <div className="rounded-xl border border-[#6c00f4]/30 p-3 text-center">
+            <div className="text-2xl font-black text-[#6c00f4]">{stats.finalizados}</div>
+            <div className="text-[10px] text-[#6c00f4]/70">Finalizados</div>
           </div>
           <div className="rounded-xl border border-zinc-700/30 p-3 text-center">
-            <div className="text-2xl font-black text-zinc-400">{stats.desconocidos}</div>
+            <div className="text-2xl font-black text-[var(--tenko-text-secondary)]">{stats.desconocidos}</div>
             <div className="text-[10px] text-zinc-500">Desc.</div>
           </div>
           <div className="rounded-xl border border-purple-500/30 p-3 text-center">
@@ -103,7 +103,7 @@ export default function InventarioPage() {
               key={e.valor}
               onClick={() => setFiltro(e.valor)}
               className={`px-3 py-1.5 rounded-lg text-xs ${
-                filtro === e.valor ? 'bg-white text-black' : 'bg-zinc-900 text-zinc-400'
+                filtro === e.valor ? 'bg-white text-black' : 'bg-zinc-900 text-[var(--tenko-text-secondary)]'
               }`}
             >
               {e.label}
@@ -136,7 +136,7 @@ export default function InventarioPage() {
                 </div>
                 <span className={`text-xs font-semibold ${
                   anime.estado === 'en_emision' ? 'text-green-400' :
-                  anime.estado === 'finalizado' ? 'text-blue-400' : 'text-zinc-400'
+                  anime.estado === 'finalizado' ? 'text-[#6c00f4]' : 'text-[var(--tenko-text-secondary)]'
                 }`}>
                   {anime.estado === 'en_emision' ? 'Emisión' :
                    anime.estado === 'finalizado' ? 'Finalizado' : 'Desc.'}

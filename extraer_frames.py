@@ -173,7 +173,7 @@ def procesar_episodio(ep):
 
 def main():
     """Función principal."""
-    print('🏯 Santuario Anime - Extractor de Frames')
+    print('🏯 TENKO - Extractor de Frames')
     print('=' * 60)
     print('')
     

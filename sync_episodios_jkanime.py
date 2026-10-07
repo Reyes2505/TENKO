@@ -167,7 +167,7 @@ def procesar_episodio(ep: Dict) -> Dict[str, int]:
 
 def main():
     print('=' * 60)
-    print('📺 Santuario Anime - Sync Episodios desde JK Anime')
+    print('📺 TENKO - Sync Episodios desde JK Anime')
     print(f'📅 {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
     print(f'🎯 Límite: {LIMITE_EPISODIOS} episodios')
     print('=' * 60)

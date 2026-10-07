@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=TENKO
+Comment=Plataforma privada de streaming de anime offline y local
+Exec=/home/aaron/Documentos/santuario-anime002/santuario-anime.sh start
+Path=/home/aaron/Documentos/santuario-anime002
+Icon=video-x-generic
+Terminal=false
+Categories=AudioVideo;Player;TV;
+StartupNotify=true

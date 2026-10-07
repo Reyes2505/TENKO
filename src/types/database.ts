@@ -30,6 +30,10 @@ export interface Episodio {
   temporada_id?: string | null;
   numero: number;
   titulo: string;
+  // ✅ Nuevos campos usados en EpisodeCard y ver/[id]
+  titulo_episodio?: string | null;
+  fecha_emision?: string | null;
+  duracion_total?: number | null;
   url_stream: string;
   tipo_stream?: StreamType;
   duracion?: string | number | null;

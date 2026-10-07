@@ -346,3 +346,33 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+def consultar_tmdb_completo(titulo: str):
+    """Consulta info completa de TMDB."""
+    print(f"\n🔍 Consultando TMDB: {titulo}")
+    
+    info = consultar_tmdb(titulo)
+    
+    if not info:
+        print(f"  ❌ No encontrado")
+        return
+    
+    print(f"  ✅ Nombre: {info.get('nombre', '')}")
+    print(f"  📅 Primera emisión: {info.get('primera_emision', '')}")
+    print(f"  📅 Última emisión: {info.get('ultima_emision', '')}")
+    print(f"  🎬 Estado: {info.get('estado', '')}")
+    print(f"  📺 Total episodios: {info.get('total_episodios', 0)}")
+    print(f"  📺 Temporadas: {info.get('temporadas', 1)}")
+    print(f"  🎭 Géneros: {', '.join(info.get('generos', []))}")
+    print(f"  ⭐ Votos: {info.get('votos', 0)}")
+    print(f"  🔥 Popularidad: {info.get('popularidad', 0)}")
+    
+    if info.get('ultimo_episodio'):
+        ep = info['ultimo_episodio']
+        print(f"  📺 Último EP: {ep.get('episode_number')} - {ep.get('name')}")
+        print(f"     📅 {ep.get('air_date')}")
+    
+    if info.get('proximo_episodio'):
+        ep = info['proximo_episodio']
+        print(f"  ⏭️ Próximo EP: {ep.get('episode_number')} - {ep.get('name')}")
+        print(f"     📅 {ep.get('air_date')}")

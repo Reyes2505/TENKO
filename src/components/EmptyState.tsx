@@ -24,7 +24,7 @@ export default function EmptyState({
           />
         </svg>
       </div>
-      <h3 className="text-lg font-bold text-white mb-1">{title}</h3>
+      <h3 className="text-lg font-bold text-[var(--tenko-text-primary)] mb-1">{title}</h3>
       <p className="text-sm text-zinc-400 max-w-md">{description}</p>
     </div>
   );

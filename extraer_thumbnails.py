@@ -188,7 +188,7 @@ def procesar_episodio(ep: dict) -> bool:
 
 def main():
     print('=' * 60)
-    print('🏯 Santuario Anime - Extractor de Thumbnails')
+    print('🏯 TENKO - Extractor de Thumbnails')
     print('=' * 60)
     print(f'📋 Límite: {LIMITE_EPISODIOS} episodios')
     print('')

@@ -38,7 +38,6 @@ export default function PeticionesPage() {
 
   const detectarAnimesLocal = (texto: string): string[] => {
     const animes: string[] = [];
-    
     const urlRegex = /https?:\/\/jkanime\.net\/([a-z0-9-]+)\/?/g;
     let urlMatch;
     while ((urlMatch = urlRegex.exec(texto)) !== null) {
@@ -48,7 +47,6 @@ export default function PeticionesPage() {
         animes.push(nombre);
       }
     }
-    
     if (animes.length === 0) {
       const lineas = texto.split('\n');
       for (const linea of lineas) {
@@ -58,16 +56,14 @@ export default function PeticionesPage() {
         }
       }
     }
-    
     return [...new Set(animes)].filter(n => n.length > 3);
   };
 
   const analizarPeticion = async () => {
     setAnalizando(true);
     setMensaje('');
-    
+
     const nombres = detectarAnimesLocal(texto);
-    
     if (nombres.length === 0) {
       setMensaje('⚠️ No se detectaron animes.');
       setAnalizando(false);
@@ -114,57 +110,60 @@ export default function PeticionesPage() {
 
   const agregarAnime = async (nombre: string) => {
     setMensaje(`🔄 Sincronizando "${nombre}"...`);
-    
     try {
       const slug = nombre.toLowerCase().replace(/\s+/g, '-');
       const url = `https://jkanime.net/${slug}/`;
-      
       const response = await fetch(`/api/sync-anime?nombre=${encodeURIComponent(url)}`);
       const data = await response.json();
-      
+
       if (data.success) {
         setMensaje(`✅ "${nombre}" sincronizado! Episodios: ${data.episodios || 0}`);
         analizarPeticion();
       } else {
         setMensaje(`❌ Error: ${data.error || 'Desconocido'}`);
       }
-    } catch (err) {
+    } catch {
       setMensaje('❌ Error de conexión con el bot');
     }
   };
 
   return (
-    <main className="min-h-screen bg-zinc-950 pb-16">
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        <h1 className="text-2xl font-black text-white mb-2">
-          🤖 Peticiones al <span className="text-blue-400">Bot</span>
-        </h1>
-        <p className="text-xs text-zinc-500 mb-6">
-          Pega URLs de JK Anime o nombres de anime.
-        </p>
+    <main className="min-h-screen bg-[var(--tenko-bg-page)] pb-16">
+      <div className="mx-auto max-w-5xl px-6 py-12">
+        <div className="mb-10 border-b border-[var(--tenko-border)] pb-6">
+          <span className="font-mono text-[10px] tracking-[0.3em] text-[#6c00f4] font-bold block mb-2">
+            // COMUNIDAD · SOLICITUDES
+          </span>
+          <h1 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl font-black uppercase tracking-tight text-white">
+            Peticiones al Bot
+          </h1>
+          <p className="font-mono text-[11px] tracking-widest text-[var(--tenko-text-muted)] mt-2">
+            Pega URLs de JK Anime o nombres de anime
+          </p>
+        </div>
 
-        <div className="mb-6">
+        <div className="mb-8">
           <textarea
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             rows={6}
-            className="w-full rounded-xl border border-zinc-700 bg-zinc-900 p-4 text-sm text-white focus:border-blue-500 focus:outline-none resize-none"
+            className="w-full rounded-xl border border-[var(--tenko-border)] bg-black/40 p-4 font-mono text-sm text-[var(--tenko-text-primary)] placeholder-white/30 outline-none transition-all focus:border-[#6c00f4] focus:ring-2 focus:ring-[#6c00f4]/40 resize-none"
             placeholder={'Ejemplos:\n\nhttps://jkanime.net/suzume-no-tojimari/\n\nMushoku Tensei\nRe:Zero'}
           />
           <button
             onClick={analizarPeticion}
             disabled={analizando || !texto.trim()}
-            className="mt-3 w-full rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-4 py-3 text-sm font-bold text-white shadow-lg hover:shadow-purple-600/30 transition-all active:scale-95 disabled:opacity-50"
+            className="mt-4 w-full rounded-md bg-[#6c00f4] px-4 py-3 font-mono text-xs font-bold tracking-widest uppercase text-[var(--tenko-text-primary)] shadow-lg shadow-[#6c00f4]/30 hover:bg-white hover:text-black transition-all active:scale-95 disabled:opacity-50"
           >
-            {analizando ? '🔍 Analizando...' : '🔍 Detectar Animes'}
+            {analizando ? '🔍 ANALIZANDO...' : '🔍 DETECTAR ANIMES'}
           </button>
         </div>
 
         {mensaje && (
-          <div className={`mb-4 rounded-lg p-3 text-xs ${
-            mensaje.startsWith('✅') ? 'bg-green-950/50 text-green-300' :
-            mensaje.startsWith('❌') ? 'bg-red-950/50 text-red-300' :
-            'bg-yellow-950/50 text-yellow-300'
+          <div className={`mb-6 rounded-lg p-3 font-mono text-[11px] tracking-wider ${
+            mensaje.startsWith('✅') ? 'bg-emerald-950/40 text-emerald-300 border border-emerald-500/30' :
+            mensaje.startsWith('❌') ? 'bg-red-950/40 text-red-300 border border-red-500/30' :
+            'bg-yellow-950/40 text-yellow-300 border border-yellow-500/30'
           }`}>
             {mensaje}
           </div>
@@ -172,39 +171,48 @@ export default function PeticionesPage() {
 
         {resultados.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-lg font-bold text-white">
-              📊 Resultados ({resultados.length})
-            </h2>
-            
+            <div className="flex items-baseline gap-3 mb-4">
+              <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black uppercase tracking-tight text-white">
+                Resultados
+              </h2>
+              <span className="font-mono text-[10px] tracking-widest text-[#6c00f4] font-bold">
+                {resultados.length} DETECTADOS
+              </span>
+            </div>
+
             {resultados.map((resultado, i) => (
               <div
                 key={i}
                 className={`rounded-xl border p-4 flex items-center justify-between ${
                   resultado.enBD
-                    ? 'border-green-500/30 bg-green-950/20'
-                    : 'border-red-500/30 bg-red-950/20'
+                    ? 'border-emerald-500/30 bg-emerald-950/10'
+                    : 'border-red-500/30 bg-red-950/10'
                 }`}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   {resultado.enBD && resultado.encontrado?.portada_url ? (
                     <img
                       src={resultado.encontrado.portada_url}
                       alt={resultado.nombre}
-                      className="h-14 w-10 rounded object-cover"
+                      className="h-16 w-11 rounded object-cover border border-[var(--tenko-border)]"
                     />
                   ) : (
-                    <div className="h-14 w-10 rounded bg-zinc-800 flex items-center justify-center text-lg">
+                    <div className="h-16 w-11 rounded bg-white/5 border border-[var(--tenko-border)] flex items-center justify-center text-lg">
                       {resultado.enBD ? '✅' : '❌'}
                     </div>
                   )}
                   <div>
-                    <h3 className="text-sm font-bold text-white">{resultado.nombre}</h3>
+                    <h3 className="font-[family-name:var(--font-unbounded)] text-sm font-bold text-white">
+                      {resultado.nombre}
+                    </h3>
                     {resultado.enBD && resultado.encontrado ? (
-                      <p className="text-xs text-green-400">
-                        ✓ Disponible · {resultado.encontrado.episodios} eps
+                      <p className="font-mono text-[10px] tracking-wider text-emerald-400 mt-0.5">
+                        ✓ DISPONIBLE · {resultado.encontrado.episodios} EPS
                       </p>
                     ) : (
-                      <p className="text-xs text-red-400">✗ No está en la BD</p>
+                      <p className="font-mono text-[10px] tracking-wider text-red-400 mt-0.5">
+                        ✗ NO ESTÁ EN LA BD
+                      </p>
                     )}
                   </div>
                 </div>
@@ -212,16 +220,16 @@ export default function PeticionesPage() {
                 {resultado.enBD && resultado.encontrado ? (
                   <Link
                     href={`/anime/${resultado.encontrado.id}`}
-                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-500"
+                    className="font-mono rounded-md bg-[#6c00f4] px-3 py-1.5 text-[10px] font-bold tracking-widest text-[var(--tenko-text-primary)] hover:bg-white hover:text-black transition-all"
                   >
-                    Ver Anime
+                    VER ANIME
                   </Link>
                 ) : (
                   <button
                     onClick={() => agregarAnime(resultado.nombre)}
-                    className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-green-500"
+                    className="font-mono rounded-md bg-emerald-600 px-3 py-1.5 text-[10px] font-bold tracking-widest text-[var(--tenko-text-primary)] hover:bg-emerald-500 transition-all"
                   >
-                    + Agregar
+                    + AGREGAR
                   </button>
                 )}
               </div>

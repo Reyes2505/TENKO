@@ -29,7 +29,7 @@ export default function AnimeTicker() {
 
   // Si aún está cargando o falla, mostramos un título genérico de respaldo para que veas el ticker animándose sí o sí
   const displayItems = items.length > 0 ? items : [
-    { id: '1', titulo: 'Santuario Anime - Catálogo en Vivo' },
+    { id: '1', titulo: 'TENKO - Catálogo en Vivo' },
     { id: '2', titulo: 'Explora los mejores estrenos' },
     { id: '3', titulo: 'Actualización automática activa' }
   ];
@@ -63,7 +63,7 @@ export default function AnimeTicker() {
               href={`/anime/${anime.id}`}
               className="flex items-center gap-2 hover:bg-zinc-900 transition-all bg-zinc-900/40 px-3 py-1 rounded-full border border-zinc-800/60 shrink-0"
             >
-              <span className="text-emerald-400 font-mono text-[10px] font-bold">🔥 TENDENCIA</span>
+              <span className="text-[#6c00f4] font-mono text-[10px] font-bold">🔥 TENDENCIA</span>
               <span className="text-xs font-medium text-zinc-300">{anime.titulo}</span>
             </Link>
           ))}

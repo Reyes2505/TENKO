@@ -6,9 +6,11 @@ import { supabase } from '@/lib/supabase';
 
 interface VideoPlayerProps {
   episodio: Episodio;
+  onNextEpisode?: () => void;
+  onPrevEpisode?: () => void;
 }
 
-export default function VideoPlayer({ episodio }: VideoPlayerProps) {
+export default function VideoPlayer({ episodio, onNextEpisode, onPrevEpisode }: VideoPlayerProps) {
   const [animeSlug, setAnimeSlug] = useState('');
 
   const url = episodio.url_stream || '';
