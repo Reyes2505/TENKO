@@ -39,9 +39,17 @@ export default function Page({ params }: PageProps) {
   useEffect(() => {
     async function getStream() {
       if (!episodio?.url_stream) return;
+
+      // ✅ BYPASS: si ya es un .m3u8 directo, usarlo sin llamar al API
+      const url = episodio.url_stream;
+      if (url.includes('.m3u8') || url.includes('zilla-networks')) {
+        setStreamUrl(url);
+        return;
+      }
+
       setStreamLoading(true);
       try {
-        const res = await fetch(`/api/stream?url=${encodeURIComponent(episodio.url_stream)}`);
+        const res = await fetch(`/api/stream?url=${encodeURIComponent(url)}`);
         const data = await res.json();
         if (data.success && data.streamUrl) setStreamUrl(data.streamUrl);
       } catch (err) {
