@@ -184,14 +184,18 @@ async function main() {
 
         if (!hlsUrl) continue;
 
-        await sb.from('episodios').insert({
+        const { error: insertError } = await sb.from('episodios').insert({
           temporada_id: temp.id,
           numero: ep.number,
           titulo: epDetalle?.title || `Episodio ${ep.number}`,
           url_stream: hlsUrl,
-          tipo_stream: 'online',
           fuente: 'animeav1',
         });
+
+        if (insertError) {
+          console.log(`  ❌ Error insertando ep ${ep.number}: ${insertError.message}`);
+          continue;
+        }
 
         nuevosEp++;
       }

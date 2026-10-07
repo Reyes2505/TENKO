@@ -165,19 +165,14 @@ async function scrapeAnime(anime) {
 
       if (existente) {
         await sb.from('episodios').update({
-          url_stream: hlsUrl,
-          fuente: 'animeav1',
-          titulo: epDetalle?.title || `Episodio ${ep.number}`,
+          url_stream: hlsUrl,          titulo: epDetalle?.title || `Episodio ${ep.number}`,
         }).eq('id', existente.id);
       } else {
         await sb.from('episodios').insert({
           temporada_id: temp.id,
           numero: ep.number,
           titulo: epDetalle?.title || `Episodio ${ep.number}`,
-          url_stream: hlsUrl,
-          tipo_stream: 'online',
-          fuente: 'animeav1',
-        });
+          url_stream: hlsUrl,        });
       }
 
       nuevosEp++;
