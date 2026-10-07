@@ -48,14 +48,14 @@ export default function AnimeCard({ anime }: AnimeCardProps) {
         {/* Estado (badge mono) */}
         <div className="absolute top-2 left-2 flex items-center gap-1.5 rounded-md bg-black/70 backdrop-blur-md px-2 py-1 border border-[var(--tenko-border)]">
           <span className={`h-2 w-2 rounded-full ${dotColor} animate-pulse`} />
-          <span className="font-mono text-[9px] font-bold tracking-widest text-[var(--tenko-text-primary)]">
+          <span className="font-mono text-[9px] font-bold tracking-widest text-white">
             {estadoLabel}
           </span>
         </div>
 
         {/* Botón play con glow morado */}
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6c00f4]/90 text-[var(--tenko-text-primary)] shadow-lg shadow-[#6c00f4]/50 scale-50 group-hover:scale-100 transition-transform duration-300">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#6c00f4]/90 text-white shadow-lg shadow-[#6c00f4]/50 scale-50 group-hover:scale-100 transition-transform duration-300">
             <svg className="h-5 w-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z" />
             </svg>
@@ -63,8 +63,8 @@ export default function AnimeCard({ anime }: AnimeCardProps) {
         </div>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent dark:from-black dark:via-black/80 dark:to-transparent">
-        <h3 className="font-[family-name:var(--font-unbounded)] text-xs font-bold text-[var(--tenko-text-primary)] line-clamp-2 leading-snug group-hover:text-[#6c00f4] transition-colors">
+      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black via-black/80 to-transparent">
+        <h3 className="font-[family-name:var(--font-unbounded)] text-xs font-bold text-white line-clamp-2 leading-snug group-hover:text-[#6c00f4] transition-colors">
           {anime.titulo}
         </h3>
 

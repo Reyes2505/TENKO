@@ -61,8 +61,8 @@ export default function HeroCarousel({ animes }: HeroCarouselProps) {
             }}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f] via-[#0a0a0f]/60 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--tenko-bg-page)] via-[var(--tenko-bg-page)]/60 to-transparent dark:from-[#0a0a0f] dark:via-[#0a0a0f]/60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
         {/* Glow morado sutil de fondo */}
         <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-[#6c00f4]/10 blur-[120px] pointer-events-none" />
       </div>
@@ -79,12 +79,12 @@ export default function HeroCarousel({ animes }: HeroCarouselProps) {
               <span className="font-mono rounded-full border border-[#6c00f4]/40 bg-[#6c00f4]/15 px-3 py-1 text-[10px] font-bold tracking-widest text-[#6c00f4]">
                 ✦ TENKO SPOTLIGHT
               </span>
-              <span className="font-mono text-[10px] tracking-widest text-[var(--tenko-text-muted)]">
+              <span className="font-mono text-[10px] tracking-widest text-white/40">
                 {String(currentIndex + 1).padStart(2, '0')} / {String(destacados.length).padStart(2, '0')}
               </span>
             </div>
 
-            <h1 className="font-[family-name:var(--font-unbounded)] text-3xl sm:text-5xl font-black uppercase tracking-tight text-[var(--tenko-text-primary)] drop-shadow-md line-clamp-2 leading-[1.05]">
+            <h1 className="font-[family-name:var(--font-unbounded)] text-3xl sm:text-5xl font-black uppercase tracking-tight text-white drop-shadow-md line-clamp-2 leading-[1.05]">
               {anime.titulo}
             </h1>
 
