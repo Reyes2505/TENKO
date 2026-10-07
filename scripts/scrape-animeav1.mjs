@@ -205,6 +205,14 @@ async function main() {
   console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅' : '❌');
   console.log('Service key:', process.env.SUPABASE_SERVICE_ROLE_KEY ? '✅' : '❌');
   console.log('CI mode:', process.env.CI === 'true' ? '✅' : 'local');
+  const _key = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  const _url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  console.log('DEBUG: key len =', _key.length);
+  console.log('DEBUG: key prefix =', JSON.stringify(_key.substring(0, 12)));
+  console.log('DEBUG: key suffix =', JSON.stringify(_key.substring(_key.length - 12)));
+  console.log('DEBUG: url =', JSON.stringify(_url));
+  console.log('DEBUG: key has newline =', _key.includes('\n'));
+  console.log('DEBUG: key has space =', _key.includes(' '));
   console.log('═══════════════════════════════════════');
   console.log('');
   console.log('🚀 Scraper AnimeAV1 → Supabase');
