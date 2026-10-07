@@ -169,34 +169,72 @@ async function main() {
         if (existente) continue;
 
         let epDetalle = null;
-        let hlsUrl = null;
+        let streamUrl = null;
 
         try {
           epDetalle = await getEpisode(anime.animeav1_slug, ep.number);
-          hlsUrl = epDetalle?.embeds?.SUB?.find(e => e.server === 'HLS')?.url
-                || epDetalle?.embeds?.DUB?.find(e => e.server === 'HLS')?.url
-                || epDetalle?.embeds?.SUB?.[0]?.url;
+
+          // ✅ Prioridad: UPNShare (iframe) → Voe (iframe) → HLS (Zilla)
+          const embedsSub = epDetalle?.embeds?.SUB || [];
+          const embedsDub = epDetalle?.embeds?.DUB || [];
+
+          // 1. UPNShare (iframe, funciona sin CORS)
+          const upn = embedsSub.find(e => e.server === 'UPNShare')
+                   || embedsDub.find(e => e.server === 'UPNShare');
+          if (upn) streamUrl = upn.url;
+
+          // 2. Voe (iframe)
+          if (!streamUrl) {
+            const voe = embedsSub.find(e => e.server === 'Voe')
+                     || embedsDub.find(e => e.server === 'Voe');
+            if (voe) streamUrl = voe.url;
+          }
+
+          // 3. HLS (Zilla, último recurso)
+          if (!streamUrl) {
+            const hls = embedsSub.find(e => e.server === 'HLS')
+                     || embedsDub.find(e => e.server === 'HLS');
+            if (hls) streamUrl = hls.url;
+          }
+
           await sleep(DELAY_MS);
         } catch (err) {
           console.log(`  ⚠️  Error ep ${ep.number}: ${err.message}`);
           continue;
         }
 
-        if (!hlsUrl) continue;
+        if (!streamUrl) continue;
 
-        const { error: upsertError } = await sb.from('episodios').upsert({
-          temporada_id: temp.id,
-          numero: ep.number,
-          titulo: epDetalle?.title || `Episodio ${ep.number}`,
-          url_stream: hlsUrl,
-          fuente: 'animeav1',
-        }, {
-          onConflict: 'temporada_id,numero',
-        });
+        // ✅ Insert/update explícito (más confiable que upsert)
+        if (existente) {
+          // Ya existía → actualizar el url_stream
+          const { error: updateError } = await sb
+            .from('episodios')
+            .update({
+              url_stream: streamUrl,
+              titulo: epDetalle?.title || `Episodio ${ep.number}`,
+              fuente: 'animeav1',
+            })
+            .eq('id', existente.id);
 
-        if (upsertError) {
-          console.log(`  ❌ Error en ep ${ep.number}: ${upsertError.message}`);
-          continue;
+          if (updateError) {
+            console.log(`  ❌ Error actualizando ep ${ep.number}: ${updateError.message}`);
+            continue;
+          }
+        } else {
+          // No existía → insertar
+          const { error: insertError } = await sb.from('episodios').insert({
+            temporada_id: temp.id,
+            numero: ep.number,
+            titulo: epDetalle?.title || `Episodio ${ep.number}`,
+            url_stream: streamUrl,
+            fuente: 'animeav1',
+          });
+
+          if (insertError) {
+            console.log(`  ❌ Error insertando ep ${ep.number}: ${insertError.message}`);
+            continue;
+          }
         }
 
         nuevosEp++;
