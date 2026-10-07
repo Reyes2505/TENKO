@@ -24,6 +24,7 @@ for (const ep of zillaEps || []) {
 console.log(`Temporadas afectadas: ${Object.keys(porTemporada).length}\n`);
 
 let actualizados = 0;
+  let procesados = 0;
 let errores = 0;
 
 for (const [tempId, eps] of Object.entries(porTemporada)) {
