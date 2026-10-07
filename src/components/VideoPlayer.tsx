@@ -43,7 +43,12 @@ export default function VideoPlayer({ episodio }: VideoPlayerProps) {
     return (
       <div className="w-full max-w-5xl mx-auto">
         <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-white/10 bg-black">
-          <M3U8Player src={src} />
+          <M3U8Player
+            src={src}
+            episodeId={episodio.id}
+            episodeNumber={episodio.numero}
+            title={episodio.titulo || `Episodio ${episodio.numero}`}
+          />
         </div>
         {stream.serverName === 'Zilla' && (
           <div className="mt-2 text-center">
@@ -70,7 +75,6 @@ export default function VideoPlayer({ episodio }: VideoPlayerProps) {
             allowFullScreen
             allow="autoplay; encrypted-media; fullscreen; picture-in-picture; clipboard-write"
             referrerPolicy="no-referrer"
-            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-forms"
             title={episodio.titulo || `Episodio ${episodio.numero}`}
           />
         </div>
