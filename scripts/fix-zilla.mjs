@@ -49,36 +49,57 @@ for (const [tempId, eps] of Object.entries(porTemporada)) {
 
   console.log(`🎬 ${anime.animeav1_slug} (${eps.length} episodios)`);
 
+  // ✅ Cortar si llegamos al límite
+  if (procesados >= LIMIT) {
+    console.log(`\n⏹️  Límite alcanzado (${LIMIT} episodios)`);
+    break;
+  }
+
   for (const ep of eps) {
+    // ✅ Cortar si llegamos al límite
+    if (procesados >= LIMIT) break;
+    procesados++;
+
     try {
       const epDetalle = await getEpisode(anime.animeav1_slug, ep.numero);
       const embedsSub = epDetalle?.embeds?.SUB || [];
       const embedsDub = epDetalle?.embeds?.DUB || [];
 
-      // Buscar UPNShare
+      let streamUrl = null;
+
+      // Prioridad 1: UPNShare
       const upn = embedsSub.find(e => e.server === 'UPNShare')
                || embedsDub.find(e => e.server === 'UPNShare');
+      if (upn) streamUrl = upn.url;
 
-      if (!upn) {
-        console.log(`  ⚠️  EP ${ep.numero}: sin UPNShare`);
+      // Prioridad 2: Voe
+      if (!streamUrl) {
+        const voe = embedsSub.find(e => e.server === 'Voe')
+                 || embedsDub.find(e => e.server === 'Voe');
+        if (voe) streamUrl = voe.url;
+      }
+
+      if (!streamUrl) {
+        sinUPN++;
         continue;
       }
 
       const { error } = await sb
         .from('episodios')
-        .update({ url_stream: upn.url, fuente: 'animeav1' })
+        .update({ url_stream: streamUrl, fuente: 'animeav1' })
         .eq('id', ep.id);
 
       if (error) {
-        console.log(`  ❌ EP ${ep.numero}: ${error.message}`);
         errores++;
       } else {
         actualizados++;
+        if (actualizados % 20 === 0) {
+          console.log(`  ✅ ${actualizados} actualizados...`);
+        }
       }
 
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, DELAY_MS));
     } catch (err) {
-      console.log(`  ❌ EP ${ep.numero}: ${err.message}`);
       errores++;
     }
   }
@@ -89,3 +110,4 @@ console.log('📊 RESUMEN');
 console.log('═══════════════════════════════════════');
 console.log(`✅ Actualizados: ${actualizados}`);
 console.log(`❌ Errores: ${errores}`);
+  console.log(`📊 Total procesados: ${procesados}`);
