@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Episodio, Anime } from '@/types/database';
 import M3U8Player from '@/components/M3U8Player';
@@ -13,8 +14,12 @@ interface PageProps {
   params: Promise<{ id: string }> | { id: string };
 }
 
-export default function Page({ params }: PageProps) {
-  const { id } = (React as any).use ? (React as any).use(params) : (params as { id: string });
+export default function Page({ params: paramsPromise }: PageProps) {
+  // ✅ Usar useParams (más confiable)
+  const routeParams = useParams();
+  const id = (routeParams?.id as string) || '';
+  console.log('[VER] routeParams:', routeParams, 'id:', id);
+
   const [episodio, setEpisodio] = useState<Episodio | null>(null);
   const [anime, setAnime] = useState<Anime | null>(null);
   const [mismaTemporada, setMismaTemporada] = useState<Episodio[]>([]);
