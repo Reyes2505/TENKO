@@ -2,8 +2,9 @@ name: Scrape AnimeAV1 (Catálogo + Episodios)
 
 on:
   schedule:
-    # Cada 6 horas
-    - cron: '0 */6 * * *'
+    # Cada 6 horas, a las 1:00, 7:00, 13:00, 19:00 UTC
+    # (1 hora después de AniList Sync para tener estados frescos)
+    - cron: '0 1,7,13,19 * * *'
 
   workflow_dispatch:
     inputs:
@@ -17,11 +18,11 @@ on:
           - 'episodes'
           - 'both'
       limit:
-        description: 'Límite de animes para episodios'
+        description: 'Límite de animes para episodios (default: 100)'
         required: false
         default: '100'
       max_pages:
-        description: 'Páginas del catálogo (vacío = 100)'
+        description: 'Páginas del catálogo (default: 100)'
         required: false
         default: '100'
 
@@ -48,14 +49,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Scrape catálogo (nuevos animes)
+      - name: Scrape catálogo (animes nuevos)
         if: ${{ inputs.mode == 'catalog' || inputs.mode == 'both' || github.event_name == 'schedule' }}
         run: |
+          echo "📚 Scrapeando catálogo de AnimeAV1..."
           node scripts/scrape-catalog.mjs --max-pages ${{ inputs.max_pages || '100' }}
 
-      - name: Scrape episodios (de animes pendientes)
+      - name: Scrape episodios (animes pendientes, priorizando emisión)
         if: ${{ inputs.mode == 'episodes' || inputs.mode == 'both' || github.event_name == 'schedule' }}
         run: |
+          echo "📺 Scrapeando episodios (priorizando emisión)..."
           node scripts/scrape-episodes.mjs --limit ${{ inputs.limit || '100' }}
 
       - name: Summary
@@ -63,6 +66,8 @@ jobs:
         run: |
           echo "## Scraping AnimeAV1" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- Modo: ${{ inputs.mode || 'both' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Estado: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Fecha: $(date -u '+%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "| Campo | Valor |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Modo | ${{ inputs.mode || 'both (schedule)' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Estado | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Fecha | $(date -u '+%Y-%m-%d %H:%M UTC') |" >> $GITHUB_STEP_SUMMARY
