@@ -27,10 +27,13 @@ export async function GET(req: NextRequest) {
 
       // Si es un .m3u8 directo o viene de Zilla Networks
       if (lower.includes('.m3u8') || lower.includes('zilla-networks')) {
+        // ✅ Proxear la URL para evitar CORS de Zilla
+        const proxied = `/api/proxy-video?url=${encodeURIComponent(url)}`;
         return NextResponse.json({
           success: true,
-          streamUrl: url,
-          source: 'direct-hls',
+          streamUrl: proxied,
+          originalUrl: url,
+          source: 'proxied-hls',
         });
       }
 
