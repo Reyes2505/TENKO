@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@supabase/supabase-js";
 import MediaDisplay, { isVideoUrl, isTikTokUrl } from "@/components/MediaDisplay";
 
@@ -236,6 +237,18 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-black text-neutral-900 dark:text-white pb-16 transition-colors">
+      {/* Botón Volver a Shorts — solo durante mantenimiento */}
+      {process.env.NEXT_PUBLIC_MAINTENANCE_MODE === "true" && (
+        <Link
+          href="/shorts"
+          className="fixed top-20 left-4 z-50 inline-flex items-center gap-2 rounded-xl bg-[#6c00f4]/90 hover:bg-[#7d1af5] backdrop-blur-md px-4 py-2 text-xs font-extrabold text-white uppercase tracking-wider shadow-lg shadow-purple-950/50 transition-transform hover:scale-105"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Volver a Shorts
+        </Link>
+      )}
       {/* Banner Superior Orgánico Fusión Seamless */}
       <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden bg-neutral-200 dark:bg-black group">
         <MediaDisplay

@@ -1,76 +1,105 @@
-export default function CookiesPage() {
+'use client';
+
+import { useEffect, useState } from 'react';
+import { cookiePolicy, Locale } from './content';
+
+export default function CookiePolicyPage() {
+  const [locale, setLocale] = useState<Locale>('es');
+
+  useEffect(() => {
+    const saved = (localStorage.getItem('tenko-locale') as Locale) || 'es';
+    setLocale(saved);
+  }, []);
+
+  const handleLocaleChange = (next: Locale) => {
+    setLocale(next);
+    localStorage.setItem('tenko-locale', next);
+    document.documentElement.lang = next;
+  };
+
+  const data = cookiePolicy[locale];
+
   return (
-    <main className="min-h-screen bg-[#0b0b0e] text-neutral-300 py-12 px-6 sm:px-12 selection:bg-purple-500 selection:text-white">
-      <div className="max-w-4xl mx-auto space-y-10 text-xs sm:text-sm leading-relaxed">
-        
-        {/* Cabecera */}
-        <div className="border-b border-neutral-800 pb-8">
-          <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-2">
-            Política de Cookies y Tecnologías de Rastreo
-          </h1>
-          <p className="text-neutral-500 text-xs uppercase tracking-wider font-bold">Última actualización: Octubre de 2026</p>
+    <main className="min-h-screen bg-white dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100 transition-colors">
+      <div className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
+        <div className="mb-8 flex items-center justify-end gap-2">
+          <button
+            onClick={() => handleLocaleChange('es')}
+            aria-pressed={locale === 'es'}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+              locale === 'es'
+                ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
+                : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300'
+            }`}
+          >
+            Español
+          </button>
+          <button
+            onClick={() => handleLocaleChange('en')}
+            aria-pressed={locale === 'en'}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+              locale === 'en'
+                ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
+                : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300'
+            }`}
+          >
+            English
+          </button>
         </div>
 
-        {/* Sección 1 */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-bold text-white">1. ¿Qué son las Cookies y tecnologías similares?</h2>
-          <p>
-            Para garantizar el correcto funcionamiento de <strong>TENKO</strong>, utilizamos tecnologías de almacenamiento de datos en su dispositivo. Las "cookies" son pequeños fragmentos de texto enviados por su navegador web a un sitio que usted visita. Asimismo, utilizamos tecnologías análogas como el <strong>almacenamiento local (localStorage)</strong> y el almacenamiento de sesión de HTML5.
-          </p>
-          <p>
-            Estas herramientas permiten que la plataforma reconozca su dispositivo, recuerde sus preferencias en visitas posteriores, y mantenga los estándares de seguridad necesarios durante la navegación.
-          </p>
-        </section>
+        <header className="mb-10 border-b border-neutral-200 pb-6 dark:border-neutral-800">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{data.title}</h1>
+          <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">{data.lastUpdated}</p>
+        </header>
 
-        {/* Sección 2 */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-bold text-white">2. Categorías de Tecnologías Utilizadas</h2>
-          <p>En TENKO clasificamos las cookies y el almacenamiento de datos en las siguientes categorías:</p>
-          
-          <div className="space-y-4 text-neutral-400 mt-4">
-            <div className="p-4 rounded-xl bg-neutral-900/60 border border-neutral-800 transition hover:border-neutral-700">
-              <strong className="text-white block mb-2 text-base">A. Tecnologías Estrictamente Necesarias (Técnicas)</strong>
-              Son indispensables para que la web funcione correctamente. Incluyen el almacenamiento de tokens de acceso seguro, la gestión del estado de autenticación (para mantener su sesión iniciada) y la prevención de vulnerabilidades o accesos no autorizados a su cuenta. Sin estas tecnologías, el uso de perfiles y funciones sociales en TENKO sería imposible.
-            </div>
-            
-            <div className="p-4 rounded-xl bg-neutral-900/60 border border-neutral-800 transition hover:border-neutral-700">
-              <strong className="text-white block mb-2 text-base">B. Tecnologías de Preferencias y Personalización</strong>
-              Utilizamos el <em>localStorage</em> de su navegador para recordar decisiones de interfaz de usuario. Por ejemplo: si prefiere el "Modo Oscuro" o "Modo Claro", si ha silenciado el volumen de los reproductores de Shorts, y el caché temporal de avatares para acelerar la carga visual de la página.
-            </div>
-            
-            <div className="p-4 rounded-xl bg-neutral-900/60 border border-neutral-800 transition hover:border-neutral-700">
-              <strong className="text-white block mb-2 text-base">C. Cookies de Analítica y Publicidad (Integraciones Futuras)</strong>
-              Para asegurar la gratuidad y el desarrollo de la plataforma, TENKO puede integrar eventualmente cookies de redes de análisis y servicios de terceros. Estas herramientas procesan datos estadísticos agregados y de manera anónima (interacciones, tiempo de retención, clics) para ayudarnos a entender qué contenido disfruta la comunidad y mostrar anuncios relevantes.
-            </div>
-          </div>
-        </section>
+        <article className="space-y-10">
+          {data.sections.map((section, idx) => (
+            <section key={idx}>
+              <h2 className="mb-4 text-xl font-semibold tracking-tight sm:text-2xl">{section.title}</h2>
+              <div className="space-y-3 text-[15px] leading-relaxed text-neutral-700 dark:text-neutral-300">
+                {section.body.map((block, i) => {
+                  if (typeof block === 'string') return <p key={i}>{block}</p>;
+                  if ('list' in block) {
+                    return (
+                      <ul key={i} className="list-disc space-y-2 pl-6">
+                        {block.list.map((item, j) => <li key={j}>{item}</li>)}
+                      </ul>
+                    );
+                  }
+                  if ('table' in block) {
+                    return (
+                      <div key={i} className="my-4 overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+                        <table className="w-full border-collapse text-left text-sm">
+                          <thead className="bg-neutral-50 dark:bg-neutral-900">
+                            <tr>
+                              {block.table.headers.map((h, j) => (
+                                <th key={j} className="border-b border-neutral-200 px-4 py-2 font-semibold dark:border-neutral-800">{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {block.table.rows.map((row, r) => (
+                              <tr key={r} className="odd:bg-white even:bg-neutral-50 dark:odd:bg-neutral-950 dark:even:bg-neutral-900/50">
+                                {row.map((cell, c) => (
+                                  <td key={c} className="border-b border-neutral-100 px-4 py-2 align-top dark:border-neutral-800/60">{cell}</td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+            </section>
+          ))}
+        </article>
 
-        {/* Sección 3 */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-bold text-white">3. Proveedores de Terceros (Autenticación Externa)</h2>
-          <p>
-            Al utilizar las funciones de inicio de sesión mediante plataformas de terceros, dichas empresas externas pueden depositar cookies en su navegador o utilizar tecnologías de rastreo mediante el protocolo OAuth/PKCE. Estas transferencias de datos técnicos (como el <code>code_verifier</code> o tokens de intercambio) se realizan estrictamente con fines de validación criptográfica y autenticación.
-          </p>
-          <p>
-            TENKO no tiene control directo sobre las cookies depositadas por estos proveedores en sus respectivos dominios. Le recomendamos leer las políticas de privacidad de dichas plataformas externas.
-          </p>
-        </section>
-
-        {/* Sección 4 */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-bold text-white">4. Gestión de su Consentimiento y Configuración</h2>
-          <p>
-            De conformidad con los estándares de privacidad internacionales, usted tiene el derecho de gestionar, bloquear o eliminar las cookies en cualquier momento. 
-          </p>
-          <ul className="list-disc pl-5 space-y-2 text-neutral-400">
-            <li><strong>Aceptación inicial:</strong> Al continuar navegando en nuestra web tras visualizar el aviso de cookies, usted otorga su consentimiento implícito para el uso de las tecnologías descritas.</li>
-            <li><strong>Configuración del Navegador:</strong> La mayoría de los navegadores (Chrome, Firefox, Safari, Edge, Brave) permiten acceder a los ajustes de privacidad para bloquear cookies de terceros o borrar el almacenamiento local (borrar historial y datos del sitio).</li>
-          </ul>
-          <p className="text-amber-400 font-medium">
-            Advertencia: Si usted desactiva o elimina las cookies estrictamente necesarias, se cerrará su sesión de TENKO inmediatamente y ciertas funcionalidades interactivas (como guardar favoritos, dar Me Gusta o comentar) dejarán de estar operativas.
-          </p>
-        </section>
-
+        <footer className="mt-16 border-t border-neutral-200 pt-6 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
+          {data.footerNote}
+        </footer>
       </div>
     </main>
   );

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
+import Image from "next/image";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
@@ -56,7 +57,7 @@ export default function LoginPage() {
           localStorage.setItem("user_display_name", fullName.trim() || "Usuario Tenko");
           localStorage.setItem("user_handle", username.trim() ? `@${username.replace(/^@/, '')}` : "@usuario");
           localStorage.setItem("user_avatar_url", "https://i.postimg.cc/0j0x4x7G/zerotwo.jpg");
-          
+
           window.dispatchEvent(new Event("tenko-profile-updated"));
           router.push("/perfil");
         }
@@ -90,43 +91,55 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0b0e] text-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white dark:bg-[#0b0b0e] text-neutral-900 dark:text-white flex items-center justify-center p-4 transition-colors">
       <div className="absolute w-96 h-96 bg-purple-900/20 rounded-full blur-3xl pointer-events-none -top-10 -left-10" />
       <div className="absolute w-96 h-96 bg-pink-900/15 rounded-full blur-3xl pointer-events-none bottom-0 right-0" />
 
-      <div className="relative w-full max-w-md bg-neutral-900/80 border border-neutral-800 backdrop-blur-xl p-8 rounded-3xl shadow-2xl z-10">
+      <div className="relative w-full max-w-md bg-white/80 dark:bg-neutral-900/80 border border-neutral-200 dark:border-neutral-800 backdrop-blur-xl p-8 rounded-3xl shadow-2xl z-10">
         <div className="text-center mb-6">
-          <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-extrabold tracking-tight text-white">
-              TENKO<span className="text-purple-500 font-black ml-1">天気</span>
-            </h1>
+          <Link href="/" className="inline-block h-14">
+            <Image
+              src="/tenko-logo-light.png"
+              alt="TENKO天気"
+              width={200}
+              height={64}
+              className="h-full w-auto object-contain mx-auto dark:hidden"
+              priority
+            />
+            <Image
+              src="/tenko-logo-dark.png"
+              alt="TENKO天気"
+              width={200}
+              height={64}
+              className="h-full w-auto object-contain mx-auto hidden dark:block"
+              priority
+            />
           </Link>
-          <p className="text-xs text-neutral-400 font-medium mt-2">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 font-medium mt-3">
             {isRegister ? "Crea tu cuenta para acceder a la comunidad" : "Ingresa a tu cuenta para continuar"}
           </p>
         </div>
 
-        {/* Botón de Inicio de Sesión con TikTok (Capa Oficial a $0 Costo) */}
         <div className="mb-6">
           <button
             onClick={handleTikTokLogin}
             type="button"
-            className="w-full py-3 px-4 rounded-xl bg-black hover:bg-neutral-950 border border-neutral-700 text-white font-extrabold text-xs flex items-center justify-center gap-3 transition shadow-lg cursor-pointer"
+            className="w-full py-3 px-4 rounded-xl bg-black hover:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 text-white font-extrabold text-xs flex items-center justify-center gap-3 transition shadow-lg cursor-pointer"
           >
             <svg className="w-4 h-4 fill-current text-white" viewBox="0 0 24 24">
-              <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+              <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
             </svg>
             Continuar con TikTok
           </button>
           <div className="relative flex py-3 items-center">
-            <div className="flex-grow border-t border-neutral-800"></div>
+            <div className="flex-grow border-t border-neutral-200 dark:border-neutral-800"></div>
             <span className="flex-shrink mx-4 text-neutral-500 text-[10px] uppercase font-bold">o con correo</span>
-            <div className="flex-grow border-t border-neutral-800"></div>
+            <div className="flex-grow border-t border-neutral-200 dark:border-neutral-800"></div>
           </div>
         </div>
 
         {errorMessage && (
-          <div className="mb-4 p-3 rounded-xl bg-red-950/60 border border-red-500/50 text-red-300 text-xs font-semibold text-center">
+          <div className="mb-4 p-3 rounded-xl bg-red-100 dark:bg-red-950/60 border border-red-300 dark:border-red-500/50 text-red-700 dark:text-red-300 text-xs font-semibold text-center">
             {errorMessage}
           </div>
         )}
@@ -135,45 +148,45 @@ export default function LoginPage() {
           {isRegister && (
             <>
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">Nombre Completo</label>
+                <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">Nombre Completo</label>
                 <input
                   type="text"
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="Ej. Otaku Master"
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-purple-500 transition"
+                  className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-xs text-neutral-900 dark:text-white focus:outline-none focus:border-purple-500 transition"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-neutral-300 mb-1">Nombre de Usuario</label>
+                <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">Nombre de Usuario</label>
                 <input
                   type="text"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Ej. otaku_007"
-                  className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-purple-500 transition"
+                  className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-xs text-neutral-900 dark:text-white focus:outline-none focus:border-purple-500 transition"
                 />
               </div>
             </>
           )}
 
           <div>
-            <label className="block text-xs font-bold text-neutral-300 mb-1">Correo Electrónico</label>
+            <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">Correo Electrónico</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@correo.com"
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-purple-500 transition"
+              className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-xs text-neutral-900 dark:text-white focus:outline-none focus:border-purple-500 transition"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-neutral-300 mb-1">Contraseña</label>
+            <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">Contraseña</label>
             <input
               type="password"
               required
@@ -181,7 +194,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full bg-neutral-950 border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-purple-500 transition"
+              className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-xs text-neutral-900 dark:text-white focus:outline-none focus:border-purple-500 transition"
             />
           </div>
 
@@ -194,15 +207,15 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center pt-4 border-t border-neutral-800">
-          <p className="text-xs text-neutral-400">
+        <div className="mt-6 text-center pt-4 border-t border-neutral-200 dark:border-neutral-800">
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
             {isRegister ? "¿Ya tienes una cuenta?" : "¿Aún no tienes cuenta?"}{" "}
             <button
               onClick={() => {
                 setIsRegister(!isRegister);
                 setErrorMessage("");
               }}
-              className="text-purple-400 font-bold hover:underline ml-1 cursor-pointer"
+              className="text-purple-600 dark:text-purple-400 font-bold hover:underline ml-1 cursor-pointer"
             >
               {isRegister ? "Inicia Sesión" : "Regístrate gratis"}
             </button>

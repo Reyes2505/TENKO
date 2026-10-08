@@ -2,12 +2,15 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+const MAINTENANCE_MODE = process.env.NEXT_PUBLIC_MAINTENANCE_MODE === "true";
 
 export default function Header() {
   const router = useRouter();
@@ -17,7 +20,6 @@ export default function Header() {
   const [avatarUrl, setAvatarUrl] = useState<string>("https://i.postimg.cc/0j0x4x7G/zerotwo.jpg");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
-  // Control e inicialización del modo claro/oscuro
   useEffect(() => {
     const savedTheme = (localStorage.getItem("theme") as "dark" | "light") || "dark";
     setTheme(savedTheme);
@@ -88,7 +90,6 @@ export default function Header() {
     router.push("/login");
   };
 
-  // Helper para detectar la página activa (No aplica cuando estás en /perfil)
   const isActive = (path: string) => {
     if (pathname === "/perfil") return false;
     if (path === "/" && pathname === "/") return true;
@@ -106,49 +107,70 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-neutral-200/60 dark:border-white/10 bg-white/75 dark:bg-[#0b0b0e]/80 backdrop-blur-md px-6 py-3 flex items-center justify-between text-neutral-900 dark:text-white transition-colors duration-200">
-      {/* Logotipo TENKO Más Grande y con Fuente Destacada */}
       <div className="flex items-center gap-8">
-        <Link href="/" className="flex items-center gap-1 group">
-          <span className="text-2xl sm:text-3xl font-black font-mono tracking-tighter uppercase text-neutral-900 dark:text-white transition-transform duration-200 group-hover:scale-105">
-            TENKO
-            <span className="text-purple-600 dark:text-purple-400 font-black text-xl sm:text-2xl ml-1 font-sans">
-              天気
-            </span>
-          </span>
+        <Link
+          href={MAINTENANCE_MODE ? "/shorts" : "/"}
+          className="flex items-center group shrink-0 h-10"
+        >
+          <Image
+            src="/tenko-logo-light.png"
+            alt="TENKO天気"
+            width={180}
+            height={48}
+            className="h-full w-auto object-contain transition-transform duration-200 group-hover:scale-105 dark:hidden"
+            priority
+          />
+          <Image
+            src="/tenko-logo-dark.png"
+            alt="TENKO天気"
+            width={180}
+            height={48}
+            className="h-full w-auto object-contain transition-transform duration-200 group-hover:scale-105 hidden dark:block"
+            priority
+          />
         </Link>
 
-        {/* Menú de Navegación con Señalador Activo */}
-        <nav className="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-300">
-          {navLinks.map((link) => {
-            const active = isActive(link.href);
-            return (
-              <Link
-                key={link.name}
-                href={link.href}
-                className={`relative py-1 transition flex items-center gap-1 ${
-                  active
-                    ? "text-purple-600 dark:text-purple-400 font-extrabold"
-                    : "hover:text-neutral-900 dark:hover:text-white"
-                }`}
-              >
-                {link.isShorts && (
-                  <span className="text-purple-600 dark:text-purple-500 font-extrabold">●</span>
-                )}
-                {link.name}
+        {/* Navegación: SOLO si NO estamos en modo mantenimiento */}
+        {!MAINTENANCE_MODE && (
+          <nav className="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-300">
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className={`relative py-1 transition flex items-center gap-1 ${
+                    active
+                      ? "text-purple-600 dark:text-purple-400 font-extrabold"
+                      : "hover:text-neutral-900 dark:hover:text-white"
+                  }`}
+                >
+                  {link.isShorts && (
+                    <span className="text-purple-600 dark:text-purple-500 font-extrabold">●</span>
+                  )}
+                  {link.name}
 
-                {/* Indicador flotante debajo del enlace activo */}
-                {active && (
-                  <span className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-600 dark:bg-purple-400 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+                  {active && (
+                    <span className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-600 dark:bg-purple-400 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+        )}
+
+        {/* Aviso de mantenimiento (solo si estamos en modo mantenimiento) */}
+        {MAINTENANCE_MODE && (
+          <div className="hidden md:inline-flex items-center gap-2 rounded-full bg-[#6c00f4]/15 border border-[#6c00f4]/50 px-3 py-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#6c00f4] animate-pulse" />
+            <span className="font-mono text-[9px] tracking-[0.25em] text-[#6c00f4] font-bold uppercase">
+              Modo mantenimiento
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Controles: Selector de Tema Claro/Oscuro + Estado de Sesión */}
       <div className="flex items-center gap-4">
-        {/* Botón de Conmutar Modo Claro / Oscuro */}
         <button
           onClick={toggleTheme}
           title={theme === "dark" ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
@@ -165,7 +187,6 @@ export default function Header() {
           )}
         </button>
 
-        {/* Perfil / Cierre de Sesión */}
         {user ? (
           <div className="flex items-center gap-3">
             <Link href="/perfil" className="flex items-center gap-2 group">

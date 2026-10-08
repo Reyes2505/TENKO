@@ -1,6 +1,7 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = 'https://uftfbidzobftjbonziql.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_f164t_IUImfvLzYxUYp-wQ_ZKqbBFAp';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Singleton: una sola instancia para toda la app
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);

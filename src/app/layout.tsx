@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -11,24 +12,21 @@ export const metadata: Metadata = {
   description: "Plataforma comunitaria de anime, calendarios, tendencias y shorts.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const headersList = await headers();
+  const pathname = headersList.get("x-pathname") || "";
+  const isMaintenance = pathname.startsWith("/mantenimiento");
+
   return (
     <html lang="es" className="dark">
       <body className={`${inter.className} bg-black text-white min-h-screen flex flex-col selection:bg-purple-500 selection:text-white`}>
-        {/* Cabecera global con indicador de página y modo claro/oscuro */}
-        <Header />
-
-        {/* Contenido principal de cada página */}
-        <main className="flex-1">
-          {children}
-        </main>
-
-        {/* Pie de página con Términos, Cookies y Banner legal */}
-        <Footer />
+        {!isMaintenance && <Header />}
+        <main className="flex-1">{children}</main>
+        {!isMaintenance && <Footer />}
       </body>
     </html>
   );

@@ -24,7 +24,8 @@ export default function CookieBanner() {
     <div className="fixed bottom-0 inset-x-0 z-50 bg-neutral-950/95 border-t border-neutral-800 p-4 backdrop-blur-md text-white flex flex-col sm:flex-row items-center justify-between gap-4 text-xs shadow-2xl">
       <p className="max-w-3xl text-neutral-300 text-center sm:text-left">
         Utilizamos cookies propias y de terceros para mejorar tu experiencia, analizar el tráfico y mostrar publicidad personalizada en el futuro. Al continuar navegando en <span className="text-purple-400 font-bold">TENKO AI</span>, aceptas nuestra{" "}
-        <Link href="/cookies" className="underline text-purple-400 hover:text-purple-300">Política de Cookies</Link> y nuestros{" "}
+        <Link href="/cookies" className="underline text-purple-400 hover:text-purple-300">Política de Cookies</Link>, nuestra{" "}
+        <Link href="/privacidad" className="underline text-purple-400 hover:text-purple-300">Política de Privacidad</Link> y nuestros{" "}
         <Link href="/terminos" className="underline text-purple-400 hover:text-purple-300">Términos y Condiciones</Link>.
       </p>
       <div className="flex items-center gap-3 shrink-0">
