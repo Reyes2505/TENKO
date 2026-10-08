@@ -36,7 +36,6 @@ async function uniqueHandle(admin: any, baseHandle: string): Promise<string> {
   return `@${base}${Math.random().toString(36).slice(2, 6)}`;
 }
 
-// ─── Detecta el origin real de la request (ngrok, Vercel, localhost) ──
 async function getOrigin(): Promise<string> {
   const h = await headers();
   const forwardedHost = h.get('x-forwarded-host');
@@ -59,6 +58,7 @@ export async function GET(request: Request) {
   const stateEncoded = url.searchParams.get('state');
   const error = url.searchParams.get('error');
 
+  // ─── 1. Decodificar el state ─────────────────────────────────────
   let mode = 'login';
   let linkingUserId: string | null = null;
   if (stateEncoded) {
@@ -74,6 +74,7 @@ export async function GET(request: Request) {
 
   const isLinking = mode === 'link' && !!linkingUserId;
 
+  // ─── 2. Errores de TikTok ────────────────────────────────────────
   if (error) {
     return NextResponse.redirect(`${origin}/perfil?error=tiktok_${error}`);
   }
@@ -81,6 +82,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/perfil?error=tiktok_canceled`);
   }
 
+  // ─── 3. Recuperar el code_verifier ───────────────────────────────
   const cookieStore = await cookies();
   const codeVerifier = cookieStore.get('tiktok_code_verifier')?.value;
 
@@ -89,6 +91,7 @@ export async function GET(request: Request) {
   }
 
   try {
+    // ─── 4. Token exchange ────────────────────────────────────────
     const tokenRes = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -103,41 +106,52 @@ export async function GET(request: Request) {
     });
 
     if (!tokenRes.ok) {
-      console.error('[tiktok callback] token exchange failed:', await tokenRes.text());
-      return NextResponse.redirect(`${origin}/perfil?error=tiktok_token_exchange`);
+      const errText = await tokenRes.text();
+      return NextResponse.redirect(
+        `${origin}/perfil?error=tiktok_token_exchange&debug=${encodeURIComponent(errText.slice(0, 200))}`
+      );
     }
 
     const tokenData = await tokenRes.json();
     const accessToken: string = tokenData.access_token;
+
     if (!accessToken) {
       return NextResponse.redirect(`${origin}/perfil?error=tiktok_no_token`);
     }
 
+    // ─── 5. User info (SIN username) ──────────────────────────────
     const userRes = await fetch(
-      'https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name,username',
+      'https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name',
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
     if (!userRes.ok) {
-      console.error('[tiktok callback] user info failed:', await userRes.text());
-      return NextResponse.redirect(`${origin}/perfil?error=tiktok_user_info`);
+      const errText = await userRes.text();
+      return NextResponse.redirect(
+        `${origin}/perfil?error=tiktok_user_info&debug=${encodeURIComponent(errText.slice(0, 200))}`
+      );
     }
 
     const userData = await userRes.json();
     const tiktokUser = userData?.data?.user;
+
     if (!tiktokUser?.open_id) {
       return NextResponse.redirect(`${origin}/perfil?error=tiktok_no_user`);
     }
 
     const openId: string = tiktokUser.open_id;
-    const username: string | null = tiktokUser.username || null;
     const displayName: string | null = tiktokUser.display_name || null;
     const avatarUrl: string | null = tiktokUser.avatar_url || null;
+    // username requiere scope user.info.profile, que no tenemos.
+    // Usamos display_name para el handle.
+    const username: string | null = displayName;
 
+    // ─── 6. Cliente admin ─────────────────────────────────────────
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
+    // ─── 7. MODO VINCULAR ─────────────────────────────────────────
     if (isLinking && linkingUserId) {
       const { data: alreadyLinked } = await admin
         .from('profiles')
@@ -164,7 +178,7 @@ export async function GET(request: Request) {
       return response;
     }
 
-    // Login mode
+    // ─── 8. MODO LOGIN ────────────────────────────────────────────
     const { data: existingProfile } = await admin
       .from('profiles')
       .select('id')
@@ -194,23 +208,21 @@ export async function GET(request: Request) {
         user_metadata: {
           provider: 'tiktok',
           tiktok_open_id: openId,
-          tiktok_username: username,
           display_name: displayName,
         },
       });
 
       if (createErr || !created?.user) {
-        console.error('[tiktok callback] createUser failed:', createErr);
         return NextResponse.redirect(`${origin}/perfil?error=tiktok_create_user`);
       }
 
       userId = created.user.id;
-      const baseHandle = buildHandle(username);
+      const baseHandle = buildHandle(displayName);
       const handle = await uniqueHandle(admin, baseHandle);
 
       await admin.from('profiles').upsert({
         id: userId,
-        name: displayName || username || 'Usuario TikTok',
+        name: displayName || 'Usuario TikTok',
         handle,
         avatar_url: avatarUrl,
         bio: 'Cuenta de TikTok',
@@ -219,6 +231,7 @@ export async function GET(request: Request) {
       });
     }
 
+    // ─── 9. Sesión ────────────────────────────────────────────────
     const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
       type: 'magiclink',
       email: `tiktok_${openId}@tenko.local`,
@@ -228,7 +241,6 @@ export async function GET(request: Request) {
     });
 
     if (linkErr || !linkData) {
-      console.error('[tiktok callback] generateLink failed:', linkErr);
       return NextResponse.redirect(`${origin}/perfil?error=tiktok_session`);
     }
 
@@ -237,7 +249,9 @@ export async function GET(request: Request) {
     response.cookies.delete('tiktok_state');
     return response;
   } catch (error) {
-    console.error('[tiktok callback] unexpected error:', error);
-    return NextResponse.redirect(`${origin}/perfil?error=server_error`);
+    const msg = error instanceof Error ? error.message : String(error);
+    return NextResponse.redirect(
+      `${origin}/perfil?error=server_error&debug=${encodeURIComponent(msg.slice(0, 200))}`
+    );
   }
 }
