@@ -1,69 +1,99 @@
+import Link from "next/link";
+
 export default function TerminosPage() {
   return (
-    <main className="min-h-screen bg-[#0b0b0e] text-neutral-300 py-12 px-6">
-      <div className="max-w-4xl mx-auto space-y-8 text-xs sm:text-sm leading-relaxed">
+    <main className="min-h-screen bg-[#0b0b0e] text-neutral-300 py-12 px-6 sm:px-12 selection:bg-purple-500 selection:text-white">
+      <div className="max-w-4xl mx-auto space-y-10 text-xs sm:text-sm leading-relaxed">
         
         {/* Cabecera */}
-        <div className="border-b border-neutral-800 pb-6">
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            Términos y Condiciones de Uso y Aviso Legal
+        <div className="border-b border-neutral-800 pb-8">
+          <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-2">
+            Términos y Condiciones de Uso
           </h1>
-          <p className="text-neutral-500 text-xs mt-1">Última actualización: Octubre de 2026</p>
+          <p className="text-neutral-500 text-xs uppercase tracking-wider font-bold">Última actualización: Octubre de 2026</p>
         </div>
 
         {/* Sección 1 */}
-        <section className="space-y-3">
-          <h2 className="text-base font-bold text-white">1. Naturaleza del Servicio y No Alojamiento de Contenido (Safe Harbor)</h2>
+        <section className="space-y-4">
+          <h2 className="text-lg font-bold text-white">1. Introducción y Aceptación de los Términos</h2>
           <p>
-            <strong>TENKO AI (TENKO天気)</strong> opera estrictamente como una plataforma web comunitaria de indexación, visualización y software de interfaz social. 
+            Bienvenido a <strong>TENKO (TENKO天気)</strong>. El acceso y uso de esta plataforma, sus servicios, aplicaciones y herramientas (en adelante, el "Servicio") están sujetos a los presentes Términos y Condiciones. Al acceder, navegar, registrarse o utilizar cualquier función de TENKO, usted acepta estar legalmente vinculado por estos términos en su totalidad, así como por nuestra <Link href="/cookies" className="text-purple-400 hover:underline">Política de Cookies</Link> y Privacidad. Si no está de acuerdo con alguna parte de estos términos, debe abstenerse de utilizar el Servicio.
           </p>
-          <div className="p-4 rounded-xl bg-neutral-900/90 border border-neutral-800 text-neutral-200 font-medium">
-            <p className="uppercase tracking-wider text-[11px] text-purple-400 font-black mb-1">Aviso Importante de Servidores:</p>
-            La plataforma <strong>NO aloja, almacena, sube, distribuye ni controla</strong> ningún archivo multimedia, fichero de video (MP4, HLS, etc.), pistas de audio o material protegido por derechos de autor en sus servidores propios. Todos los contenidos visualizados en la sección de <em>Shorts</em> o perfiles provienen de enlaces públicos externos, incrustaciones (embeds) de terceros o son aportados de forma independiente por los usuarios bajo su absoluta y exclusiva responsabilidad en calidad de Contenido Generado por el Usuario (UGC).
-          </div>
         </section>
 
-        {/* Sección 2 */}
-        <section className="space-y-3">
-          <h2 className="text-base font-bold text-white">2. Propiedad Intelectual y Política de Retirada (DMCA / Indecopi)</h2>
+        {/* Sección 2 - CRUCIAL SAFE HARBOR */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-bold text-white">2. Naturaleza del Servicio y Política de No Alojamiento (Safe Harbor)</h2>
           <p>
-            TENKO AI respeta rigurosamente los derechos de propiedad intelectual. En cumplimiento con la legislación de la República del Perú (Decreto Legislativo N° 822 - Ley sobre el Derecho de Autor) y normativas internacionales de protección de derechos de autor:
+            TENKO opera estrictamente como una interfaz web y un agregador social. Nuestra plataforma permite a los usuarios sincronizar y visualizar contenido a través de integraciones de terceros.
           </p>
-          <ul className="list-disc pl-5 space-y-1.5 text-neutral-400">
-            <li>Si usted es titular de derechos de autor o un representante autorizado y considera que algún enlace o contenido indexado infringe sus derechos, puede notificarlo inmediatamente a través de nuestros canales de contacto.</li>
-            <li>Al recibir una notificación formal y fundamentada, TENKO AI procederá de manera inmediata a la desactivación o eliminación del enlace infractor de su índice en un plazo razonable (Notice and Takedown).</li>
-          </ul>
+          <div className="p-5 rounded-xl bg-neutral-900 border-l-4 border-purple-500 text-neutral-200">
+            <p className="uppercase tracking-wider text-[11px] text-purple-400 font-black mb-2">Aviso Legal sobre Contenido Multimedia:</p>
+            TENKO <strong>no aloja, no almacena, no transfiere, no codifica ni distribuye</strong> ningún tipo de archivo multimedia (incluyendo, pero sin limitarse a, videos MP4, streams HLS, archivos de audio o imágenes protegidas) en sus propios servidores. Todo el contenido audiovisual visualizado en la sección de "Shorts" o en los perfiles de usuario proviene de incrustaciones de terceros (embeds) o interfaces de programación de aplicaciones (API) externas.
+          </div>
+          <p>
+            La responsabilidad sobre la legalidad, los derechos de autor y la naturaleza de dicho contenido recae de manera exclusiva en las plataformas de origen donde dichos archivos están físicamente almacenados y en el usuario que decide vincularlos.
+          </p>
         </section>
 
         {/* Sección 3 */}
-        <section className="space-y-3">
-          <h2 className="text-base font-bold text-white">3. Responsabilidad del Usuario (UGC)</h2>
+        <section className="space-y-4">
+          <h2 className="text-lg font-bold text-white">3. Integración con Terceros y Autenticación</h2>
           <p>
-            Los usuarios registrados que utilicen las funciones de perfil, avatares, banners, comentarios o publicaciones garantizan que poseen los derechos o autorizaciones necesarias sobre los enlaces y textos que comparten. Queda terminantemente prohibido el uso de la plataforma para difundir material ilícito, software malicioso, acoso o infracciones graves de copyright. TENKO AI se reserva el derecho de suspender cuentas infractoras sin previo aviso.
+            El Servicio permite la vinculación y autenticación mediante plataformas de terceros. Al utilizar la función "Continuar con..." u otorgar permisos de acceso, usted comprende y acepta que:
           </p>
+          <ul className="list-disc pl-5 space-y-2 text-neutral-400">
+            <li>TENKO actuará únicamente como una capa de personalización (wrapper) y lectura de datos públicos autorizados por usted.</li>
+            <li>El uso de estas integraciones está sujeto a los términos de servicio, políticas de privacidad y directrices de la plataforma de origen correspondiente.</li>
+            <li>Cualquier revocación de acceso a la cuenta de terceros deberá ser gestionada directamente desde la configuración de seguridad de dicha plataforma.</li>
+          </ul>
         </section>
 
         {/* Sección 4 */}
-        <section className="space-y-3">
-          <h2 className="text-base font-bold text-white">4. Exención de Garantías y Limitación de Responsabilidad</h2>
+        <section className="space-y-4">
+          <h2 className="text-lg font-bold text-white">4. Propiedad Intelectual y Notificaciones de Infracción</h2>
           <p>
-            El servicio se proporciona "tal cual" y "según disponibilidad". TENKO AI no otorga garantías, expresas o implícitas, sobre la disponibilidad continua del servicio, exactitud de enlaces externos proporcionados por terceros o la ausencia de errores técnicos. La plataforma no asume ninguna responsabilidad civil o penal por el uso indebido que los usuarios hagan de las herramientas del sitio.
+            TENKO respeta plenamente los derechos de propiedad intelectual de terceros bajo los estándares y normativas internacionales de derechos de autor. Dado que actuamos como un mero conducto de información (Safe Harbor):
           </p>
+          <ul className="list-disc pl-5 space-y-2 text-neutral-400">
+            <li>Si usted es titular de derechos de autor y cree de buena fe que algún enlace indexado en TENKO infringe sus derechos, puede enviar una notificación formal de retiro (Takedown Notice) a nuestro equipo de soporte.</li>
+            <li>Tras la verificación, procederemos diligentemente a la desvinculación, bloqueo o eliminación del enlace de nuestro índice, sin que esto implique la eliminación del archivo del servidor de origen (el cual no controlamos).</li>
+          </ul>
         </section>
 
         {/* Sección 5 */}
-        <section className="space-y-3">
-          <h2 className="text-base font-bold text-white">5. Monetización y Publicidad</h2>
+        <section className="space-y-4">
+          <h2 className="text-lg font-bold text-white">5. Conducta del Usuario y Contenido Generado por la Comunidad (UGC)</h2>
           <p>
-            Para garantizar la sostenibilidad operativa de la plataforma a costo cero para sus usuarios fundadores, TENKO AI podrá incorporar en el futuro espacios publicitarios, enlaces patrocinados o banners comerciales de terceros. La visualización de dichos anuncios se rige por las políticas de privacidad de los proveedores correspondientes.
+            Los usuarios son los únicos responsables de cualquier texto, comentario, biografía o enlace que compartan en TENKO. Queda estrictamente prohibido utilizar la plataforma para:
           </p>
+          <ul className="list-disc pl-5 space-y-2 text-neutral-400">
+            <li>Fomentar el discurso de odio, discriminación, violencia o acoso sistemático contra cualquier individuo o grupo.</li>
+            <li>Distribuir software malicioso, spam, esquemas fraudulentos o enlaces de phishing.</li>
+            <li>Incurrir en suplantación de identidad (impersonation) de creadores, estudios de animación, o personal de TENKO.</li>
+          </ul>
+          <p>TENKO se reserva el derecho unilateral de suspender, limitar o eliminar de manera permanente cualquier cuenta que infrinja estas normas de convivencia, sin obligación de notificación previa.</p>
         </section>
 
         {/* Sección 6 */}
-        <section className="space-y-3">
-          <h2 className="text-base font-bold text-white">6. Legislación y Jurisdicción Aplicable</h2>
+        <section className="space-y-4">
+          <h2 className="text-lg font-bold text-white">6. Limitación de Responsabilidad y Exención de Garantías</h2>
           <p>
-            Para cualquier controversia legal o administrativa derivada del uso de TENKO AI, las partes se someten expresamente a la jurisdicción de los tribunales y autoridades competentes de la ciudad de Lima, Perú, renunciando a cualquier otro fuero.
+            El Servicio de TENKO se proporciona "tal cual" (AS IS) y "según disponibilidad". En la medida máxima permitida por las leyes aplicables a nivel internacional, TENKO, sus desarrolladores, directores y afiliados renuncian a cualquier garantía expresa o implícita relacionada con el rendimiento de la web, la disponibilidad ininterrumpida, o la exactitud del contenido mostrado.
+          </p>
+          <p>
+            TENKO no será responsable por daños directos, indirectos, incidentales o consecuentes (incluida la pérdida de datos o interrupción del uso) que deriven del uso de la plataforma o de la incapacidad para acceder a servicios de terceros integrados.
+          </p>
+        </section>
+
+        {/* Sección 7 */}
+        <section className="space-y-4">
+          <h2 className="text-lg font-bold text-white">7. Jurisdicción, Resolución de Disputas y Modificaciones</h2>
+          <p>
+            Cualquier disputa derivada o relacionada con estos términos y el uso de TENKO se interpretará y resolverá de acuerdo con las leyes aplicables de la jurisdicción competente en la que se registre la entidad legal operadora del sitio, excluyendo conflictos de principios legales.
+          </p>
+          <p>
+            Nos reservamos el derecho de modificar estos Términos y Condiciones en cualquier momento para reflejar cambios legales, técnicos o comerciales. Las actualizaciones entrarán en vigor en el momento de su publicación. Es responsabilidad del usuario revisar periódicamente esta página. El uso continuado del sitio constituirá la aceptación irrevocable de los términos modificados.
           </p>
         </section>
 
