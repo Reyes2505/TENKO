@@ -37,18 +37,16 @@ async function uniqueHandle(admin: any, baseHandle: string): Promise<string> {
 }
 
 async function getOrigin(): Promise<string> {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
   const h = await headers();
-  const forwardedHost = h.get('x-forwarded-host');
-  const forwardedProto = h.get('x-forwarded-proto') || 'https';
-  const host = h.get('host');
-
+  const forwardedHost = h.get("x-forwarded-host");
+  const forwardedProto = h.get("x-forwarded-proto") || "https";
   if (forwardedHost) {
     return `${forwardedProto}://${forwardedHost}`;
   }
-  if (host && host !== 'localhost:3000') {
-    return `${forwardedProto}://${host}`;
-  }
-  return 'http://localhost:3000';
+  return "http://localhost:3000";
 }
 
 export async function GET(request: Request) {
