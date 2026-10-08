@@ -144,8 +144,21 @@ export default function LoginPage() {
     }
   };
 
-  const handleTikTokLogin = () => {
-    window.location.href = "/api/auth/tiktok";
+  const handleTikTokLogin = async () => {
+    try {
+      const res = await fetch("/api/auth/tiktok?mode=login");
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else if (data.redirect) {
+        window.location.href = data.redirect;
+      } else {
+        alert("Error: " + (data.error || "desconocido"));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error de red");
+    }
   };
 
   return (
