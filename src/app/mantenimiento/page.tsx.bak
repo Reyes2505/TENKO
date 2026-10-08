@@ -198,6 +198,26 @@ export default function MantenimientoPage() {
             Gracias por tu paciencia.
           </p>
 
+          {/* ═══════════════════════════════════════════════════════════════
+              BOTÓN DE SHORTS — DESACTIVADO TEMPORALMENTE
+              Para reactivar: descomentar este bloque y quitar el comentario
+              ═══════════════════════════════════════════════════════════════
+          <div className="mb-10">
+            <a
+              href="/shorts"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#6c00f4] to-[#a855f7] hover:from-[#7d1af5] hover:to-[#b366ff] px-6 py-3 text-sm font-extrabold text-white uppercase tracking-wider shadow-lg shadow-purple-950/50 transition-transform hover:scale-105"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+              Ver Shorts mientras tanto
+            </a>
+            <p className="mt-3 text-[10px] font-mono tracking-widest text-[var(--tenko-text-primary)]/40 uppercase">
+              Disponible durante el mantenimiento
+            </p>
+          </div>
+          */}
+
           <div className="max-w-md mx-auto">
             <div className="flex justify-between items-center mb-2">
               <span className="font-mono text-[10px] tracking-widest text-[var(--tenko-text-primary)]/40">

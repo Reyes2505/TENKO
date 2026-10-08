@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -11,6 +11,10 @@ const TIKTOK_REDIRECT_URI =
   process.env.NEXT_PUBLIC_TIKTOK_REDIRECT_URI ||
   'http://localhost:3000/api/auth/tiktok/callback';
 
+/**
+ * Genera un handle a partir del username de TikTok.
+ * "otaku123" → "@otaku123"
+ */
 function buildHandle(username: string | null | undefined): string {
   const clean = (username || '')
     .replace(/^@/, '')
@@ -19,7 +23,13 @@ function buildHandle(username: string | null | undefined): string {
   return `@${clean || `user${Math.random().toString(36).slice(2, 8)}`}`;
 }
 
-async function uniqueHandle(admin: any, baseHandle: string): Promise<string> {
+/**
+ * Asegura unicidad del handle.
+ */
+async function uniqueHandle(
+  admin: ReturnType<typeof createClient>,
+  baseHandle: string
+): Promise<string> {
   const base = baseHandle.replace(/^@/, '');
   let candidate = `@${base}`;
   let suffix = 1;
@@ -36,59 +46,36 @@ async function uniqueHandle(admin: any, baseHandle: string): Promise<string> {
   return `@${base}${Math.random().toString(36).slice(2, 6)}`;
 }
 
-// ─── Detecta el origin real de la request (ngrok, Vercel, localhost) ──
-async function getOrigin(): Promise<string> {
-  const h = await headers();
-  const forwardedHost = h.get('x-forwarded-host');
-  const forwardedProto = h.get('x-forwarded-proto') || 'https';
-  const host = h.get('host');
-
-  if (forwardedHost) {
-    return `${forwardedProto}://${forwardedHost}`;
-  }
-  if (host && host !== 'localhost:3000') {
-    return `${forwardedProto}://${host}`;
-  }
-  return 'http://localhost:3000';
-}
-
 export async function GET(request: Request) {
-  const origin = await getOrigin();
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
-  const stateEncoded = url.searchParams.get('state');
+  const state = url.searchParams.get('state');
   const error = url.searchParams.get('error');
 
-  let mode = 'login';
-  let linkingUserId: string | null = null;
-  if (stateEncoded) {
-    try {
-      const decoded = Buffer.from(stateEncoded, 'base64url').toString('utf-8');
-      const [m, uid] = decoded.split('.');
-      mode = m || 'login';
-      linkingUserId = uid && uid !== 'anon' ? uid : null;
-    } catch {
-      /* state corrupto */
-    }
-  }
-
-  const isLinking = mode === 'link' && !!linkingUserId;
-
+  // ─── 1. Manejo de errores de TikTok ──────────────────────────────
   if (error) {
-    return NextResponse.redirect(`${origin}/perfil?error=tiktok_${error}`);
+    return NextResponse.redirect(
+      new URL(`/login?error=tiktok_${error}`, request.url)
+    );
   }
   if (!code) {
-    return NextResponse.redirect(`${origin}/perfil?error=tiktok_canceled`);
+    return NextResponse.redirect(
+      new URL('/login?error=tiktok_canceled', request.url)
+    );
   }
 
+  // ─── 2. Recuperar el code_verifier de la cookie ──────────────────
   const cookieStore = await cookies();
   const codeVerifier = cookieStore.get('tiktok_code_verifier')?.value;
 
   if (!codeVerifier) {
-    return NextResponse.redirect(`${origin}/perfil?error=tiktok_missing_verifier`);
+    return NextResponse.redirect(
+      new URL('/login?error=tiktok_missing_verifier', request.url)
+    );
   }
 
   try {
+    // ─── 3. Intercambiar el code por access_token ─────────────────
     const tokenRes = await fetch('https://open.tiktokapis.com/v2/oauth/token/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -103,30 +90,44 @@ export async function GET(request: Request) {
     });
 
     if (!tokenRes.ok) {
-      console.error('[tiktok callback] token exchange failed:', await tokenRes.text());
-      return NextResponse.redirect(`${origin}/perfil?error=tiktok_token_exchange`);
+      const errText = await tokenRes.text();
+      console.error('[tiktok callback] token exchange failed:', errText);
+      return NextResponse.redirect(
+        new URL('/login?error=tiktok_token_exchange', request.url)
+      );
     }
 
     const tokenData = await tokenRes.json();
     const accessToken: string = tokenData.access_token;
+
     if (!accessToken) {
-      return NextResponse.redirect(`${origin}/perfil?error=tiktok_no_token`);
+      return NextResponse.redirect(
+        new URL('/login?error=tiktok_no_token', request.url)
+      );
     }
 
+    // ─── 4. Obtener datos del usuario de TikTok ───────────────────
     const userRes = await fetch(
       'https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name,username',
-      { headers: { Authorization: `Bearer ${accessToken}` } }
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
     );
 
     if (!userRes.ok) {
       console.error('[tiktok callback] user info failed:', await userRes.text());
-      return NextResponse.redirect(`${origin}/perfil?error=tiktok_user_info`);
+      return NextResponse.redirect(
+        new URL('/login?error=tiktok_user_info', request.url)
+      );
     }
 
     const userData = await userRes.json();
     const tiktokUser = userData?.data?.user;
+
     if (!tiktokUser?.open_id) {
-      return NextResponse.redirect(`${origin}/perfil?error=tiktok_no_user`);
+      return NextResponse.redirect(
+        new URL('/login?error=tiktok_no_user', request.url)
+      );
     }
 
     const openId: string = tiktokUser.open_id;
@@ -134,37 +135,12 @@ export async function GET(request: Request) {
     const displayName: string | null = tiktokUser.display_name || null;
     const avatarUrl: string | null = tiktokUser.avatar_url || null;
 
+    // ─── 5. Cliente admin de Supabase ─────────────────────────────
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    if (isLinking && linkingUserId) {
-      const { data: alreadyLinked } = await admin
-        .from('profiles')
-        .select('id')
-        .eq('tiktok_open_id', openId)
-        .maybeSingle();
-
-      if (alreadyLinked && alreadyLinked.id !== linkingUserId) {
-        return NextResponse.redirect(`${origin}/perfil?error=tiktok_already_linked`);
-      }
-
-      await admin
-        .from('profiles')
-        .update({
-          tiktok_open_id: openId,
-          tiktok_username: username,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', linkingUserId);
-
-      const response = NextResponse.redirect(`${origin}/perfil?tiktok_linked=true`);
-      response.cookies.delete('tiktok_code_verifier');
-      response.cookies.delete('tiktok_state');
-      return response;
-    }
-
-    // Login mode
+    // ─── 6. ¿Ya existe un perfil con este tiktok_open_id? ─────────
     const { data: existingProfile } = await admin
       .from('profiles')
       .select('id')
@@ -174,6 +150,7 @@ export async function GET(request: Request) {
     let userId: string;
 
     if (existingProfile?.id) {
+      // 6a. Usuario existente → solo actualizar avatar/name si cambiaron
       userId = existingProfile.id;
       await admin
         .from('profiles')
@@ -184,6 +161,7 @@ export async function GET(request: Request) {
         })
         .eq('id', userId);
     } else {
+      // 6b. Usuario nuevo → crear cuenta en auth.users
       const fakeEmail = `tiktok_${openId}@tenko.local`;
       const randomPassword = Math.random().toString(36).slice(2) + Date.now();
 
@@ -201,14 +179,18 @@ export async function GET(request: Request) {
 
       if (createErr || !created?.user) {
         console.error('[tiktok callback] createUser failed:', createErr);
-        return NextResponse.redirect(`${origin}/perfil?error=tiktok_create_user`);
+        return NextResponse.redirect(
+          new URL('/login?error=tiktok_create_user', request.url)
+        );
       }
 
       userId = created.user.id;
+
+      // 6c. Crear perfil en la tabla profiles
       const baseHandle = buildHandle(username);
       const handle = await uniqueHandle(admin, baseHandle);
 
-      await admin.from('profiles').upsert({
+      const { error: profileErr } = await admin.from('profiles').upsert({
         id: userId,
         name: displayName || username || 'Usuario TikTok',
         handle,
@@ -217,27 +199,40 @@ export async function GET(request: Request) {
         tiktok_open_id: openId,
         updated_at: new Date().toISOString(),
       });
+
+      if (profileErr) {
+        console.error('[tiktok callback] profile upsert failed:', profileErr);
+      }
     }
 
+    // ─── 7. Generar sesión de Supabase para el usuario ────────────
+    // Usamos magic link para crear una sesión válida
     const { data: linkData, error: linkErr } = await admin.auth.admin.generateLink({
       type: 'magiclink',
       email: `tiktok_${openId}@tenko.local`,
       options: {
-        redirectTo: `${origin}/api/auth/tiktok/session?user_id=${userId}`,
+        redirectTo: `${url.origin}/api/auth/tiktok/session?user_id=${userId}`,
       },
     });
 
     if (linkErr || !linkData) {
       console.error('[tiktok callback] generateLink failed:', linkErr);
-      return NextResponse.redirect(`${origin}/perfil?error=tiktok_session`);
+      return NextResponse.redirect(
+        new URL('/login?error=tiktok_session', request.url)
+      );
     }
 
+    // Redirigir al usuario a la URL de login generada por Supabase
     const response = NextResponse.redirect(linkData.properties.action_link);
+
+    // Limpiar la cookie del code_verifier
     response.cookies.delete('tiktok_code_verifier');
-    response.cookies.delete('tiktok_state');
+
     return response;
   } catch (error) {
     console.error('[tiktok callback] unexpected error:', error);
-    return NextResponse.redirect(`${origin}/perfil?error=server_error`);
+    return NextResponse.redirect(
+      new URL('/login?error=server_error', request.url)
+    );
   }
 }

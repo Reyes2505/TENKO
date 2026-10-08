@@ -1,0 +1,57 @@
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+// ══════════════════════════════════════════════════════════════════
+// FLAG DE MANTENIMIENTO
+// Actívalo poniendo MAINTENANCE_MODE=true en .env.local (o en Vercel)
+// ══════════════════════════════════════════════════════════════════
+const MAINTENANCE_MODE = process.env.MAINTENANCE_MODE === 'true';
+
+// Rutas que siguen accesibles durante el mantenimiento
+const ALLOWED_PATHS = [
+  '/mantenimiento',
+  '/api',           // deja pasar APIs (Auth, etc.)
+  '/_next',         // assets internos de Next.js
+  '/favicon.ico',
+  '/tenko-logo-dark.png',
+  '/tenko-logo-light.png',
+  '/robots.txt',
+  '/sitemap.xml',
+];
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Si el modo mantenimiento está desactivado, todo pasa normal
+  if (!MAINTENANCE_MODE) {
+    return NextResponse.next();
+  }
+
+  // Si la ruta está permitida, dejar pasar
+  const isAllowed = ALLOWED_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`)
+  );
+
+  if (isAllowed) {
+    return NextResponse.next();
+  }
+
+  // Redirigir a /mantenimiento
+  const url = request.nextUrl.clone();
+  url.pathname = '/mantenimiento';
+  return NextResponse.redirect(url);
+}
+
+// Configurar en qué rutas actúa el middleware
+export const config = {
+  matcher: [
+    /*
+     * Excluye:
+     * - _next/static (archivos estáticos)
+     * - _next/image (optimización de imágenes)
+     * - favicon.ico
+     * - archivos públicos (png, jpg, svg, etc.)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|txt|xml|json)$).*)',
+  ],
+};

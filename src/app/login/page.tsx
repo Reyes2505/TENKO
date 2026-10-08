@@ -2,13 +2,56 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import Image from "next/image";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { supabase } from "@/lib/supabase";
+
+// ══════════════════════════════════════════════════════════════════
+// HELPERS: generación de handle desde el correo
+// ══════════════════════════════════════════════════════════════════
+
+/**
+ * Genera un handle base a partir del correo:
+ *   aaron@gmail.com        → @aaron
+ *   aaron+test@gmail.com   → @aaron
+ *   juan.perez@mail.com    → @juanperez
+ *   user123@dominio.com    → @user123
+ */
+function generateHandleFromEmail(email: string): string {
+  const localPart = email.split("@")[0] || "";
+  const beforePlus = localPart.split("+")[0] || localPart;
+  const clean = beforePlus.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase();
+  return `@${clean || "user"}`;
+}
+
+/**
+ * Asegura que el handle sea único en la tabla profiles.
+ * Si "@aaron" ya existe, prueba "@aaron2", "@aaron3", etc.
+ */
+async function uniqueHandle(baseHandle: string): Promise<string> {
+  const base = baseHandle.replace(/^@/, "");
+  let candidate = `@${base}`;
+  let suffix = 1;
+
+  while (suffix < 100) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("handle", candidate)
+      .maybeSingle();
+
+    if (!data) return candidate;
+
+    suffix += 1;
+    candidate = `@${base}${suffix}`;
+  }
+
+  // Fallback con sufijo aleatorio
+  return `@${base}${Math.random().toString(36).slice(2, 6)}`;
+}
+
+// ══════════════════════════════════════════════════════════════════
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,7 +62,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState("");
 
   useEffect(() => {
     async function checkSession() {
@@ -38,13 +80,18 @@ export default function LoginPage() {
 
     try {
       if (isRegister) {
+        // 1. Generar handle único a partir del correo
+        const baseHandle = generateHandleFromEmail(email);
+        const handle = await uniqueHandle(baseHandle);
+
+        // 2. Registro
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
             data: {
               full_name: fullName.trim() || "Usuario Tenko",
-              username: username.trim() ? `@${username.replace(/^@/, '')}` : "@usuario",
+              handle,
               avatar_url: "https://i.postimg.cc/0j0x4x7G/zerotwo.jpg",
               bio: "Fan de Anime & Shorts",
             },
@@ -55,13 +102,24 @@ export default function LoginPage() {
 
         if (data.user) {
           localStorage.setItem("user_display_name", fullName.trim() || "Usuario Tenko");
-          localStorage.setItem("user_handle", username.trim() ? `@${username.replace(/^@/, '')}` : "@usuario");
+          localStorage.setItem("user_handle", handle);
           localStorage.setItem("user_avatar_url", "https://i.postimg.cc/0j0x4x7G/zerotwo.jpg");
+
+          // Crear/actualizar el perfil en la tabla profiles
+          await supabase.from("profiles").upsert({
+            id: data.user.id,
+            name: fullName.trim() || "Usuario Tenko",
+            handle,
+            avatar_url: "https://i.postimg.cc/0j0x4x7G/zerotwo.jpg",
+            bio: "Fan de Anime & Shorts",
+            updated_at: new Date().toISOString(),
+          });
 
           window.dispatchEvent(new Event("tenko-profile-updated"));
           router.push("/perfil");
         }
       } else {
+        // ─── LOGIN ────────────────────────────────────────────────
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -72,7 +130,7 @@ export default function LoginPage() {
         if (data.user) {
           const meta = data.user.user_metadata || {};
           if (meta.full_name) localStorage.setItem("user_display_name", meta.full_name);
-          if (meta.username) localStorage.setItem("user_handle", meta.username);
+          if (meta.handle) localStorage.setItem("user_handle", meta.handle);
           if (meta.avatar_url) localStorage.setItem("user_avatar_url", meta.avatar_url);
 
           window.dispatchEvent(new Event("tenko-profile-updated"));
@@ -146,35 +204,25 @@ export default function LoginPage() {
 
         <form onSubmit={handleAuth} className="space-y-4">
           {isRegister && (
-            <>
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">Nombre Completo</label>
-                <input
-                  type="text"
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Ej. Otaku Master"
-                  className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-xs text-neutral-900 dark:text-white focus:outline-none focus:border-purple-500 transition"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">Nombre de Usuario</label>
-                <input
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Ej. otaku_007"
-                  className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-xs text-neutral-900 dark:text-white focus:outline-none focus:border-purple-500 transition"
-                />
-              </div>
-            </>
+            <div>
+              <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">
+                Nombre Completo
+              </label>
+              <input
+                type="text"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Ej. Otaku Master"
+                className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-xs text-neutral-900 dark:text-white focus:outline-none focus:border-purple-500 transition"
+              />
+            </div>
           )}
 
           <div>
-            <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">Correo Electrónico</label>
+            <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">
+              Correo Electrónico
+            </label>
             <input
               type="email"
               required
@@ -183,10 +231,17 @@ export default function LoginPage() {
               placeholder="tu@correo.com"
               className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-xs text-neutral-900 dark:text-white focus:outline-none focus:border-purple-500 transition"
             />
+            {isRegister && (
+              <p className="mt-1 text-[10px] text-neutral-500 dark:text-neutral-400">
+                Tu nombre de usuario se generará automáticamente desde tu correo.
+              </p>
+            )}
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">Contraseña</label>
+            <label className="block text-xs font-bold text-neutral-700 dark:text-neutral-300 mb-1">
+              Contraseña
+            </label>
             <input
               type="password"
               required
