@@ -94,20 +94,23 @@ export async function GET(request: Request) {
     '&code_challenge_method=S256' +
     '&state=' + encodeURIComponent(stateEncoded);
 
+  // ─── Configuración de cookies ────────────────────────────────────
+  const isProd = process.env.NODE_ENV === 'production';
+  const cookieDomain = isProd ? '.tenko-anime.vercel.app' : undefined;
+
+  const baseCookieOptions = {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: 600,
+    ...(cookieDomain ? { domain: cookieDomain } : {}),
+  };
+
   // ─── Guardar cookies y devolver JSON ─────────────────────────────
   const response = NextResponse.json({ url: authUrl });
-  response.cookies.set('tiktok_code_verifier', codeVerifier, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: 600,
-  });
-  response.cookies.set('tiktok_state', statePlain, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    path: '/',
-    maxAge: 600,
-  });
+  response.cookies.set('tiktok_code_verifier', codeVerifier, baseCookieOptions);
+  response.cookies.set('tiktok_state', statePlain, baseCookieOptions);
 
   return response;
 }
