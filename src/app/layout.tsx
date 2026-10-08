@@ -1,30 +1,14 @@
 import type { Metadata } from "next";
-import { Unbounded, Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import HeaderWrapper from "@/components/HeaderWrapper";
-import { ThemeProvider } from "@/components/ThemeProvider";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
-const unbounded = Unbounded({
-  subsets: ["latin"],
-  variable: "--font-unbounded",
-  display: "swap",
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space-grotesk",
-  display: "swap",
-});
-
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-  display: "swap",
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TENKO // 天狐",
-  description: "Streaming de anime, simulcasts y descubrimiento con IA.",
+  title: "TENKO AI - Santuario de Anime",
+  description: "Plataforma comunitaria de anime, calendarios, tendencias y shorts.",
 };
 
 export default function RootLayout({
@@ -33,14 +17,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" suppressHydrationWarning>
-      <body
-        className={`${unbounded.variable} ${spaceGrotesk.variable} ${jetbrains.variable} bg-[var(--tenko-bg-page)] text-[var(--tenko-text-primary)] antialiased`}
-      >
-        <ThemeProvider>
-          <HeaderWrapper />
-          <main className="min-h-screen pt-20">{children}</main>
-        </ThemeProvider>
+    <html lang="es" className="dark">
+      <body className={`${inter.className} bg-black text-white min-h-screen flex flex-col selection:bg-purple-500 selection:text-white`}>
+        {/* Cabecera global con indicador de página y modo claro/oscuro */}
+        <Header />
+
+        {/* Contenido principal de cada página */}
+        <main className="flex-1">
+          {children}
+        </main>
+
+        {/* Pie de página con Términos, Cookies y Banner legal */}
+        <Footer />
       </body>
     </html>
   );

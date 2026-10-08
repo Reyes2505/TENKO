@@ -1,31 +1,22 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { Anime, Episodio, Temporada } from '@/types/database';
-import EpisodeGrid from '@/components/EpisodeGrid';
+import { Anime, Episodio } from '@/types/database';
 
-interface AnimeConSaga extends Anime {
-  saga_titulo?: string | null;
-  saga_normalizada?: string | null;
-  es_saga_principal?: boolean | null;
-  anime_padre_id?: string | null;
-}
-
-export default function AnimeDetailPage() {
-  const { id } = useParams();
-  const router = useRouter();
-  const [anime, setAnime] = useState<AnimeConSaga | null>(null);
-  const [temporadas, setTemporadas] = useState<Temporada[]>([]);
+export default function AnimeDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = use(params);
+  const [anime, setAnime] = useState<Anime | null>(null);
   const [episodios, setEpisodios] = useState<Episodio[]>([]);
-  const [temporadaActiva, setTemporadaActiva] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadData() {
-      if (!id) return;
+    async function loadAnimeDetail() {
       setLoading(true);
       try {
         const { data: animeData } = await supabase
@@ -34,385 +25,190 @@ export default function AnimeDetailPage() {
           .eq('id', id)
           .single();
 
-        if (!animeData) return;
-        setAnime(animeData);
+        if (animeData) {
+          setAnime(animeData);
 
-        const animeConSaga = animeData as AnimeConSaga;
-        const sagaPadreId = animeConSaga.anime_padre_id || animeData.id;
+          const { data: epsData } = await supabase
+            .from('episodios')
+            .select('*')
+            .eq('anime_id', id)
+            .order('numero', { ascending: true });
 
-        const { data: sagaAnimes } = await supabase
-          .from('animes')
-          .select('id, titulo, portada_url, banner_url, sinopsis, estado_emision, fecha_estreno, generos, saga_titulo, anime_padre_id')
-          .or(`id.eq.${sagaPadreId},anime_padre_id.eq.${sagaPadreId}`)
-          .order('fecha_estreno');
-
-        if (!sagaAnimes || sagaAnimes.length === 0) return;
-
-        const animesOrdenados = [...sagaAnimes].sort((a, b) => {
-          if (a.id === sagaPadreId) return -1;
-          if (b.id === sagaPadreId) return 1;
-          const fechaA = a.fecha_estreno ? new Date(a.fecha_estreno).getTime() : 0;
-          const fechaB = b.fecha_estreno ? new Date(b.fecha_estreno).getTime() : 0;
-          return fechaA - fechaB;
-        });
-
-        const animeIdsSaga = animesOrdenados.map(a => a.id);
-
-        const { data: tempsData } = await supabase
-          .from('temporadas')
-          .select('*')
-          .in('anime_id', animeIdsSaga)
-          .order('orden');
-
-        if (!tempsData || tempsData.length === 0) {
-          setTemporadas([]);
-          setEpisodios([]);
-          return;
+          if (epsData) setEpisodios(epsData);
         }
-
-        const tempsEnriquecidas: Temporada[] = [];
-        for (const animeSaga of animesOrdenados) {
-          const tempsDelAnime = tempsData.filter(t => t.anime_id === animeSaga.id);
-          const esPrincipal = animeSaga.id === sagaPadreId;
-          const totalAnimesSaga = animesOrdenados.length;
-
-          for (const temp of tempsDelAnime) {
-            let nombreTemp = temp.nombre;
-            if (totalAnimesSaga > 1 && !esPrincipal) {
-              nombreTemp = `${animeSaga.titulo}`;
-            } else if (totalAnimesSaga > 1 && tempsDelAnime.length > 1) {
-              nombreTemp = temp.nombre;
-            }
-
-            tempsEnriquecidas.push({
-              ...temp,
-              nombre: nombreTemp,
-              orden: (animeSaga.fecha_estreno
-                ? new Date(animeSaga.fecha_estreno).getFullYear() * 100
-                : 0) + (temp.orden || 0),
-            } as Temporada & { orden: number });
-          }
-        }
-
-        const tempIds = tempsEnriquecidas.map(t => t.id);
-        const { data: epsData } = await supabase
-          .from('episodios')
-          .select('*')
-          .in('temporada_id', tempIds)
-          .order('numero');
-
-        if (epsData) setEpisodios(epsData);
-        setTemporadas(tempsEnriquecidas);
-
-        if (tempsEnriquecidas.length > 0) {
-          setTemporadaActiva(tempsEnriquecidas[0].id);
-        }
-      } catch (err) {
-        console.error('Error cargando anime:', err);
+      } catch {
+        setAnime(null);
       } finally {
-        setTimeout(() => setLoading(false), 300);
+        setLoading(false);
       }
     }
-
-    loadData();
+    loadAnimeDetail();
   }, [id]);
 
-  const stats = useMemo(() => {
-    const totalEpisodios = episodios.length;
-    const anioEstreno = anime?.fecha_estreno ? new Date(anime.fecha_estreno).getFullYear() : null;
-    const totalTemporadas = temporadas.length;
-    const estadoLabel = anime?.estado_emision === 'emitido' ? 'EN EMISIÓN'
-      : anime?.estado_emision === 'terminado' ? 'FINALIZADO'
-      : anime?.estado_emision === 'suspendido' ? 'SUSPENDIDO'
-      : 'DESCONOCIDO';
-
-    return { totalEpisodios, anioEstreno, totalTemporadas, estadoLabel };
-  }, [episodios, temporadas, anime]);
-
-  // Loading
   if (loading) {
     return (
-      <main className="min-h-screen bg-[var(--tenko-bg-page)]">
-        <div className="h-64 md:h-80 bg-white/5 animate-pulse relative overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-              <div className="h-16 w-16 rounded-2xl bg-[#6c00f4]/20 border border-[#6c00f4]/40 animate-pulse flex items-center justify-center">
-                <svg className="h-8 w-8 text-[#6c00f4]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <p className="font-mono text-[11px] tracking-widest text-[var(--tenko-text-muted)]">
-                // CARGANDO ANIME...
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mx-auto max-w-7xl px-4 -mt-20 relative z-10">
-          <div className="flex gap-6">
-            <div className="w-40 shrink-0">
-              <div className="aspect-[3/4] rounded-xl bg-white/5 animate-pulse" />
-            </div>
-            <div className="flex-1 pt-16 space-y-4">
-              <div className="h-8 w-2/3 bg-white/5 animate-pulse rounded-lg" />
-              <div className="h-4 w-full bg-white/5 animate-pulse rounded-lg" />
-              <div className="h-4 w-4/5 bg-white/5 animate-pulse rounded-lg" />
-            </div>
-          </div>
-        </div>
-      </main>
+      <div className="min-h-screen bg-[var(--tenko-bg-page)] flex items-center justify-center">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#6c00f4] border-t-transparent" />
+      </div>
     );
   }
 
-  // No encontrado
   if (!anime) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[var(--tenko-bg-page)]">
-        <div className="text-center">
-          <div className="text-6xl mb-4">😢</div>
-          <p className="font-[family-name:var(--font-unbounded)] text-lg font-bold text-[var(--tenko-text-primary)]">
-            Anime no encontrado
-          </p>
-          <Link href="/" className="font-mono text-[11px] tracking-widest text-[#6c00f4] hover:text-[var(--tenko-text-primary)] text-xs mt-3 inline-block transition-colors">
-            ← VOLVER AL INICIO
-          </Link>
-        </div>
-      </main>
+      <div className="min-h-screen bg-[var(--tenko-bg-page)] text-[var(--tenko-text-primary)] flex flex-col items-center justify-center gap-4">
+        <p className="font-mono text-sm">Anime no encontrado en la base de datos.</p>
+        <Link href="/" className="px-4 py-2 rounded-lg bg-[#6c00f4] text-white font-bold text-xs">
+          Volver al catálogo
+        </Link>
+      </div>
     );
   }
 
-  const estadoDot =
-    anime.estado_emision === 'emitido' ? 'bg-emerald-500' :
-    anime.estado_emision === 'suspendido' ? 'bg-red-500' :
-    anime.estado_emision === 'terminado' ? 'bg-[#6c00f4]' : 'bg-zinc-500';
-
-  const esSaga = temporadas.length > 1;
-  const ambientImage = anime.banner_url || anime.portada_url || '';
+  const estadoTexto = anime.estado_emision && anime.estado_emision !== 'desconocido'
+    ? anime.estado_emision.toUpperCase()
+    : 'AL AIRE';
 
   return (
-    <main className="relative min-h-screen bg-[var(--tenko-bg-page)] pb-20 overflow-hidden">
-      {/* Glow sutil derivado del banner (pero NO es el Ambient Glow del reproductor) */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        {ambientImage && (
+    <main className="min-h-screen bg-[var(--tenko-bg-page)] text-[var(--tenko-text-primary)] transition-colors duration-200">
+      {/* Hero Section Limpia con Degradados Únicamente en los Límites */}
+      <section className="relative w-full overflow-hidden bg-[var(--tenko-bg-page)] min-h-[460px] lg:min-h-[520px] flex items-end pb-12 pt-24">
+        {/* Banner de Fondo Completo y Vivido */}
+        <div className="absolute inset-0 z-0 overflow-hidden">
           <div
-            className="absolute top-0 left-0 w-full h-[60vh] opacity-10 blur-[140px]"
+            className="absolute inset-0 bg-cover bg-center transition-opacity duration-500"
             style={{
-              backgroundImage: `url(${ambientImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
+              backgroundImage: `url(${anime.banner_url || anime.portada_url || ''})`,
             }}
           />
-        )}
-      </div>
+          {/* Degradado Superior para integrar el Header */}
+          <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-[var(--tenko-bg-page)] to-transparent" />
 
-      {/* ==================== BANNER ==================== */}
-      <div className="relative h-[60vh] min-h-[400px] overflow-hidden">
-        {anime.banner_url || anime.portada_url ? (
-          <img
-            src={anime.banner_url || anime.portada_url}
-            alt={anime.titulo}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-zinc-900 via-[#0a0a0f] to-black" />
-        )}
+          {/* Degradado Inferior para difuminar suavemente la transición del banner */}
+          <div className="absolute bottom-0 inset-x-0 h-32 bg-gradient-to-t from-[var(--tenko-bg-page)] to-transparent" />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/70 to-[#0a0a0f]/30" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0f]/80 via-transparent to-transparent" />
+          {/* Degradado Lateral Izquierdo para legibilidad del texto */}
+          <div className="absolute inset-y-0 left-0 w-full lg:w-2/3 bg-gradient-to-r from-[var(--tenko-bg-page)] via-[var(--tenko-bg-page)]/80 to-transparent" />
+        </div>
 
-        <button
-          onClick={() => router.back()}
-          className="absolute top-6 left-6 z-20 flex items-center gap-2 rounded-md bg-black/60 backdrop-blur-md border border-[var(--tenko-border)] px-4 py-2 font-mono text-[11px] tracking-widest text-[var(--tenko-text-primary)]/70 hover:text-[var(--tenko-text-primary)] hover:border-[#6c00f4]/60 transition-all"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/>
-          </svg>
-          VOLVER
-        </button>
-
-        {esSaga && anime.saga_titulo && (
-          <div className="absolute top-6 right-6 z-20 rounded-md bg-[#6c00f4] px-4 py-2 font-mono text-[10px] font-bold tracking-widest text-[var(--tenko-text-primary)] flex items-center gap-2 shadow-lg shadow-[#6c00f4]/40">
-            <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
-            </svg>
-            SAGA · {temporadas.length} TEMPORADAS
-          </div>
-        )}
-      </div>
-
-      {/* ==================== INFO PRINCIPAL ==================== */}
-      <section className="mx-auto max-w-7xl px-6 lg:px-8 -mt-40 relative z-10">
-        <div className="flex flex-col md:flex-row gap-6 md:gap-8">
-          <div className="w-40 md:w-56 shrink-0 mx-auto md:mx-0">
-            <div className="aspect-[3/4] rounded-2xl overflow-hidden border-2 border-[var(--tenko-border)] shadow-2xl shadow-black/60 hover:shadow-[#6c00f4]/30 hover:scale-[1.02] hover:border-[#6c00f4]/40 transition-all duration-500">
-              {anime.portada_url ? (
-                <img
-                  src={anime.portada_url}
-                  alt={anime.titulo}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="h-full w-full bg-zinc-800 flex items-center justify-center text-5xl">🎬</div>
-              )}
+        {/* Contenido Principal */}
+        <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-end">
+            {/* Portada Miniatura */}
+            <div className="hidden sm:block lg:col-span-3 shrink-0">
+              <div className="relative aspect-[3/4] w-full max-w-[220px] overflow-hidden rounded-2xl border border-[var(--tenko-border)] bg-[var(--tenko-bg-card)] shadow-2xl">
+                {anime.portada_url ? (
+                  <img
+                    src={anime.portada_url}
+                    alt={anime.titulo}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-[var(--tenko-bg-card)] text-xs text-[var(--tenko-text-secondary)] font-mono">
+                    SIN PORTADA
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className="flex-1 pt-2 md:pt-24">
-            <div className="flex items-start gap-3">
-              <h1 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl lg:text-5xl font-black text-white leading-[1.05] uppercase tracking-tight drop-shadow-lg">
+            {/* Metadatos, Título y Sinopsis */}
+            <div className="lg:col-span-9 space-y-4">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+                <span className="px-2.5 py-1 rounded-md bg-[var(--tenko-bg-card)] border border-[var(--tenko-border)] text-[var(--tenko-text-primary)] font-bold shadow-sm">
+                  EPISODIOS: {episodios.length || '--'}
+                </span>
+                <span className="px-2.5 py-1 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold uppercase">
+                  {estadoTexto}
+                </span>
+                <span className="px-2.5 py-1 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-300 font-bold">
+                  ★ 4.8
+                </span>
+              </div>
+
+              <h1 className="font-[family-name:var(--font-unbounded)] text-2xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight text-[var(--tenko-text-primary)] leading-tight">
                 {anime.titulo}
               </h1>
-              <span className={`mt-2 h-3 w-3 rounded-full ${estadoDot} animate-pulse shrink-0`} />
-            </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-3 font-mono text-[10px] tracking-widest">
-              <span className="px-3 py-1 rounded-full bg-[#6c00f4]/15 border border-[#6c00f4]/30 text-[#6c00f4] font-bold">
-                {stats.estadoLabel}
-              </span>
-              {stats.anioEstreno && (
-                <span className="text-[var(--tenko-text-secondary)]">{stats.anioEstreno}</span>
-              )}
-              <span className="text-[var(--tenko-text-muted)]">·</span>
-              <span className="text-[var(--tenko-text-secondary)]">
-                {stats.totalTemporadas} {stats.totalTemporadas === 1 ? 'TEMPORADA' : 'TEMPORADAS'}
-              </span>
-              <span className="text-[var(--tenko-text-muted)]">·</span>
-              <span className="text-[var(--tenko-text-secondary)]">
-                {stats.totalEpisodios} {stats.totalEpisodios === 1 ? 'EPISODIO' : 'EPISODIOS'}
-              </span>
-            </div>
-
-            {anime.sinopsis && (
-              <p className="mt-5 font-[family-name:var(--font-space-grotesk)] text-sm md:text-base text-[var(--tenko-text-primary)]/70 max-w-3xl leading-relaxed">
-                {anime.sinopsis}
+              <p className="text-xs sm:text-sm text-[var(--tenko-text-secondary)] max-w-2xl line-clamp-3 leading-relaxed">
+                {anime.sinopsis || 'Sin descripción disponible.'}
               </p>
-            )}
 
-            {anime.generos && anime.generos.length > 0 && (
-              <div className="mt-5 flex flex-wrap gap-2">
-                {anime.generos.map((genero) => (
-                  <span
-                    key={genero}
-                    className="font-mono px-3 py-1 rounded-md bg-white/5 border border-[var(--tenko-border)] text-[var(--tenko-text-primary)]/60 text-[10px] tracking-widest font-bold uppercase hover:border-[#6c00f4]/40 hover:text-[#6c00f4] transition-all cursor-default"
+              {/* Botones de Acción */}
+              <div className="flex flex-wrap items-center gap-3 pt-2">
+                {episodios.length > 0 ? (
+                  <Link
+                    href={`/ver/${episodios[0].id}`}
+                    className="inline-flex items-center gap-2 rounded-xl bg-[#6c00f4] px-6 py-3 text-xs font-bold tracking-wider text-white hover:bg-[#5800cc] transition shadow-md shadow-[#6c00f4]/20 active:scale-95"
                   >
-                    {genero}
-                  </span>
-                ))}
+                    <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                    VER PRIMER EPISODIO
+                  </Link>
+                ) : (
+                  <button
+                    disabled
+                    className="inline-flex items-center gap-2 rounded-xl bg-[var(--tenko-bg-card)] border border-[var(--tenko-border)] px-6 py-3 text-xs font-bold tracking-wider text-[var(--tenko-text-secondary)] cursor-not-allowed opacity-60"
+                  >
+                    PRÓXIMAMENTE
+                  </button>
+                )}
+
+                <button className="inline-flex items-center gap-2 rounded-xl bg-[var(--tenko-bg-card)] border border-[var(--tenko-border)] px-5 py-3 text-xs font-semibold text-[var(--tenko-text-primary)] hover:bg-[var(--tenko-border)] transition active:scale-95 shadow-sm">
+                  + MI LISTA
+                </button>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ==================== CONTENIDO ==================== */}
-      <section className="mx-auto max-w-7xl px-6 lg:px-8 pt-14">
-        {temporadas.length === 0 ? (
-          <div className="rounded-2xl border border-[var(--tenko-border)] bg-white/[0.02] p-12 text-center">
-            <div className="text-5xl mb-4">📭</div>
-            <h3 className="font-[family-name:var(--font-unbounded)] text-lg font-bold text-[var(--tenko-text-primary)] mb-2">
-              Sin episodios disponibles
-            </h3>
-            <p className="font-mono text-[11px] tracking-widest text-[var(--tenko-text-muted)]">
-              // ESTE ANIME AÚN NO TIENE EPISODIOS CARGADOS
-            </p>
+      {/* Lista de Episodios */}
+      <section className="mx-auto max-w-7xl px-6 lg:px-8 py-10 space-y-6">
+        <div className="border-b border-[var(--tenko-border)] pb-4 flex items-center justify-between">
+          <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
+            Episodios Disponibles ({episodios.length})
+          </h2>
+        </div>
+
+        {episodios.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {episodios.map((ep) => (
+              <Link
+                key={ep.id}
+                href={`/ver/${ep.id}`}
+                className="group relative flex flex-col overflow-hidden rounded-xl border border-[var(--tenko-border)] bg-[var(--tenko-bg-card)] hover:border-[#6c00f4] transition shadow-sm"
+              >
+                <div className="aspect-video w-full bg-[var(--tenko-bg-page)] relative overflow-hidden">
+                  {ep.thumbnail_url || anime.portada_url ? (
+                    <img
+                      src={ep.thumbnail_url || anime.portada_url}
+                      alt={ep.titulo || `Episodio ${ep.numero}`}
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs text-[var(--tenko-text-secondary)] font-mono">
+                      EP {ep.numero}
+                    </div>
+                  )}
+                  <div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-[var(--tenko-bg-card)]/90 font-mono text-[10px] text-[var(--tenko-text-primary)] border border-[var(--tenko-border)] font-bold">
+                    EP {String(ep.numero).padStart(2, '0')}
+                  </div>
+                </div>
+
+                <div className="p-3">
+                  <h3 className="text-xs font-bold text-[var(--tenko-text-primary)] group-hover:text-[#6c00f4] transition truncate">
+                    {ep.titulo || `Episodio ${ep.numero}`}
+                  </h3>
+                </div>
+              </Link>
+            ))}
           </div>
         ) : (
-          <>
-            {esSaga && (
-              <div className="mb-10">
-                <div className="flex items-center justify-between mb-5 border-b border-[var(--tenko-border)] pb-3">
-                  <div className="flex items-center gap-3">
-                    <span className="h-2 w-2 rounded-full bg-[#6c00f4]" />
-                    <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
-                      Temporadas
-                    </h2>
-                  </div>
-                  <span className="font-mono text-[10px] tracking-widest text-[var(--tenko-text-muted)]">
-                    {temporadas.length} DISPONIBLES
-                  </span>
-                </div>
-
-                <div className="flex gap-2 overflow-x-auto pb-3">
-                  {temporadas.map((temp, index) => {
-                    const epsDeTemp = episodios.filter(ep => ep.temporada_id === temp.id);
-                    const esActiva = temporadaActiva === temp.id;
-
-                    return (
-                      <button
-                        key={temp.id}
-                        onClick={() => setTemporadaActiva(temp.id)}
-                        className={`group relative shrink-0 px-5 py-3 rounded-lg transition-all duration-300 ${
-                          esActiva
-                            ? 'bg-[#6c00f4] text-[var(--tenko-text-primary)] shadow-lg shadow-[#6c00f4]/40 scale-[1.02]'
-                            : 'bg-white/5 text-[var(--tenko-text-primary)]/60 hover:bg-white/10 hover:text-[var(--tenko-text-primary)] border border-[var(--tenko-border)] hover:border-[#6c00f4]/40'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className={`font-mono text-[10px] tracking-widest ${esActiva ? 'text-[var(--tenko-text-primary)]/70' : 'text-[var(--tenko-text-muted)]'}`}>
-                            {String(index + 1).padStart(2, '0')}
-                          </span>
-                          <span className="font-[family-name:var(--font-unbounded)] text-xs font-bold whitespace-nowrap uppercase">
-                            {temp.nombre.length > 30 ? `${temp.nombre.substring(0, 30)}...` : temp.nombre}
-                          </span>
-                        </div>
-                        <div className={`mt-1 font-mono text-[9px] tracking-widest ${esActiva ? 'text-[var(--tenko-text-primary)]/60' : 'text-[var(--tenko-text-muted)]'}`}>
-                          {epsDeTemp.length} {epsDeTemp.length === 1 ? 'EP' : 'EPS'}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {temporadas.map((temp) => {
-              const epsDeTemp = episodios.filter(ep => ep.temporada_id === temp.id);
-
-              if (esSaga && temp.id !== temporadaActiva) return null;
-              if (!esSaga && epsDeTemp.length === 0) return null;
-
-              if (epsDeTemp.length === 0) {
-                return (
-                  <div key={temp.id} className="rounded-2xl border border-[var(--tenko-border)] bg-white/[0.02] p-12 text-center">
-                    <div className="text-4xl mb-3">📭</div>
-                    <p className="font-mono text-[11px] tracking-widest text-[var(--tenko-text-muted)]">
-                      // ESTA TEMPORADA AÚN NO TIENE EPISODIOS
-                    </p>
-                  </div>
-                );
-              }
-
-              return (
-                <div key={temp.id}>
-                  <div className="border-b border-[var(--tenko-border)] pb-4 mb-6 flex items-end justify-between flex-wrap gap-3">
-                    <div>
-                      <h2 className="font-[family-name:var(--font-unbounded)] text-xl font-black text-[var(--tenko-text-primary)] uppercase tracking-tight">
-                        {temp.nombre}
-                      </h2>
-                      <p className="font-mono text-[10px] tracking-widest text-[var(--tenko-text-muted)] mt-1">
-                        {epsDeTemp.length} {epsDeTemp.length === 1 ? 'EPISODIO' : 'EPISODIOS'} · {stats.estadoLabel}
-                      </p>
-                    </div>
-
-                    {epsDeTemp.length > 0 && (
-                      <Link
-                        href={`/ver/${epsDeTemp[0].id}`}
-                        className="hidden sm:flex items-center gap-2 rounded-md bg-[#6c00f4] hover:bg-white hover:text-black px-4 py-2 font-mono text-[11px] tracking-widest font-bold text-[var(--tenko-text-primary)] transition-all shadow-lg shadow-[#6c00f4]/30"
-                      >
-                        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
-                        REPRODUCIR EP 1
-                      </Link>
-                    )}
-                  </div>
-
-                  <EpisodeGrid episodios={epsDeTemp} />
-                </div>
-              );
-            })}
-          </>
+          <div className="text-center py-12 border border-[var(--tenko-border)] rounded-xl bg-[var(--tenko-bg-card)]">
+            <p className="text-xs font-mono text-[var(--tenko-text-secondary)]">
+              No hay episodios registrados para este título.
+            </p>
+          </div>
         )}
       </section>
     </main>

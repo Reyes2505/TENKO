@@ -21,145 +21,129 @@ export default function HeroCarousel({ animes }: HeroCarouselProps) {
     timerRef.current = setTimeout(() => {
       setCurrentIndex(index);
       setIsVisible(true);
-    }, 400);
+    }, 250);
   }, []);
 
   const nextSlide = useCallback(() => {
     goToSlide((currentIndex + 1) % destacados.length);
   }, [currentIndex, destacados.length, goToSlide]);
 
-  const prevSlide = () => {
-    goToSlide((currentIndex - 1 + destacados.length) % destacados.length);
-  };
-
   useEffect(() => {
     if (isPaused || destacados.length <= 1) return;
-    const interval = setInterval(nextSlide, 6000);
+    const interval = setInterval(nextSlide, 7000);
     return () => clearInterval(interval);
   }, [isPaused, destacados.length, nextSlide]);
 
   if (!destacados.length) return null;
 
   const anime = destacados[currentIndex];
+  const animeNext1 = destacados[(currentIndex + 1) % destacados.length];
+  const animeNext2 = destacados[(currentIndex + 2) % destacados.length];
 
   return (
     <section
-      className="relative w-full overflow-hidden border-b border-[var(--tenko-border)] bg-[var(--tenko-bg-page)] text-[var(--tenko-text-primary)] min-h-[420px] lg:min-h-[520px] flex items-center"
+      className="relative w-full overflow-hidden bg-[var(--tenko-bg-page)] text-[var(--tenko-text-primary)] min-h-[440px] lg:min-h-[500px] flex items-center pt-16 transition-colors duration-200"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Background con crossfade */}
-      <div className="absolute inset-0 z-0">
+      {/* Banner de Fondo Vivido con Degradados ÚNICAMENTE en los límites */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
         {destacados.map((a, i) => (
           <div
             key={a.id}
-            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-700 ease-in-out ${
-              i === currentIndex ? 'opacity-40' : 'opacity-0'
+            className={`absolute inset-0 bg-cover bg-center transition-opacity duration-700 ${
+              i === currentIndex ? 'opacity-100' : 'opacity-0'
             }`}
-            style={{
-              backgroundImage: `url(${a.banner_url || a.portada_url || ''})`,
-            }}
+            style={{ backgroundImage: `url(${a.banner_url || a.portada_url || ''})` }}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--tenko-bg-page)] via-[var(--tenko-bg-page)]/60 to-transparent dark:from-[#0a0a0f] dark:via-[#0a0a0f]/60" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-        {/* Glow morado sutil de fondo */}
-        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-[#6c00f4]/10 blur-[120px] pointer-events-none" />
+
+        {/* Degradado Superior para integrar con el Header */}
+        <div className="absolute top-0 inset-x-0 h-20 bg-gradient-to-b from-[var(--tenko-bg-page)] to-transparent" />
+
+        {/* Degradado Inferior para fundir el límite del banner */}
+        <div className="absolute bottom-0 inset-x-0 h-28 bg-gradient-to-t from-[var(--tenko-bg-page)] to-transparent" />
+
+        {/* Degradado Izquierdo para dar legibilidad limpia al texto */}
+        <div className="absolute inset-y-0 left-0 w-full lg:w-2/3 bg-gradient-to-r from-[var(--tenko-bg-page)] via-[var(--tenko-bg-page)]/80 to-transparent" />
       </div>
 
-      {/* Content */}
       <div
-        className={`relative z-10 mx-auto max-w-7xl px-6 py-12 lg:px-8 w-full transition-all duration-500 ease-out ${
-          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        className={`relative z-10 mx-auto max-w-7xl px-6 py-8 lg:px-8 w-full transition-all duration-300 ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'
         }`}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-          <div className="lg:col-span-8 space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="font-mono rounded-full border border-[#6c00f4]/40 bg-[#6c00f4]/15 px-3 py-1 text-[10px] font-bold tracking-widest text-[#6c00f4]">
-                ✦ TENKO SPOTLIGHT
-              </span>
-              <span className="font-mono text-[10px] tracking-widest text-white/40">
-                {String(currentIndex + 1).padStart(2, '0')} / {String(destacados.length).padStart(2, '0')}
-              </span>
-            </div>
-
-            <h1 className="font-[family-name:var(--font-unbounded)] text-3xl sm:text-5xl font-black uppercase tracking-tight text-white drop-shadow-md line-clamp-2 leading-[1.05]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="lg:col-span-7 space-y-3.5">
+            <h1 className="font-[family-name:var(--font-unbounded)] text-3xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight text-[var(--tenko-text-primary)] line-clamp-2 leading-tight">
               {anime.titulo}
             </h1>
 
-            <p className="font-[family-name:var(--font-space-grotesk)] text-sm sm:text-base text-[var(--tenko-text-primary)]/70 max-w-2xl line-clamp-2 leading-relaxed">
-              {anime.sinopsis || 'Sin descripción disponible'}
+            <p className="text-xs sm:text-sm text-[var(--tenko-text-secondary)] max-w-xl line-clamp-2 leading-relaxed">
+              {anime.sinopsis || 'Sin descripción disponible.'}
             </p>
 
-            <Link
-              href={`/anime/${anime.id}`}
-              className="inline-flex items-center gap-2 rounded-md bg-[#6c00f4] px-6 py-3 font-mono text-xs font-bold tracking-widest text-[var(--tenko-text-primary)] shadow-xl shadow-[#6c00f4]/30 hover:bg-white hover:text-black transition-all active:scale-95"
-            >
-              <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-              REPRODUCIR EN TENKO
-            </Link>
+            <div className="flex items-center gap-3 text-xs font-mono pt-0.5">
+              <span className="text-[var(--tenko-text-primary)] font-semibold">Ep. 2 · SUB</span>
+              <span className="text-amber-500 font-bold flex items-center gap-1">
+                ★ 4.8
+              </span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 border border-emerald-500/40 text-emerald-500 uppercase">
+                AL AIRE
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 pt-2">
+              <Link
+                href={`/anime/${anime.id}`}
+                className="inline-flex items-center gap-2 rounded-lg bg-[#6c00f4] px-5 py-2.5 text-xs font-bold tracking-wider text-white hover:bg-[#5800cc] transition shadow-md"
+              >
+                <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+                VER EPISODIO 1
+              </Link>
+              <button className="inline-flex items-center gap-2 rounded-lg bg-[var(--tenko-bg-card)] border border-[var(--tenko-border)] px-5 py-2.5 text-xs font-semibold text-[var(--tenko-text-primary)] hover:bg-[var(--tenko-border)] transition">
+                + MI LISTA
+              </button>
+            </div>
           </div>
 
-          <div className="hidden lg:flex justify-end lg:col-span-4">
-            <div className="relative aspect-[3/4] w-44 overflow-hidden rounded-xl border border-[var(--tenko-border)] shadow-2xl shadow-black/60 ring-1 ring-[#6c00f4]/20">
+          <div className="hidden lg:flex justify-end lg:col-span-5 relative h-72 items-center pr-4">
+            {animeNext2?.portada_url && (
+              <div className="absolute right-0 w-36 aspect-[3/4] rounded-xl overflow-hidden border border-[var(--tenko-border)] shadow-md opacity-40 translate-x-10 scale-90 rotate-6">
+                <img src={animeNext2.portada_url} alt="" className="h-full w-full object-cover" />
+              </div>
+            )}
+            {animeNext1?.portada_url && (
+              <div className="absolute right-8 w-40 aspect-[3/4] rounded-xl overflow-hidden border border-[var(--tenko-border)] shadow-lg opacity-75 translate-x-5 scale-95 rotate-3 z-10">
+                <img src={animeNext1.portada_url} alt="" className="h-full w-full object-cover" />
+              </div>
+            )}
+            <div className="relative z-20 w-44 aspect-[3/4] rounded-xl overflow-hidden border border-[var(--tenko-border)] shadow-xl">
               {anime.portada_url ? (
-                <img
-                  src={anime.portada_url}
-                  alt={anime.titulo}
-                  className="h-full w-full object-cover"
-                />
+                <img src={anime.portada_url} alt={anime.titulo} className="h-full w-full object-cover" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-zinc-800 text-3xl">🎬</div>
+                <div className="flex h-full w-full items-center justify-center bg-[var(--tenko-bg-card)] text-xs text-[var(--tenko-text-secondary)]">
+                  SIN PORTADA
+                </div>
               )}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Flechas */}
-      {destacados.length > 1 && (
-        <>
-          <button
-            onClick={prevSlide}
-            aria-label="Anterior"
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/50 p-2 text-[var(--tenko-text-primary)]/60 hover:bg-[#6c00f4] hover:text-[var(--tenko-text-primary)] backdrop-blur-sm transition-all border border-[var(--tenko-border)]"
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button
-            onClick={nextSlide}
-            aria-label="Siguiente"
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 rounded-full bg-black/50 p-2 text-[var(--tenko-text-primary)]/60 hover:bg-[#6c00f4] hover:text-[var(--tenko-text-primary)] backdrop-blur-sm transition-all border border-[var(--tenko-border)]"
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </>
-      )}
-
-      {/* Dots */}
-      {destacados.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+        <div className="flex items-center justify-center gap-2 mt-6">
           {destacados.map((_, i) => (
             <button
               key={i}
               onClick={() => goToSlide(i)}
-              aria-label={`Ir a slide ${i + 1}`}
-              className={`h-1.5 rounded-full transition-all duration-500 ${
-                i === currentIndex
-                  ? 'w-8 bg-[#6c00f4] shadow-[0_0_10px_rgba(108,0,244,0.8)]'
-                  : 'w-1.5 bg-white/30 hover:bg-white/60'
+              className={`h-1 rounded-full transition-all ${
+                i === currentIndex ? 'w-10 bg-[#6c00f4]' : 'w-4 bg-[var(--tenko-border)]'
               }`}
             />
           ))}
         </div>
-      )}
+      </div>
     </section>
   );
 }

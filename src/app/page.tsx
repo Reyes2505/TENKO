@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Anime } from '@/types/database';
 import HeroCarousel from '@/components/HeroCarousel';
-import AnimeGrid from '@/components/AnimeGrid';
+import AnimeCard from '@/components/AnimeCard';
 import ContinueWatchingSection from '@/components/ContinueWatchingSection';
 
 const ITEMS_POR_PAGINA = 24;
@@ -24,7 +24,6 @@ export default function Home() {
           .order('fecha_estreno', { ascending: false });
 
         if (!error && data) setAnimes(data as Anime[]);
-        else setAnimes([]);
       } catch {
         setAnimes([]);
       } finally {
@@ -41,80 +40,102 @@ export default function Home() {
   );
 
   return (
-    <main className="min-h-screen bg-[var(--tenko-bg-page)]">
+    <main className="min-h-screen bg-[var(--tenko-bg-page)] text-[var(--tenko-text-primary)] pb-16 transition-colors duration-200">
       <HeroCarousel animes={animes.slice(0, 5)} />
 
-      <section className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-        <ContinueWatchingSection />
+      <section className="mx-auto max-w-7xl px-6 py-8 lg:px-8 space-y-12">
+        {/* 1. Tendencias Recientes */}
+        <div className="space-y-4">
+          <div className="border-b border-[var(--tenko-border)] pb-3">
+            <h2 className="font-[family-name:var(--font-unbounded)] text-sm font-extrabold uppercase tracking-wider text-[var(--tenko-text-primary)]">
+              TENDENCIAS RECIENTES
+            </h2>
+          </div>
 
-        {/* Header de sección */}
-        <div className="mb-10 border-b border-[var(--tenko-border)] pb-6">
-          <span className="font-mono text-[10px] tracking-[0.3em] text-[#6c00f4] font-bold block mb-2">
-            // EXPLORACIÓN DE CONTENIDO
-          </span>
-          <h2 className="font-[family-name:var(--font-unbounded)] text-3xl md:text-4xl font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
-            Catálogo Principal
-          </h2>
+          {loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="aspect-[3/4] rounded-xl bg-[var(--tenko-bg-card)] animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {animes.slice(0, 6).map((anime, index) => (
+                <AnimeCard
+                  key={anime.id}
+                  anime={anime}
+                  episodioSugerido={1}
+                  esNuevo={index < 3}
+                  esPopular={index >= 3}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        <p className="font-mono text-[10px] tracking-widest text-[var(--tenko-text-muted)] mb-6">
-          {animes.length} ANIMES
-          {pagina > 1 && ` · PÁG. ${pagina}/${totalPaginas}`}
-        </p>
+        {/* 2. Continuar Viendo */}
+        <ContinueWatchingSection />
 
-        {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {[...Array(12)].map((_, i) => (
-              <div key={i} className="aspect-[3/4] rounded-xl bg-white/5 animate-pulse" />
-            ))}
+        {/* 3. Catálogo Principal Completo */}
+        <div className="space-y-6">
+          <div className="flex items-end justify-between border-b border-[var(--tenko-border)] pb-3">
+            <h2 className="font-[family-name:var(--font-unbounded)] text-sm font-extrabold uppercase tracking-wider text-[var(--tenko-text-primary)]">
+              CATÁLOGO PRINCIPAL
+            </h2>
+            <span className="text-xs font-mono text-[var(--tenko-text-secondary)]">
+              {animes.length} TÍTULOS {pagina > 1 && `· PÁG. ${pagina}/${totalPaginas}`}
+            </span>
           </div>
-        ) : animesPaginados.length > 0 ? (
-          <AnimeGrid animes={animesPaginados} />
-        ) : (
-          <div className="text-center py-16 border border-[var(--tenko-border)] rounded-xl bg-white/[0.02]">
-            <p className="font-mono text-xs tracking-widest text-[var(--tenko-text-muted)]">
-              // SIN RESULTADOS
-            </p>
-          </div>
-        )}
 
-        {totalPaginas > 1 && (
-          <div className="flex items-center justify-center gap-1.5 mt-10">
-            <button
-              onClick={() => setPagina(Math.max(1, pagina - 1))}
-              disabled={pagina === 1}
-              className="px-4 py-2 rounded-md bg-white/5 font-mono text-[11px] tracking-widest text-[var(--tenko-text-primary)]/60 hover:bg-white/10 hover:text-[var(--tenko-text-primary)] disabled:opacity-30 transition-all"
-            >
-              ← PREV
-            </button>
-            {Array.from({ length: totalPaginas }, (_, i) => i + 1)
-              .filter((num) => num === 1 || num === totalPaginas || Math.abs(num - pagina) <= 1)
-              .map((num, idx, arr) => (
-                <div key={num} className="flex items-center gap-1.5">
-                  {idx > 0 && arr[idx - 1] !== num - 1 && (
-                    <span className="text-[var(--tenko-text-muted)] font-mono">...</span>
-                  )}
-                  <button
-                    onClick={() => setPagina(num)}
-                    className={`h-9 w-9 rounded-md font-mono text-[11px] font-bold transition-all ${
-                      pagina === num
-                        ? 'bg-[#6c00f4] text-[var(--tenko-text-primary)] shadow-md shadow-[#6c00f4]/30'
-                        : 'bg-white/5 text-[var(--tenko-text-secondary)] hover:bg-white/10 hover:text-[var(--tenko-text-primary)]'
-                    }`}
-                  >
-                    {num}
-                  </button>
-                </div>
+          {loading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {[...Array(12)].map((_, i) => (
+                <div key={i} className="aspect-[3/4] rounded-xl bg-[var(--tenko-bg-card)] animate-pulse" />
               ))}
-            <button
-              onClick={() => setPagina(Math.min(totalPaginas, pagina + 1))}
-              disabled={pagina === totalPaginas}
-              className="px-4 py-2 rounded-md bg-white/5 font-mono text-[11px] tracking-widest text-[var(--tenko-text-primary)]/60 hover:bg-white/10 hover:text-[var(--tenko-text-primary)] disabled:opacity-30 transition-all"
-            >
-              SIG →
-            </button>
-          </div>
-        )}
+            </div>
+          ) : animesPaginados.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {animesPaginados.map((anime, index) => (
+                <AnimeCard
+                  key={anime.id}
+                  anime={anime}
+                  episodioSugerido={1}
+                  esNuevo={index < 2}
+                  esPopular={anime.estado_emision === 'emitido'}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16 border border-[var(--tenko-border)] rounded-xl bg-[var(--tenko-bg-card)]">
+              <p className="text-xs font-mono text-[var(--tenko-text-secondary)]">
+                No hay títulos registrados en la base de datos.
+              </p>
+            </div>
+          )}
+
+          {/* Navegación de Paginación */}
+          {totalPaginas > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-6">
+              <button
+                onClick={() => setPagina((p) => Math.max(1, p - 1))}
+                disabled={pagina === 1}
+                className="px-3.5 py-1.5 rounded-lg bg-[var(--tenko-bg-card)] border border-[var(--tenko-border)] text-xs font-semibold text-[var(--tenko-text-primary)] hover:bg-[var(--tenko-border)] disabled:opacity-40 transition"
+              >
+                Anterior
+              </button>
+              <span className="text-xs text-[var(--tenko-text-secondary)] px-3 font-mono">
+                Página {pagina} de {totalPaginas}
+              </span>
+              <button
+                onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))}
+                disabled={pagina === totalPaginas}
+                className="px-3.5 py-1.5 rounded-lg bg-[var(--tenko-bg-card)] border border-[var(--tenko-border)] text-xs font-semibold text-[var(--tenko-text-primary)] hover:bg-[var(--tenko-border)] disabled:opacity-40 transition"
+              >
+                Siguiente
+              </button>
+            </div>
+          )}
+        </div>
       </section>
     </main>
   );

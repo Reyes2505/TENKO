@@ -1,177 +1,195 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useTheme } from "./ThemeProvider";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useRouter, usePathname } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
 
-const NAV = [
-  { href: "/", label: "INICIO" },
-  { href: "/calendario", label: "CALENDARIO" },
-  { href: "/recomendaciones", label: "TENDENCIAS" },
-  { href: "/mi-lista", label: "MI LISTA" },
-];
-
-interface UserInfo {
-  username: string;
-  isAdmin: boolean;
-  initials: string;
-}
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export default function Header() {
-  const pathname = usePathname();
   const router = useRouter();
-  const { theme, toggle } = useTheme();
-  const [query, setQuery] = useState("");
-  const [user, setUser] = useState<UserInfo | null>(null);
+  const pathname = usePathname();
 
+  const [user, setUser] = useState<any>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string>("https://i.postimg.cc/0j0x4x7G/zerotwo.jpg");
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  // Control e inicialización del modo claro/oscuro
   useEffect(() => {
-    async function loadUser() {
-      const { data: { session } } = await supabase.auth.getSession();
-      const u = session?.user;
-      if (!u) {
-        setUser(null);
-        return;
-      }
-      const email = u.email || "";
-      const defaultName = email.split("@")[0];
-
-      let perfil = null;
-      try {
-        const { data, error: perfilError } = await supabase
-          .from("perfiles")
-          .select("username, is_admin")
-          .eq("user_id", u.id)
-          .maybeSingle();
-        if (!perfilError) perfil = data;
-      } catch (e) {
-        // Silenciar 401 de RLS
-      }
-
-      const username = perfil?.username || defaultName;
-      const esAdminMaster = email.toLowerCase().trim() === "aaronreyesabantoj3@gmail.com";
-
-      setUser({
-        username,
-        isAdmin: esAdminMaster || Boolean(perfil?.is_admin),
-        initials: username.slice(0, 2).toUpperCase(),
-      });
+    const savedTheme = (localStorage.getItem("theme") as "dark" | "light") || "dark";
+    setTheme(savedTheme);
+    if (savedTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
     }
-    loadUser();
-    const { data: sub } = supabase.auth.onAuthStateChange(() => loadUser());
-    return () => sub.subscription.unsubscribe();
   }, []);
 
-  const buscar = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-    router.push(`/buscar?q=${encodeURIComponent(query.trim())}`);
+  const toggleTheme = () => {
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
+    if (newTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   };
 
+  const syncUserSession = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+
+    if (user?.id) {
+      const { data: dbProfile } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (dbProfile?.avatar_url) {
+        setAvatarUrl(dbProfile.avatar_url);
+        return;
+      }
+    }
+
+    if (user?.user_metadata?.avatar_url) {
+      setAvatarUrl(user.user_metadata.avatar_url);
+    } else if (typeof window !== "undefined") {
+      const localAvatar = localStorage.getItem("user_avatar_url");
+      if (localAvatar) setAvatarUrl(localAvatar);
+    }
+  };
+
+  useEffect(() => {
+    syncUserSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) syncUserSession();
+    });
+
+    const handleProfileUpdate = () => syncUserSession();
+    window.addEventListener("tenko-profile-updated", handleProfileUpdate);
+
+    return () => {
+      authListener.subscription.unsubscribe();
+      window.removeEventListener("tenko-profile-updated", handleProfileUpdate);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.clear();
+    setUser(null);
+    router.push("/login");
+  };
+
+  // Helper para detectar la página activa (No aplica cuando estás en /perfil)
+  const isActive = (path: string) => {
+    if (pathname === "/perfil") return false;
+    if (path === "/" && pathname === "/") return true;
+    if (path !== "/" && pathname.startsWith(path)) return true;
+    return false;
+  };
+
+  const navLinks = [
+    { name: "Inicio", href: "/" },
+    { name: "Calendario", href: "/calendario" },
+    { name: "Tendencias", href: "/tendencias" },
+    { name: "Mi Lista", href: "/mi-lista" },
+    { name: "Shorts", href: "/shorts", isShorts: true },
+  ];
+
   return (
-    <header className="fixed top-0 inset-x-0 z-50 backdrop-blur-xl bg-[var(--tenko-bg-page)]/85 border-b border-[var(--tenko-border)]">
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-6 h-16 gap-4">
-        <Link href="/" className="flex items-center gap-2 group shrink-0">
-          <span className="font-[family-name:var(--font-unbounded)] text-xl font-black tracking-tight text-[var(--tenko-text-primary)]">
+    <header className="sticky top-0 z-40 w-full border-b border-neutral-200/60 dark:border-white/10 bg-white/75 dark:bg-[#0b0b0e]/80 backdrop-blur-md px-6 py-3 flex items-center justify-between text-neutral-900 dark:text-white transition-colors duration-200">
+      {/* Logotipo TENKO Más Grande y con Fuente Destacada */}
+      <div className="flex items-center gap-8">
+        <Link href="/" className="flex items-center gap-1 group">
+          <span className="text-2xl sm:text-3xl font-black font-mono tracking-tighter uppercase text-neutral-900 dark:text-white transition-transform duration-200 group-hover:scale-105">
             TENKO
-          </span>
-          <span className="text-[#6c00f4] text-xs font-mono opacity-70 group-hover:opacity-100 transition">
-            天狐
+            <span className="text-purple-600 dark:text-purple-400 font-black text-xl sm:text-2xl ml-1 font-sans">
+              天気
+            </span>
           </span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1">
-          {NAV.map((item) => {
-            const active =
-              item.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(item.href);
+        {/* Menú de Navegación con Señalador Activo */}
+        <nav className="hidden md:flex items-center gap-6 text-xs font-bold uppercase tracking-wider text-neutral-600 dark:text-neutral-300">
+          {navLinks.map((link) => {
+            const active = isActive(link.href);
             return (
               <Link
-                key={item.href}
-                href={item.href}
-                className={`px-4 py-2 font-mono text-[11px] tracking-widest transition rounded-full ${
+                key={link.name}
+                href={link.href}
+                className={`relative py-1 transition flex items-center gap-1 ${
                   active
-                    ? "text-[var(--tenko-text-primary)] bg-[#6c00f4]/20 border border-[#6c00f4]/40"
-                    : "text-[var(--tenko-text-secondary)] hover:text-[var(--tenko-text-primary)] hover:bg-[var(--tenko-bg-card)]"
+                    ? "text-purple-600 dark:text-purple-400 font-extrabold"
+                    : "hover:text-neutral-900 dark:hover:text-white"
                 }`}
               >
-                {item.label}
+                {link.isShorts && (
+                  <span className="text-purple-600 dark:text-purple-500 font-extrabold">●</span>
+                )}
+                {link.name}
+
+                {/* Indicador flotante debajo del enlace activo */}
+                {active && (
+                  <span className="absolute bottom-0 left-0 w-full h-[2px] bg-purple-600 dark:bg-purple-400 rounded-full shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+                )}
               </Link>
             );
           })}
         </nav>
+      </div>
 
-        <form onSubmit={buscar} className="relative hidden sm:block">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="BUSCAR EN TENKO..."
-            className="w-44 focus:w-60 transition-all duration-300 rounded-full bg-[var(--tenko-bg-card)] border border-[var(--tenko-border)] px-4 py-2 font-mono text-[11px] tracking-widest uppercase text-[var(--tenko-text-primary)] placeholder-[var(--tenko-text-muted)] outline-none focus:ring-2 focus:ring-[#6c00f4] focus:border-transparent"
-          />
-          <button
-            type="submit"
-            aria-label="Buscar"
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-[var(--tenko-text-muted)] hover:text-[#6c00f4] transition"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
-          </button>
-        </form>
-
+      {/* Controles: Selector de Tema Claro/Oscuro + Estado de Sesión */}
+      <div className="flex items-center gap-4">
+        {/* Botón de Conmutar Modo Claro / Oscuro */}
         <button
-          onClick={toggle}
-          aria-label="Cambiar tema"
-          className="relative w-14 h-7 rounded-full bg-[var(--tenko-bg-card)] border border-[var(--tenko-border-strong)] transition hover:border-[#6c00f4]/60 shrink-0"
+          onClick={toggleTheme}
+          title={theme === "dark" ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
+          className="p-2 rounded-xl bg-neutral-200/80 hover:bg-neutral-300 dark:bg-neutral-800/80 dark:hover:bg-neutral-700/80 text-neutral-800 dark:text-neutral-200 transition backdrop-blur-md cursor-pointer border border-neutral-300/50 dark:border-neutral-700/50"
         >
-          <span
-            className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-[#6c00f4] flex items-center justify-center transition-transform duration-300 ${
-              theme === "light" ? "translate-x-7" : "translate-x-0"
-            }`}
-          >
-            {theme === "dark" ? (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-              </svg>
-            ) : (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="4" />
-                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-              </svg>
-            )}
-          </span>
+          {theme === "dark" ? (
+            <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            </svg>
+          )}
         </button>
 
+        {/* Perfil / Cierre de Sesión */}
         {user ? (
-          <div className="flex items-center gap-2 shrink-0">
-            {user.isAdmin && (
-              <Link
-                href="/admin"
-                title="Panel Admin"
-                className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full bg-[#6c00f4]/15 border border-[#6c00f4]/40 text-[#6c00f4] hover:bg-[#6c00f4] hover:text-[var(--tenko-text-primary)] transition-all"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
-                </svg>
-              </Link>
-            )}
-            <Link
-              href="/perfil"
-              className="h-8 w-8 rounded-full bg-[#6c00f4] flex items-center justify-center font-[family-name:var(--font-unbounded)] text-[11px] font-bold text-[var(--tenko-text-primary)] hover:scale-110 transition-transform"
-              title={`@${user.username}`}
-            >
-              {user.initials}
+          <div className="flex items-center gap-3">
+            <Link href="/perfil" className="flex items-center gap-2 group">
+              <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-purple-500/80 group-hover:border-purple-400 transition shadow-md bg-neutral-200 dark:bg-neutral-800">
+                <img src={avatarUrl} alt="Perfil" className="w-full h-full object-cover" />
+              </div>
+              <span className="text-xs font-extrabold text-neutral-700 dark:text-neutral-200 group-hover:text-neutral-900 dark:group-hover:text-white hidden sm:inline">
+                {user.user_metadata?.full_name || "Mi Perfil"}
+              </span>
             </Link>
+
+            <button
+              onClick={handleLogout}
+              className="bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 text-[11px] font-bold px-3 py-1.5 rounded-lg transition cursor-pointer"
+            >
+              Cerrar Sesión
+            </button>
           </div>
         ) : (
           <Link
             href="/login"
-            className="shrink-0 px-4 py-2 rounded-full bg-[#6c00f4] font-mono text-[11px] tracking-widest font-bold text-[var(--tenko-text-primary)] hover:bg-white hover:text-black transition-all"
+            className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-extrabold px-4 py-2 rounded-xl transition shadow-lg shadow-purple-950/40"
           >
-            ENTRAR
+            Iniciar Sesión
           </Link>
         )}
       </div>

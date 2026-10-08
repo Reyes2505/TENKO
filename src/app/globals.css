@@ -1,50 +1,25 @@
 @import "tailwindcss";
 
-@theme {
-  --color-tenko: #6c00f4;
-  --color-tenko-glow: rgba(108, 0, 244, 0.6);
-  --font-display: var(--font-unbounded), sans-serif;
-  --font-body: var(--font-space-grotesk), sans-serif;
-  --font-mono: var(--font-mono), monospace;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --tenko-purple: #6c00f4;
-  /* Tema oscuro por defecto */
-  --tenko-bg-page: #0a0a0f;
-  --tenko-bg-card: rgba(255, 255, 255, 0.05);
-  --tenko-bg-input: rgba(0, 0, 0, 0.4);
+  --tenko-bg-page: #f8fafc;
+  --tenko-bg-card: #ffffff;
+  --tenko-text-primary: #0f172a;
+  --tenko-text-secondary: #64748b;
+  --tenko-border: #e2e8f0;
+}
+
+html.dark {
+  --tenko-bg-page: #0d0e12;
+  --tenko-bg-card: #16181e;
   --tenko-text-primary: #ffffff;
-  --tenko-text-secondary: rgba(255, 255, 255, 0.6);
-  --tenko-text-muted: rgba(255, 255, 255, 0.4);
-  --tenko-border: rgba(255, 255, 255, 0.1);
-  --tenko-border-strong: rgba(255, 255, 255, 0.15);
+  --tenko-text-secondary: #a1a1aa;
+  --tenko-border: #27272a;
 }
 
-/* Modo claro */
-html:not(.dark) {
-  --tenko-bg-page: #f4f4f0;
-  --tenko-bg-card: rgba(0, 0, 0, 0.03);
-  --tenko-bg-input: rgba(0, 0, 0, 0.05);
-  --tenko-text-primary: #0a0a0f;
-  --tenko-text-secondary: rgba(10, 10, 15, 0.7);
-  --tenko-text-muted: rgba(10, 10, 15, 0.5);
-  --tenko-border: rgba(0, 0, 0, 0.1);
-  --tenko-border-strong: rgba(0, 0, 0, 0.15);
-}
-
-html,
 body {
-  background: var(--tenko-bg-page);
+  background-color: var(--tenko-bg-page);
   color: var(--tenko-text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: rgba(108, 0, 244, 0.4);
-  border-radius: 8px;
-}
-::-webkit-scrollbar-thumb:hover { background: rgba(108, 0, 244, 0.7); }

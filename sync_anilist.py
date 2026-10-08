@@ -1,364 +1,123 @@
-#!/usr/bin/env python3
-"""
-Sincronizar BD con AniList - Versión Definitiva Final
-TODAS las mejoras implementadas:
-- Guardado incremental (no se pierde si se interrumpe)
-- Limpieza avanzada de títulos (10+ variantes)
-- Reintentos con backoff exponencial
-- Manejo de rate limiting (429)
-- Solo actualiza pendientes
-- Modo rápido para verificación
-- Pausa de 2s entre peticiones
-- Pausa final de 20s
-- Fechas seguras (None handling)
-- Búsqueda por título original y alternativo
-- Soporte para donghuas (animación china)
-- Logging detallado
-- Resumen final con estadísticas
-"""
-
-import os
-import re
-import sys
-import json
 import time
+import re
 import requests
-from datetime import datetime
-from supabase import create_client
+from typing import Optional, Dict, Any
 
-# Credenciales SOLO desde variables de entorno
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
-SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
-
-if not SUPABASE_URL or not SUPABASE_KEY:
-    print("Error: Faltan las variables de entorno SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY")
-    print("Configúralas con:")
-    print("  export SUPABASE_URL='https://uftfbidzobftjbonziql.supabase.co'")
-    print("  export SUPABASE_SERVICE_ROLE_KEY='tu_key_aqui'")
-    sys.exit(1)
-
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+ANILIST_API_URL = "https://graphql.anilist.co"
 
 ANILIST_QUERY = """
-query ($search: String) {
-  Media(search: $search, type: ANIME) {
+query SyncAnimeInfo($search: String,$id: Int) {
+  Media(search: $search, id:$id, type: ANIME) {
     id
-    title { romaji english native }
+    idMal
+    title {
+      romaji
+      english
+      native
+    }
+    coverImage {
+      extraLarge
+      large
+      color
+    }
+    bannerImage
+    description(asHtml: false)
     status
     episodes
-    startDate { year month day }
-    endDate { year month day }
     genres
+    season
+    seasonYear
     averageScore
-    popularity
-    studios { nodes { name } }
-    coverImage { large }
-    bannerImage
+    nextAiringEpisode {
+      airingAt
+      episode
+    }
   }
 }
 """
 
-PROGRESO_FILE = '.sync_progreso.json'
+def clean_html(raw_html: Optional[str]) -> str:
+    if not raw_html:
+        return ""
+    return re.sub(r'<[^>]+>', '', raw_html).strip()
 
-def cargar_progreso():
-    """Carga el progreso guardado"""
-    try:
-        if os.path.exists(PROGRESO_FILE):
-            with open(PROGRESO_FILE, 'r') as f:
-                return json.load(f)
-    except:
-        pass
-    return {}
+def fetch_from_anilist(title: Optional[str] = None, anilist_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
+    variables = {}
+    if anilist_id:
+        variables["id"] = anilist_id
+    elif title:
+        variables["search"] = title
+    else:
+        raise ValueError("Se debe proporcionar un título o ID de AniList")
 
-def guardar_progreso(anime_id, titulo, exito=True):
-    """Guarda el progreso inmediatamente después de cada actualización"""
-    try:
-        progreso = cargar_progreso()
-        progreso[anime_id] = {
-            'titulo': titulo,
-            'fecha': datetime.now().isoformat(),
-            'exito': exito,
-        }
-        with open(PROGRESO_FILE, 'w') as f:
-            json.dump(progreso, f, indent=2)
-    except:
-        pass
+    headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
-def limpiar_titulo(titulo):
-    """Limpia el título eliminando sufijos y caracteres especiales"""
-    titulo = re.sub(r'\s*\((TV|OVA|ONA|Movie|Special)\)', '', titulo)
-    titulo = re.sub(r'\s*\d+(st|nd|rd|th)\s+Season.*', '', titulo, flags=re.IGNORECASE)
-    titulo = re.sub(r'\s*Season\s*\d+.*', '', titulo, flags=re.IGNORECASE)
-    titulo = re.sub(r'\s*Part\s*\d+.*', '', titulo, flags=re.IGNORECASE)
-    titulo = re.sub(r'\s*Recap\s*$', '', titulo)
-    titulo = re.sub(r'\s*Ni!!\s*$', '', titulo)
-    titulo = re.sub(r'\s*Specials?\s*$', '', titulo, flags=re.IGNORECASE)
-    titulo = re.sub(r'\s*Movie\s*$', '', titulo, flags=re.IGNORECASE)
-    titulo = titulo.replace(':', '').replace('!', '').replace('?', '')
-    titulo = titulo.replace('∞', '').replace('※', '')
-    return titulo.strip()
+    for _ in range(3):
+        response = requests.post(
+            ANILIST_API_URL,
+            json={"query": ANILIST_QUERY, "variables": variables},
+            headers=headers,
+            timeout=10
+        )
 
-def generar_variantes(titulo):
-    """Genera TODAS las variantes posibles del título para búsqueda"""
-    variantes = []
-    variantes.append(titulo)
-    
-    titulo_limpio = limpiar_titulo(titulo)
-    if titulo_limpio and titulo_limpio != titulo:
-        variantes.append(titulo_limpio)
-    
-    if ':' in titulo:
-        sin_subtitulo = titulo.split(':')[0].strip()
-        if sin_subtitulo and len(sin_subtitulo) >= 3:
-            variantes.append(sin_subtitulo)
-    
-    sin_temp = re.sub(r'\s*\d+(st|nd|rd|th)\s+Season.*', '', titulo, flags=re.IGNORECASE).strip()
-    if sin_temp and sin_temp != titulo:
-        variantes.append(sin_temp)
-    
-    sin_parentesis = re.sub(r'\([^)]*\)', '', titulo).strip()
-    if sin_parentesis and sin_parentesis != titulo:
-        variantes.append(sin_parentesis)
-    
-    sin_ni = titulo.replace('Ni!!', '').strip()
-    if sin_ni and sin_ni != titulo:
-        variantes.append(sin_ni)
-    
-    palabras = titulo.split()
-    if len(palabras) > 4:
-        primeras_3 = ' '.join(palabras[:3])
-        if primeras_3 and len(primeras_3) >= 10:
-            variantes.append(primeras_3)
-    
-    if titulo.lower().startswith('the '):
-        sin_the = titulo[4:].strip()
-        if sin_the and len(sin_the) >= 3:
-            variantes.append(sin_the)
-    
-    if not titulo.lower().startswith('the '):
-        con_the = f"The {titulo}"
-        variantes.append(con_the)
-    
-    sin_unicode = titulo.encode('ascii', 'ignore').decode('ascii').strip()
-    if sin_unicode and sin_unicode != titulo and len(sin_unicode) >= 3:
-        variantes.append(sin_unicode)
-    
-    variantes = [v for v in dict.fromkeys(variantes) if v and len(v) >= 3]
-    
-    return variantes[:5]
+        if response.status_code == 200:
+            return response.json().get("data", {}).get("Media")
+        elif response.status_code == 429:
+            retry_after = int(response.headers.get("Retry-After", 60))
+            print(f"[!] Límite alcanzado. Esperando {retry_after}s...")
+            time.sleep(retry_after)
+        else:
+            print(f"[x] Error HTTP {response.status_code}: {response.text}")
+            break
 
-def buscar_anilist(titulo, max_retries=4):
-    """Busca en AniList con reintentos y TODAS las variantes"""
-    variantes = generar_variantes(titulo)
-    
-    for titulo_busqueda in variantes:
-        if len(titulo_busqueda) < 3:
-            continue
-        
-        for intento in range(max_retries):
-            try:
-                response = requests.post(
-                    'https://graphql.anilist.co',
-                    json={'query': ANILIST_QUERY, 'variables': {'search': titulo_busqueda[:50]}},
-                    timeout=15
-                )
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    media = data.get('data', {}).get('Media')
-                    if media:
-                        return media
-                    break
-                elif response.status_code == 429:
-                    wait = (intento + 1) * 20
-                    print(f"    Rate limited ({wait}s)...", end=' ', flush=True)
-                    time.sleep(wait)
-                else:
-                    break
-                    
-            except requests.exceptions.Timeout:
-                if intento < max_retries - 1:
-                    time.sleep(5)
-            except Exception:
-                if intento < max_retries - 1:
-                    time.sleep(3)
-    
     return None
 
-def mapear_estado(status):
-    if status == 'RELEASING': return 'emitido'
-    if status == 'FINISHED': return 'terminado'
-    if status == 'NOT_YET_RELEASED': return 'en_espera'
-    if status == 'CANCELLED': return 'suspendido'
-    return 'desconocido'
+def normalize_anime_data(media: Dict[str, Any]) -> Dict[str, Any]:
+    titles = media.get("title", {})
+    primary_title = titles.get("romaji") or titles.get("english") or titles.get("native")
+    
+    cover_image = media.get("coverImage", {})
+    poster_url = cover_image.get("extraLarge") or cover_image.get("large")
+    banner_url = media.get("bannerImage") or poster_url
 
-def formatear_fecha(date_obj):
-    if not date_obj or not isinstance(date_obj, dict):
-        return None
-    
-    anio = date_obj.get('year')
-    if not anio:
-        return None
-    
-    mes = date_obj.get('month') or 1
-    dia = date_obj.get('day') or 1
-    
-    return f"{anio}-{str(mes).zfill(2)}-{str(dia).zfill(2)}"
-
-def actualizar_anime(anime_id, media, titulo_original):
-    """Actualiza un anime en BD con datos de AniList"""
-    update_data = {
-        'titulo': media.get('title', {}).get('romaji') or media.get('title', {}).get('english') or titulo_original,
-        'generos': media.get('genres', []),
-        'fecha_estreno': formatear_fecha(media.get('startDate')),
-        'fecha_finalizacion': formatear_fecha(media.get('endDate')),
-        'estado_emision': mapear_estado(media.get('status')),
-        'portada_url': media.get('coverImage', {}).get('large', ''),
-        'banner_url': media.get('bannerImage') or media.get('coverImage', {}).get('large', ''),
+    return {
+        "anilist_id": media.get("id"),
+        "mal_id": media.get("idMal"),
+        "titulo": primary_title,
+        "titulo_ingles": titles.get("english"),
+        "titulo_japones": titles.get("native"),
+        "sinopsis": clean_html(media.get("description")),
+        "portada_url": poster_url,
+        "banner_url": banner_url,
+        "color_dominante": cover_image.get("color"),
+        "estado": media.get("status"),
+        "episodios": media.get("episodes"),
+        "generos": media.get("genres", []),
+        "temporada": f"{media.get('season')} {media.get('seasonYear')}" if media.get("season") else None,
+        "puntuacion": media.get("averageScore"),
+        "proximo_episodio": media.get("nextAiringEpisode"),
     }
-    
-    try:
-        supabase.table('animes').update(update_data).eq('id', anime_id).execute()
-        return True
-    except Exception as e:
-        print(f"ERROR: {e}")
-        return False
 
-def modo_completo():
-    """Actualiza todos los pendientes con info completa de AniList"""
-    progreso = cargar_progreso()
-    
-    animes = supabase.table('animes').select('id, titulo').is_('fecha_estreno', 'null').execute()
-    
-    pendientes = [a for a in animes.data if a['id'] not in progreso]
-    
-    total = len(pendientes)
-    print(f"Animes pendientes: {total} (ya procesados: {len(progreso)})")
-    
-    if total == 0:
-        print("Todos los animes ya están actualizados.")
-        return
-    
-    actualizados = 0
-    fallidos = 0
-    no_encontrados = []
-    
-    tiempo_inicio = datetime.now()
-    
-    for idx, anime in enumerate(pendientes):
-        titulo = anime['titulo']
-        print(f"[{idx+1}/{total}] {titulo[:60]}...", end=' ', flush=True)
-        
-        media = buscar_anilist(titulo)
-        
-        if media:
-            if actualizar_anime(anime['id'], media, titulo):
-                actualizados += 1
-                print("OK")
-                guardar_progreso(anime['id'], titulo, True)
-            else:
-                fallidos += 1
-                guardar_progreso(anime['id'], titulo, False)
-        else:
-            fallidos += 1
-            no_encontrados.append(titulo)
-            print("No encontrado")
-            guardar_progreso(anime['id'], titulo, False)
-        
-        time.sleep(2)
-    
-    tiempo_total = (datetime.now() - tiempo_inicio).total_seconds()
-    
-    print(f"\n{'='*50}")
-    print(f"RESULTADO FINAL")
-    print(f"{'='*50}")
-    print(f"  Actualizados: {actualizados}")
-    print(f"  Fallidos: {fallidos}")
-    print(f"  Tiempo total: {tiempo_total:.1f}s")
-    
-    if no_encontrados:
-        print(f"\nNo encontrados en AniList ({len(no_encontrados)}):")
-        for titulo in no_encontrados[:20]:
-            print(f"  - {titulo[:60]}")
-
-def modo_rapido():
-    """Revisión rápida: verifica integridad y actualiza si es necesario"""
-    print("Modo rápido: Verificando integridad de datos...\n")
-    
-    animes = supabase.table('animes').select('id, titulo, fecha_estreno, generos, portada_url, estado_emision').execute()
-    
-    total = len(animes.data)
-    completos = 0
-    incompletos = 0
-    pendientes = []
-    
-    for anime in animes.data:
-        fecha = anime.get('fecha_estreno')
-        generos = anime.get('generos', [])
-        portada = anime.get('portada_url', '')
-        estado = anime.get('estado_emision', '')
-        
-        es_completo = (
-            fecha is not None and
-            generos and len(generos) > 0 and
-            portada and
-            estado and estado != 'desconocido'
-        )
-        
-        if es_completo:
-            completos += 1
-        else:
-            incompletos += 1
-            pendientes.append(anime)
-    
-    print(f"Total: {total}")
-    print(f"Completos: {completos}")
-    print(f"Incompletos: {incompletos}\n")
-    
-    if pendientes:
-        print(f"Animes que necesitan actualización:")
-        for anime in pendientes[:20]:
-            faltantes = []
-            if not anime.get('fecha_estreno'): faltantes.append('fecha')
-            if not anime.get('generos'): faltantes.append('generos')
-            if not anime.get('portada_url'): faltantes.append('portada')
-            if not anime.get('estado_emision') or anime.get('estado_emision') == 'desconocido': faltantes.append('estado')
-            print(f"  {anime['titulo'][:50]}... -> Faltan: {', '.join(faltantes)}")
-        
-        print(f"\n¿Actualizar estos {len(pendientes)} animes? (s/n)")
-        respuesta = input().lower()
-        
-        if respuesta == 's':
-            actualizados = 0
-            for idx, anime in enumerate(pendientes):
-                titulo = anime['titulo']
-                print(f"[{idx+1}/{len(pendientes)}] {titulo[:60]}...", end=' ', flush=True)
-                
-                media = buscar_anilist(titulo)
-                
-                if media:
-                    if actualizar_anime(anime['id'], media, titulo):
-                        actualizados += 1
-                        print("OK")
-                        guardar_progreso(anime['id'], titulo, True)
-                    else:
-                        print("ERROR BD")
-                        guardar_progreso(anime['id'], titulo, False)
-                else:
-                    print("No encontrado")
-                    guardar_progreso(anime['id'], titulo, False)
-                
-                time.sleep(2)
-            
-            print(f"\nActualizados: {actualizados}/{len(pendientes)}")
+def sync_anime(title_or_id: Any) -> Optional[Dict[str, Any]]:
+    print(f"[*] Buscando datos en AniList para: '{title_or_id}'...")
+    if isinstance(title_or_id, int) or (isinstance(title_or_id, str) and title_or_id.isdigit()):
+        raw_data = fetch_from_anilist(anilist_id=int(title_or_id))
     else:
-        print("Todos los animes están completos.")
+        raw_data = fetch_from_anilist(title=str(title_or_id))
+
+    if not raw_data:
+        print("[-] No se encontraron datos en AniList.")
+        return None
+
+    synced_data = normalize_anime_data(raw_data)
+    print(f"[+] Sincronizado exitosamente: {synced_data['titulo']}")
+    return synced_data
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == '--rapido':
-        modo_rapido()
-    else:
-        modo_completo()
-    
-    print("\nPausa final de 20 segundos...")
-    time.sleep(20)
+    resultado = sync_anime("Sousou no Frieren")
+    if resultado:
+        print("\n--- Resultado de Sincronización ---")
+        print(f"Título: {resultado['titulo']}")
+        print(f"Portada (HD): {resultado['portada_url']}")
+        print(f"Banner: {resultado['banner_url']}")
+        print(f"Color: {resultado['color_dominante']}")

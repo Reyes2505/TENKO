@@ -2,74 +2,77 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { getContinueWatching, HistoryEntry } from '@/lib/tracking';
+
+interface WatchProgress {
+  episodioId: string;
+  animeTitulo: string;
+  numeroEpisodio: number;
+  porcentaje: number;
+  thumbnailUrl?: string;
+  portadaUrl?: string;
+}
 
 export default function ContinueWatchingSection() {
-  const [items, setItems] = useState<HistoryEntry[]>([]);
+  const [items, setItems] = useState<WatchProgress[]>([]);
 
   useEffect(() => {
-    const load = () => setItems(getContinueWatching());
-    load();
-    
-    const interval = setInterval(load, 10000);
-    return () => clearInterval(interval);
+    try {
+      const historial = localStorage.getItem('tenko_watch_history');
+      if (historial) {
+        const parsed = JSON.parse(historial);
+        if (Array.isArray(parsed)) {
+          setItems(parsed.filter((item) => item && item.animeTitulo).slice(0, 6));
+        }
+      }
+    } catch {
+      setItems([]);
+    }
   }, []);
 
-  if (items.length === 0) return null;
+  if (!items.length) return null;
 
   return (
-    <section className="mb-8">
-      <h2 className="text-xl font-bold text-[var(--tenko-text-primary)] mb-4 flex items-center gap-2">
-        <span className="text-[#6c00f4]">▶</span> Continuar viendo
-      </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        {items.slice(0, 12).map((item) => (
+    <section className="space-y-4">
+      <div className="border-b border-zinc-200 dark:border-zinc-800/80 pb-3">
+        <h3 className="font-[family-name:var(--font-unbounded)] text-sm font-extrabold uppercase tracking-wider text-zinc-900 dark:text-white">
+          CONTINUAR VIENDO
+        </h3>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        {items.map((item) => (
           <Link
-            key={item.episodeId}
-            href={`/ver/${item.episodeId}`}
-            className="group relative rounded-xl overflow-hidden border border-[var(--tenko-border)] bg-white/5 hover:border-[#6c00f4]/60 transition-all hover:-translate-y-1"
+            key={item.episodioId}
+            href={`/ver/${item.episodioId}`}
+            className="group relative flex overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800/80 bg-white dark:bg-zinc-900/80 hover:border-zinc-300 dark:hover:border-zinc-700 transition shadow-sm"
           >
-            <div className="relative aspect-[3/4] overflow-hidden">
-              {item.animePortada ? (
+            <div className="w-24 sm:w-28 aspect-video shrink-0 bg-zinc-100 dark:bg-zinc-950 relative overflow-hidden">
+              {item.thumbnailUrl || item.portadaUrl ? (
                 <img
-                  src={item.animePortada}
+                  src={item.thumbnailUrl || item.portadaUrl}
                   alt={item.animeTitulo}
-                  className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  loading="lazy"
+                  className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="h-full w-full bg-zinc-800 flex items-center justify-center">
-                  <span className="text-4xl">🎬</span>
+                <div className="flex h-full w-full items-center justify-center text-[10px] text-zinc-500 font-mono">
+                  TENKO
                 </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-              
-              <div className="absolute top-2 left-2 rounded-md bg-zinc-950/80 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-[var(--tenko-text-primary)]">
-                EP {String(item.episodeNumber).padStart(2, '0')}
-              </div>
-
-              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="h-12 w-12 rounded-full bg-[#6c00f4]/90 flex items-center justify-center shadow-lg">
-                  <svg className="h-5 w-5 text-[var(--tenko-text-primary)] ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </div>
-              </div>
             </div>
 
-            <div className="p-2.5">
-              <h3 className="text-xs font-bold text-[var(--tenko-text-primary)] truncate group-hover:text-[#6c00f4] transition-colors">
+            <div className="p-3 flex flex-col justify-center flex-1 space-y-1 min-w-0">
+              <h4 className="text-xs font-bold text-zinc-900 dark:text-white uppercase truncate group-hover:text-purple-600 dark:group-hover:text-purple-400 transition">
                 {item.animeTitulo}
-              </h3>
-              <p className="text-[10px] text-zinc-500 mt-0.5 truncate">
-                {item.episodeTitle} · {item.progress}%
-              </p>
+              </h4>
+              <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400">
+                Ep. {item.numeroEpisodio} · {Math.round(item.porcentaje)}% visto
+              </span>
             </div>
 
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-zinc-800">
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-zinc-200 dark:bg-zinc-800">
               <div
-                className="h-full bg-[#6c00f4]"
-                style={{ width: `${item.progress}%` }}
+                className="h-full bg-purple-600"
+                style={{ width: `${Math.min(100, Math.max(0, item.porcentaje))}%` }}
               />
             </div>
           </Link>
