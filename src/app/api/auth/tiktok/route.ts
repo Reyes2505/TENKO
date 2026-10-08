@@ -83,7 +83,7 @@ export async function GET(request: Request) {
   const stateEncoded = Buffer.from(statePlain).toString('base64url');
 
   // ─── Construir URL a mano (evita doble codificación) ─────────────
-  const scopes = 'user.info.basic';
+  const scopes = 'user.info.basic,user.info.profile';
   const authUrl =
     'https://www.tiktok.com/v2/auth/authorize/' +
     '?client_key=' + encodeURIComponent(clientKey) +

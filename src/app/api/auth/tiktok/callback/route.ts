@@ -119,7 +119,7 @@ export async function GET(request: Request) {
 
     // ─── 5. User info (SIN username) ──────────────────────────────
     const userRes = await fetch(
-      'https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name',
+      'https://open.tiktokapis.com/v2/user/info/?fields=open_id,union_id,avatar_url,display_name,username',
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );
 
@@ -142,7 +142,7 @@ export async function GET(request: Request) {
     const avatarUrl: string | null = tiktokUser.avatar_url || null;
     // username requiere scope user.info.profile, que no tenemos.
     // Usamos display_name para el handle.
-    const username: string | null = displayName;
+    const username: string | null = tiktokUser.username || displayName;
 
     // ─── 6. Cliente admin ─────────────────────────────────────────
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
