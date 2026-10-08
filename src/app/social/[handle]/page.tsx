@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import MediaDisplay, { isVideoUrl, isTikTokUrl } from "@/components/MediaDisplay";
+import EditGrid from "@/components/social/EditGrid";
 import { supabase } from "@/lib/supabase";
 import {
   getPublicProfile,
@@ -19,6 +20,7 @@ interface FullProfile extends PublicProfile {
   audio_source: AudioSource;
   tiktok_open_id: string | null;
   tiktok_username: string | null;
+  edits: string[];
 }
 
 export default function PublicProfilePage() {
@@ -32,20 +34,19 @@ export default function PublicProfilePage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [profile, setProfile] = useState<FullProfile | null>(null);
   const [friendReqSent, setFriendReqSent] = useState(false);
-
-  // Control rápido de audio (visual, no persistimos para otros usuarios)
   const [audioSource, setAudioSource] = useState<AudioSource>("none");
 
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         router.push("/login");
         return;
       }
       setCurrentUserId(user.id);
 
-      // Trae el perfil público + columnas extra que getPublicProfile no devuelve
       const p = await getPublicProfile(handle, user.id);
       if (!p) {
         setNotFound(true);
@@ -57,18 +58,18 @@ export default function PublicProfilePage() {
         return;
       }
 
-      // Cargamos columnas extra (audio_source, likes_count, tiktok) desde profiles
       const { data: extra } = await supabase
         .from("profiles")
-        .select("audio_source, tiktok_open_id, tiktok_username")
+        .select("audio_source, tiktok_open_id, tiktok_username, edits")
         .eq("id", p.id)
         .maybeSingle();
 
       let likesCount = 0;
       try {
-        const { data: likesData } = await supabase.rpc("get_user_profile_stats", {
-          user_uuid: p.id,
-        });
+        const { data: likesData } = await supabase.rpc(
+          "get_user_profile_stats",
+          { user_uuid: p.id }
+        );
         if (likesData && likesData.length > 0) {
           likesCount = Number(likesData[0].total_likes_received || 0);
         }
@@ -82,6 +83,7 @@ export default function PublicProfilePage() {
         audio_source: (extra?.audio_source as AudioSource) || "none",
         tiktok_open_id: extra?.tiktok_open_id || null,
         tiktok_username: extra?.tiktok_username || null,
+        edits: Array.isArray(extra?.edits) ? extra.edits : [],
       });
       setFriendReqSent(p.friend_request_pending);
       setAudioSource((extra?.audio_source as AudioSource) || "none");
@@ -90,8 +92,10 @@ export default function PublicProfilePage() {
   }, [handle, router]);
 
   const formatNumber = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1).replace(".", ",")} M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1).replace(".", ",")} mil`;
+    if (num >= 1000000)
+      return `${(num / 1000000).toFixed(1).replace(".", ",")} M`;
+    if (num >= 1000)
+      return `${(num / 1000).toFixed(1).replace(".", ",")} mil`;
     return num.toString();
   };
 
@@ -152,7 +156,7 @@ export default function PublicProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-black text-neutral-900 dark:text-white pb-16 transition-colors">
+    <div className="min-h-screen bg-neutral-50 dark:bg-black text-neutral-900 dark:text-white transition-colors">
       {/* Banner */}
       <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden bg-neutral-200 dark:bg-black group">
         <MediaDisplay
@@ -171,7 +175,9 @@ export default function PublicProfilePage() {
             {audioSource === "banner" ? (
               <>
                 <span className="w-2 h-2 rounded-full bg-pink-500 animate-ping" />
-                <span className="text-pink-400 font-bold">Silenciar Audio Banner</span>
+                <span className="text-pink-400 font-bold">
+                  Silenciar Audio Banner
+                </span>
               </>
             ) : (
               <>
@@ -195,8 +201,8 @@ export default function PublicProfilePage() {
         )}
       </div>
 
-      {/* Sección perfil */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 -mt-20 sm:-mt-24 relative z-20">
+      {/* Contenido */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 -mt-20 sm:-mt-24 relative z-20 pb-32">
         <div className="flex flex-col sm:flex-row items-start gap-6 pb-6">
           <div className="relative flex-shrink-0 group">
             <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden border-4 border-neutral-50 dark:border-black bg-neutral-200 dark:bg-neutral-800 shadow-2xl relative">
@@ -205,7 +211,9 @@ export default function PublicProfilePage() {
                 alt={profile.name || "Avatar"}
                 muted={audioSource !== "avatar"}
                 className="w-full h-full object-cover"
-                fallbackInitials={(profile.name || profile.handle || "?").charAt(0).toUpperCase()}
+                fallbackInitials={(profile.name || profile.handle || "?")
+                  .charAt(0)
+                  .toUpperCase()}
               />
             </div>
 
@@ -243,7 +251,11 @@ export default function PublicProfilePage() {
               )}
 
               <span className="px-2 py-0.5 rounded-md bg-purple-950/80 border border-purple-500/40 text-[10px] tracking-widest font-black uppercase text-white shadow-sm flex items-center">
-                SHOR<span className="text-purple-500 font-black text-xs mx-[0.5px]">T</span>S
+                SHOR
+                <span className="text-purple-500 font-black text-xs mx-[0.5px]">
+                  T
+                </span>
+                S
               </span>
             </div>
 
@@ -275,7 +287,7 @@ export default function PublicProfilePage() {
               </div>
             </div>
 
-            {/* Botones de acción */}
+            {/* Botones */}
             <div className="flex items-center gap-3 pt-1 flex-wrap">
               <FollowButton
                 currentUserId={currentUserId}
@@ -316,6 +328,16 @@ export default function PublicProfilePage() {
             )}
           </div>
         </div>
+
+        {/* Collage de edits */}
+        {profile.edits && profile.edits.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 mb-4">
+              Edits · {profile.edits.length}
+            </h2>
+            <EditGrid urls={profile.edits} />
+          </div>
+        )}
       </div>
     </div>
   );
