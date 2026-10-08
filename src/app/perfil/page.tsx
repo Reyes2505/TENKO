@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import MediaDisplay, { isVideoUrl, isTikTokUrl } from "@/components/MediaDisplay";
-
+import EditGrid from "@/components/social/EditGrid";
 import { supabase } from "@/lib/supabase";
 
 type AudioSource = "none" | "banner" | "avatar";
@@ -22,6 +22,7 @@ interface UserProfile {
   audioSource: AudioSource;
   tiktok_open_id?: string | null;
   tiktok_username?: string | null;
+  edits: string[];
 }
 
 export default function ProfilePage() {
@@ -41,6 +42,7 @@ export default function ProfilePage() {
     audioSource: "none",
     tiktok_open_id: null,
     tiktok_username: null,
+    edits: [],
   });
 
   const [isEditing, setIsEditing] = useState(false);
@@ -51,6 +53,7 @@ export default function ProfilePage() {
   const [editHandle, setEditHandle] = useState("");
   const [editBio, setEditBio] = useState("");
   const [editAudioSource, setEditAudioSource] = useState<AudioSource>("none");
+  const [editEditsText, setEditEditsText] = useState("");
 
   useEffect(() => {
     const loadRealData = async () => {
@@ -67,6 +70,7 @@ export default function ProfilePage() {
       let storedAudioSource: AudioSource = "none";
       let storedTiktokOpenId: string | null = null;
       let storedTiktokUsername: string | null = null;
+      let storedEdits: string[] = [];
 
       if (user?.id) {
         const { data: dbProfile } = await supabase
@@ -84,6 +88,7 @@ export default function ProfilePage() {
           if (dbProfile.audio_source) storedAudioSource = dbProfile.audio_source as AudioSource;
           storedTiktokOpenId = dbProfile.tiktok_open_id || null;
           storedTiktokUsername = dbProfile.tiktok_username || null;
+          storedEdits = Array.isArray(dbProfile.edits) ? dbProfile.edits : [];
         } else {
           storedAvatar = user.user_metadata?.avatar_url || localStorage.getItem("user_avatar_url") || storedAvatar;
           storedBanner = user.user_metadata?.banner_url || localStorage.getItem("user_banner_url") || storedBanner;
@@ -111,7 +116,7 @@ export default function ProfilePage() {
           }
         }
       } catch (e) {
-        console.log("Cargando métricas verídicas...", e);
+        console.log("Cargando métricas...", e);
       }
 
       setProfile({
@@ -127,6 +132,7 @@ export default function ProfilePage() {
         likesCount: dbLikes,
         tiktok_open_id: storedTiktokOpenId,
         tiktok_username: storedTiktokUsername,
+        edits: storedEdits,
       });
 
       setIsLoading(false);
@@ -136,6 +142,13 @@ export default function ProfilePage() {
   }, []);
 
   const saveProfile = async () => {
+    // Parsear edits: una URL por línea, máx 12
+    const editsArray = editEditsText
+      .split("\n")
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0 && l.includes("tiktok.com"))
+      .slice(0, 12);
+
     const updated: UserProfile = {
       ...profile,
       name: editName.trim() || profile.name,
@@ -144,6 +157,7 @@ export default function ProfilePage() {
       avatarUrl: editAvatar.trim() || profile.avatarUrl,
       bannerUrl: editBanner.trim() || profile.bannerUrl,
       audioSource: editAudioSource,
+      edits: editsArray,
     };
 
     setProfile(updated);
@@ -157,6 +171,7 @@ export default function ProfilePage() {
         avatar_url: updated.avatarUrl,
         banner_url: updated.bannerUrl,
         audio_source: updated.audioSource,
+        edits: updated.edits,
         updated_at: new Date().toISOString(),
       });
 
@@ -375,6 +390,7 @@ export default function ProfilePage() {
                   setEditHandle(profile.handle);
                   setEditBio(profile.bio);
                   setEditAudioSource(profile.audioSource);
+                  setEditEditsText((profile.edits || []).join("\n"));
                   setIsEditing(true);
                 }}
                 className="px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs transition shadow-md cursor-pointer"
@@ -412,14 +428,29 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
+
+        {/* Collage de edits */}
+        {profile.edits && profile.edits.length > 0 && (
+          <div className="mt-10 mb-4">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 mb-3">
+              Edits
+            </h2>
+            <EditGrid urls={profile.edits} />
+          </div>
+        )}
       </div>
 
       {isEditing && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl text-neutral-900 dark:text-white">
             <div className="p-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-              <h2 className="text-sm font-bold">Editar Perfil para SHOR<span className="text-purple-500 font-black">T</span>S</h2>
-              <button onClick={() => setIsEditing(false)} className="text-neutral-400 hover:text-white text-xs font-bold">
+              <h2 className="text-sm font-bold">
+                Editar Perfil para SHOR<span className="text-purple-500 font-black">T</span>S
+              </h2>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="text-neutral-400 hover:text-white text-xs font-bold"
+              >
                 ✕
               </button>
             </div>
@@ -456,7 +487,9 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-neutral-700 dark:text-neutral-300 font-bold mb-1">URL Avatar (Imagen / TikTok / MP4)</label>
+                <label className="block text-neutral-700 dark:text-neutral-300 font-bold mb-1">
+                  URL Avatar (Imagen / TikTok / MP4)
+                </label>
                 <input
                   type="text"
                   value={editAvatar}
@@ -466,13 +499,31 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-neutral-700 dark:text-neutral-300 font-bold mb-1">URL Banner (Imagen / TikTok / MP4)</label>
+                <label className="block text-neutral-700 dark:text-neutral-300 font-bold mb-1">
+                  URL Banner (Imagen / TikTok / MP4)
+                </label>
                 <input
                   type="text"
                   value={editBanner}
                   onChange={(e) => setEditBanner(e.target.value)}
                   className="w-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg p-2.5"
                 />
+              </div>
+
+              <div>
+                <label className="block text-neutral-700 dark:text-neutral-300 font-bold mb-1">
+                  Edits de TikTok (una URL por línea, máx 12)
+                </label>
+                <textarea
+                  value={editEditsText}
+                  onChange={(e) => setEditEditsText(e.target.value)}
+                  rows={5}
+                  placeholder={"https://www.tiktok.com/@user/video/123...\nhttps://www.tiktok.com/@user/video/456..."}
+                  className="w-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg p-2.5 font-mono text-[11px]"
+                />
+                <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
+                  Solo enlaces de tiktok.com. Se guardarán hasta 12.
+                </p>
               </div>
             </div>
 
