@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import MediaDisplay from "@/components/MediaDisplay";
 
 interface EditGridProps {
@@ -11,6 +12,11 @@ function EditTile({ url }: { url: string }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const [visible, setVisible] = useState(false);
   const [openModal, setOpenModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -46,39 +52,10 @@ function EditTile({ url }: { url: string }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [openModal]);
 
-  return (
-    <>
-      <div
-        ref={ref}
-        className="relative mb-1.5 overflow-hidden bg-neutral-900 group cursor-pointer break-inside-avoid"
-        onClick={() => setOpenModal(true)}
-      >
-        {visible ? (
-          <MediaDisplay
-            src={url}
-            muted
-            className="w-full h-auto block transition-transform duration-500 group-hover:scale-[1.04]"
-          />
-        ) : (
-          <div className="w-full aspect-[9/16] flex items-center justify-center">
-            <div className="w-5 h-5 rounded-full border-2 border-purple-500/30 border-t-purple-500 animate-spin" />
-          </div>
-        )}
-
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-
-        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="w-7 h-7 rounded-full bg-black/80 backdrop-blur-sm flex items-center justify-center border border-white/20">
-            <svg className="w-3.5 h-3.5 fill-white ml-0.5" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {openModal && (
+  const modal = openModal && mounted
+    ? createPortal(
         <div
-          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9999] bg-black/95 backdrop-blur-md flex items-center justify-center p-4"
           onClick={() => setOpenModal(false)}
         >
           <button
@@ -111,8 +88,42 @@ function EditTile({ url }: { url: string }) {
               className="w-full h-auto max-h-[90vh] object-contain"
             />
           </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return (
+    <>
+      <div
+        ref={ref}
+        className="relative mb-1.5 overflow-hidden bg-neutral-900 group cursor-pointer break-inside-avoid"
+        onClick={() => setOpenModal(true)}
+      >
+        {visible ? (
+          <MediaDisplay
+            src={url}
+            muted
+            className="w-full h-auto block transition-transform duration-500 group-hover:scale-[1.04]"
+          />
+        ) : (
+          <div className="w-full aspect-[9/16] flex items-center justify-center">
+            <div className="w-5 h-5 rounded-full border-2 border-purple-500/30 border-t-purple-500 animate-spin" />
+          </div>
+        )}
+
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
+        <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="w-7 h-7 rounded-full bg-black/80 backdrop-blur-sm flex items-center justify-center border border-white/20">
+            <svg className="w-3.5 h-3.5 fill-white ml-0.5" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
         </div>
-      )}
+      </div>
+
+      {modal}
     </>
   );
 }
