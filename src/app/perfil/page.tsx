@@ -189,7 +189,15 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     localStorage.clear();
-    router.push("/login");
+
+    document.cookie.split(";").forEach((c) => {
+      const name = c.split("=")[0].trim();
+      if (name.startsWith("tiktok_")) {
+        document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      }
+    });
+
+    window.location.href = "/login";
   };
 
   const handleTikTokLink = async () => {
@@ -261,7 +269,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-black text-neutral-900 dark:text-white pb-16 transition-colors">
-      {/* Banner Superior Orgánico Fusión Seamless */}
       <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden bg-neutral-200 dark:bg-black group">
         <MediaDisplay
           src={profile.bannerUrl}
@@ -272,7 +279,6 @@ export default function ProfilePage() {
 
         <div className="absolute inset-0 bg-gradient-to-b from-neutral-50/0 via-neutral-50/20 to-neutral-50 dark:from-black/0 dark:via-black/30 dark:to-black pointer-events-none" />
 
-        {/* Control Rápido de Audio Banner Corregido */}
         {bannerHasMedia && (
           <button
             onClick={() => setQuickAudioSource("banner")}
@@ -295,7 +301,6 @@ export default function ProfilePage() {
         )}
       </div>
 
-      {/* Sección de Perfil Inspirada en TikTok */}
       <div className="max-w-3xl mx-auto px-4 sm:px-6 -mt-20 sm:-mt-24 relative z-20">
         <div className="flex flex-col sm:flex-row items-start gap-6 pb-6">
           <div className="relative flex-shrink-0 group">
@@ -340,7 +345,6 @@ export default function ProfilePage() {
               </span>
             </div>
 
-            {/* Estadísticas Verídicas en Tiempo Real */}
             <div className="flex items-center gap-6 text-xs sm:text-sm">
               <div>
                 <span className="font-extrabold text-neutral-900 dark:text-white mr-1.5">
@@ -362,7 +366,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Botones de Acción */}
             <div className="flex items-center gap-3 pt-1">
               <button
                 onClick={() => {
@@ -402,7 +405,6 @@ export default function ProfilePage() {
               )}
             </div>
 
-            {/* Biografía */}
             {profile.bio && (
               <p className="text-xs sm:text-sm text-neutral-700 dark:text-neutral-300 font-normal leading-relaxed max-w-lg whitespace-pre-line">
                 {profile.bio}
@@ -412,7 +414,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Modal de Edición */}
       {isEditing && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl text-neutral-900 dark:text-white">

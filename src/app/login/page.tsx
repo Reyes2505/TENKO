@@ -1,90 +1,73 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-
 import { supabase } from "@/lib/supabase";
-
-// ══════════════════════════════════════════════════════════════════
-// HELPERS: generación de handle desde el correo
-// ══════════════════════════════════════════════════════════════════
-
-/**
- * Genera un handle base a partir del correo:
- *   aaron@gmail.com        → @aaron
- *   aaron+test@gmail.com   → @aaron
- *   juan.perez@mail.com    → @juanperez
- *   user123@dominio.com    → @user123
- */
-function generateHandleFromEmail(email: string): string {
-  const localPart = email.split("@")[0] || "";
-  const beforePlus = localPart.split("+")[0] || localPart;
-  const clean = beforePlus.replace(/[^a-zA-Z0-9_]/g, "").toLowerCase();
-  return `@${clean || "user"}`;
-}
-
-/**
- * Asegura que el handle sea único en la tabla profiles.
- * Si "@aaron" ya existe, prueba "@aaron2", "@aaron3", etc.
- */
-async function uniqueHandle(baseHandle: string): Promise<string> {
-  const base = baseHandle.replace(/^@/, "");
-  let candidate = `@${base}`;
-  let suffix = 1;
-
-  while (suffix < 100) {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("handle", candidate)
-      .maybeSingle();
-
-    if (!data) return candidate;
-
-    suffix += 1;
-    candidate = `@${base}${suffix}`;
-  }
-
-  // Fallback con sufijo aleatorio
-  return `@${base}${Math.random().toString(36).slice(2, 6)}`;
-}
-
-// ══════════════════════════════════════════════════════════════════
 
 export default function LoginPage() {
   const router = useRouter();
   const [isRegister, setIsRegister] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    async function checkSession() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        router.push("/perfil");
-      }
+  const uniqueHandle = async (baseHandle: string): Promise<string> => {
+    const base = baseHandle.replace(/^@/, "");
+    let candidate = `@${base}`;
+    let suffix = 1;
+    while (suffix < 100) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("handle", candidate)
+        .maybeSingle();
+      if (!data) return candidate;
+      suffix += 1;
+      candidate = `@${base}${suffix}`;
     }
-    checkSession();
-  }, [router]);
+    return `@${base}${Math.random().toString(36).slice(2, 6)}`;
+  };
+
+  const buildHandleFromEmail = (mail: string): string => {
+    const local = mail.split("@")[0].toLowerCase();
+    const clean = local.replace(/\+.*$/, "").replace(/[^a-z0-9_]/g, "");
+    return `@${clean || "user"}`;
+  };
+
+  const handleTikTokLogin = async () => {
+    try {
+      // Cerrar cualquier sesión previa antes de iniciar flujo TikTok
+      await supabase.auth.signOut();
+
+      const res = await fetch("/api/auth/tiktok?mode=login");
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else if (data.redirect) {
+        window.location.href = data.redirect;
+      } else {
+        alert("Error: " + (data.error || "desconocido"));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error de red");
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setErrorMessage("");
+    setLoading(true);
 
     try {
       if (isRegister) {
-        // 1. Generar handle único a partir del correo
-        const baseHandle = generateHandleFromEmail(email);
+        const baseHandle = buildHandleFromEmail(email);
         const handle = await uniqueHandle(baseHandle);
 
-        // 2. Registro
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -105,7 +88,6 @@ export default function LoginPage() {
           localStorage.setItem("user_handle", handle);
           localStorage.setItem("user_avatar_url", "https://i.postimg.cc/0j0x4x7G/zerotwo.jpg");
 
-          // Crear/actualizar el perfil en la tabla profiles
           await supabase.from("profiles").upsert({
             id: data.user.id,
             name: fullName.trim() || "Usuario Tenko",
@@ -119,7 +101,6 @@ export default function LoginPage() {
           router.push("/perfil");
         }
       } else {
-        // ─── LOGIN ────────────────────────────────────────────────
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
@@ -138,26 +119,9 @@ export default function LoginPage() {
         }
       }
     } catch (err: any) {
-      setErrorMessage(err.message || "Ocurrió un error al autenticar");
+      setErrorMessage(err?.message || "Error al autenticar");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleTikTokLogin = async () => {
-    try {
-      const res = await fetch("/api/auth/tiktok?mode=login");
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else if (data.redirect) {
-        window.location.href = data.redirect;
-      } else {
-        alert("Error: " + (data.error || "desconocido"));
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error de red");
     }
   };
 
@@ -198,7 +162,7 @@ export default function LoginPage() {
             className="w-full py-3 px-4 rounded-xl bg-black hover:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 text-white font-extrabold text-xs flex items-center justify-center gap-3 transition shadow-lg cursor-pointer"
           >
             <svg className="w-4 h-4 fill-current text-white" viewBox="0 0 24 24">
-              <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+              <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" />
             </svg>
             Continuar con TikTok
           </button>
@@ -244,11 +208,6 @@ export default function LoginPage() {
               placeholder="tu@correo.com"
               className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 rounded-xl px-4 py-3 text-xs text-neutral-900 dark:text-white focus:outline-none focus:border-purple-500 transition"
             />
-            {isRegister && (
-              <p className="mt-1 text-[10px] text-neutral-500 dark:text-neutral-400">
-                Tu nombre de usuario se generará automáticamente desde tu correo.
-              </p>
-            )}
           </div>
 
           <div>
@@ -258,7 +217,6 @@ export default function LoginPage() {
             <input
               type="password"
               required
-              minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -269,25 +227,24 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs tracking-wider uppercase transition shadow-lg shadow-purple-950/50 cursor-pointer disabled:opacity-50"
+            className="w-full py-3.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-xs uppercase tracking-wider transition shadow-lg shadow-purple-950/40 disabled:opacity-50 disabled:cursor-wait cursor-pointer"
           >
-            {loading ? "Procesando..." : isRegister ? "Crear Cuenta" : "Iniciar Sesión"}
+            {loading ? "..." : isRegister ? "Registrarse" : "Iniciar Sesión"}
           </button>
         </form>
 
-        <div className="mt-6 text-center pt-4 border-t border-neutral-200 dark:border-neutral-800">
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            {isRegister ? "¿Ya tienes una cuenta?" : "¿Aún no tienes cuenta?"}{" "}
-            <button
-              onClick={() => {
-                setIsRegister(!isRegister);
-                setErrorMessage("");
-              }}
-              className="text-purple-600 dark:text-purple-400 font-bold hover:underline ml-1 cursor-pointer"
-            >
-              {isRegister ? "Inicia Sesión" : "Regístrate gratis"}
-            </button>
-          </p>
+        <div className="mt-6 text-center text-xs text-neutral-500 dark:text-neutral-400">
+          {isRegister ? "¿Ya tienes cuenta?" : "¿Aún no tienes cuenta?"}{" "}
+          <button
+            type="button"
+            onClick={() => {
+              setIsRegister(!isRegister);
+              setErrorMessage("");
+            }}
+            className="text-purple-600 dark:text-purple-400 font-bold hover:underline"
+          >
+            {isRegister ? "Inicia sesión" : "Regístrate gratis"}
+          </button>
         </div>
       </div>
     </div>
