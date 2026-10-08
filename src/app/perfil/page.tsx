@@ -59,7 +59,9 @@ export default function ProfilePage() {
     const loadRealData = async () => {
       setIsLoading(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       setUserSession(user);
 
       let storedAvatar = "https://i.postimg.cc/0j0x4x7G/zerotwo.jpg";
@@ -85,17 +87,35 @@ export default function ProfilePage() {
           if (dbProfile.name) storedName = dbProfile.name;
           if (dbProfile.handle) storedHandle = dbProfile.handle;
           if (dbProfile.bio) storedBio = dbProfile.bio;
-          if (dbProfile.audio_source) storedAudioSource = dbProfile.audio_source as AudioSource;
+          if (dbProfile.audio_source)
+            storedAudioSource = dbProfile.audio_source as AudioSource;
           storedTiktokOpenId = dbProfile.tiktok_open_id || null;
           storedTiktokUsername = dbProfile.tiktok_username || null;
           storedEdits = Array.isArray(dbProfile.edits) ? dbProfile.edits : [];
         } else {
-          storedAvatar = user.user_metadata?.avatar_url || localStorage.getItem("user_avatar_url") || storedAvatar;
-          storedBanner = user.user_metadata?.banner_url || localStorage.getItem("user_banner_url") || storedBanner;
-          storedName = user.user_metadata?.full_name || localStorage.getItem("user_display_name") || storedName;
-          storedHandle = user.user_metadata?.username || localStorage.getItem("user_handle") || storedHandle;
-          storedBio = user.user_metadata?.bio || localStorage.getItem("user_bio") || storedBio;
-          storedAudioSource = (user.user_metadata?.audio_source || localStorage.getItem("user_audio_source")) as AudioSource || "none";
+          storedAvatar =
+            user.user_metadata?.avatar_url ||
+            localStorage.getItem("user_avatar_url") ||
+            storedAvatar;
+          storedBanner =
+            user.user_metadata?.banner_url ||
+            localStorage.getItem("user_banner_url") ||
+            storedBanner;
+          storedName =
+            user.user_metadata?.full_name ||
+            localStorage.getItem("user_display_name") ||
+            storedName;
+          storedHandle =
+            user.user_metadata?.username ||
+            localStorage.getItem("user_handle") ||
+            storedHandle;
+          storedBio =
+            user.user_metadata?.bio ||
+            localStorage.getItem("user_bio") ||
+            storedBio;
+          storedAudioSource =
+            ((user.user_metadata?.audio_source ||
+              localStorage.getItem("user_audio_source")) as AudioSource) || "none";
         }
       }
 
@@ -142,7 +162,6 @@ export default function ProfilePage() {
   }, []);
 
   const saveProfile = async () => {
-    // Parsear edits: una URL por línea, máx 12
     const editsArray = editEditsText
       .split("\n")
       .map((l) => l.trim())
@@ -233,8 +252,10 @@ export default function ProfilePage() {
   };
 
   const formatNumber = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1).replace(".", ",")} M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1).replace(".", ",")} mil`;
+    if (num >= 1000000)
+      return `${(num / 1000000).toFixed(1).replace(".", ",")} M`;
+    if (num >= 1000)
+      return `${(num / 1000).toFixed(1).replace(".", ",")} mil`;
     return num.toString();
   };
 
@@ -258,8 +279,10 @@ export default function ProfilePage() {
     }
   };
 
-  const bannerHasMedia = isVideoUrl(profile.bannerUrl) || isTikTokUrl(profile.bannerUrl);
-  const avatarHasMedia = isVideoUrl(profile.avatarUrl) || isTikTokUrl(profile.avatarUrl);
+  const bannerHasMedia =
+    isVideoUrl(profile.bannerUrl) || isTikTokUrl(profile.bannerUrl);
+  const avatarHasMedia =
+    isVideoUrl(profile.avatarUrl) || isTikTokUrl(profile.avatarUrl);
 
   if (isLoading) {
     return (
@@ -283,7 +306,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-black text-neutral-900 dark:text-white pb-16 transition-colors">
+    <div className="min-h-screen bg-neutral-50 dark:bg-black text-neutral-900 dark:text-white transition-colors">
+      {/* Banner */}
       <div className="relative w-full h-64 sm:h-80 md:h-96 overflow-hidden bg-neutral-200 dark:bg-black group">
         <MediaDisplay
           src={profile.bannerUrl}
@@ -302,12 +326,24 @@ export default function ProfilePage() {
             {profile.audioSource === "banner" ? (
               <>
                 <span className="w-2 h-2 rounded-full bg-pink-500 animate-ping" />
-                <span className="text-pink-400 font-bold">Silenciar Audio Banner</span>
+                <span className="text-pink-400 font-bold">
+                  Silenciar Audio Banner
+                </span>
               </>
             ) : (
               <>
-                <svg className="w-3.5 h-3.5 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                <svg
+                  className="w-3.5 h-3.5 text-neutral-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                  />
                 </svg>
                 <span className="text-neutral-200">Activar Audio Banner</span>
               </>
@@ -316,13 +352,14 @@ export default function ProfilePage() {
         )}
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 -mt-20 sm:-mt-24 relative z-20">
+      {/* Contenido con padding-bottom grande para no tocar el footer */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 -mt-20 sm:-mt-24 relative z-20 pb-32">
         <div className="flex flex-col sm:flex-row items-start gap-6 pb-6">
           <div className="relative flex-shrink-0 group">
             <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden border-4 border-neutral-50 dark:border-black bg-neutral-200 dark:bg-neutral-800 shadow-2xl relative">
               <MediaDisplay
                 src={profile.avatarUrl}
-                alt={profile.name}
+                alt={profile.name || "Avatar"}
                 muted={profile.audioSource !== "avatar"}
                 className="w-full h-full object-cover"
               />
@@ -331,7 +368,11 @@ export default function ProfilePage() {
             {avatarHasMedia && (
               <button
                 onClick={() => setQuickAudioSource("avatar")}
-                title={profile.audioSource === "avatar" ? "Silenciar audio del avatar" : "Activar audio del avatar"}
+                title={
+                  profile.audioSource === "avatar"
+                    ? "Silenciar audio del avatar"
+                    : "Activar audio del avatar"
+                }
                 className="absolute bottom-1 right-1 p-2 rounded-full bg-black/80 text-white text-xs hover:scale-110 transition shadow-lg cursor-pointer border border-neutral-700"
               >
                 {profile.audioSource === "avatar" ? "🔊" : "🔇"}
@@ -356,7 +397,11 @@ export default function ProfilePage() {
                 </span>
               )}
               <span className="px-2 py-0.5 rounded-md bg-purple-950/80 border border-purple-500/40 text-[10px] tracking-widest font-black uppercase text-white shadow-sm flex items-center">
-                SHOR<span className="text-purple-500 font-black text-xs mx-[0.5px]">T</span>S
+                SHOR
+                <span className="text-purple-500 font-black text-xs mx-[0.5px]">
+                  T
+                </span>
+                S
               </span>
             </div>
 
@@ -365,23 +410,29 @@ export default function ProfilePage() {
                 <span className="font-extrabold text-neutral-900 dark:text-white mr-1.5">
                   {formatNumber(profile.followingCount)}
                 </span>
-                <span className="text-neutral-500 dark:text-neutral-400 font-medium">Siguiendo</span>
+                <span className="text-neutral-500 dark:text-neutral-400 font-medium">
+                  Siguiendo
+                </span>
               </div>
               <div>
                 <span className="font-extrabold text-neutral-900 dark:text-white mr-1.5">
                   {formatNumber(profile.followersCount)}
                 </span>
-                <span className="text-neutral-500 dark:text-neutral-400 font-medium">Seguidores</span>
+                <span className="text-neutral-500 dark:text-neutral-400 font-medium">
+                  Seguidores
+                </span>
               </div>
               <div>
                 <span className="font-extrabold text-neutral-900 dark:text-white mr-1.5">
                   {formatNumber(profile.likesCount)}
                 </span>
-                <span className="text-neutral-500 dark:text-neutral-400 font-medium">Me gusta</span>
+                <span className="text-neutral-500 dark:text-neutral-400 font-medium">
+                  Me gusta
+                </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex items-center gap-3 pt-1 flex-wrap">
               <button
                 onClick={() => {
                   setEditAvatar(profile.avatarUrl);
@@ -431,21 +482,23 @@ export default function ProfilePage() {
 
         {/* Collage de edits */}
         {profile.edits && profile.edits.length > 0 && (
-          <div className="mt-10 mb-4">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 mb-3">
-              Edits
+          <div className="mt-12 mb-4">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-neutral-500 dark:text-neutral-400 mb-4">
+              Edits · {profile.edits.length}
             </h2>
             <EditGrid urls={profile.edits} />
           </div>
         )}
       </div>
 
+      {/* Modal de edición */}
       {isEditing && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl text-neutral-900 dark:text-white">
             <div className="p-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
               <h2 className="text-sm font-bold">
-                Editar Perfil para SHOR<span className="text-purple-500 font-black">T</span>S
+                Editar Perfil para SHOR
+                <span className="text-purple-500 font-black">T</span>S
               </h2>
               <button
                 onClick={() => setIsEditing(false)}
@@ -457,7 +510,9 @@ export default function ProfilePage() {
 
             <div className="p-4 space-y-4 max-h-[75vh] overflow-y-auto text-xs">
               <div>
-                <label className="block text-neutral-700 dark:text-neutral-300 font-bold mb-1">Nombre</label>
+                <label className="block text-neutral-700 dark:text-neutral-300 font-bold mb-1">
+                  Nombre
+                </label>
                 <input
                   type="text"
                   value={editName}
@@ -467,7 +522,9 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-neutral-700 dark:text-neutral-300 font-bold mb-1">Usuario</label>
+                <label className="block text-neutral-700 dark:text-neutral-300 font-bold mb-1">
+                  Usuario
+                </label>
                 <input
                   type="text"
                   value={editHandle}
@@ -477,7 +534,9 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-neutral-700 dark:text-neutral-300 font-bold mb-1">Biografía</label>
+                <label className="block text-neutral-700 dark:text-neutral-300 font-bold mb-1">
+                  Biografía
+                </label>
                 <textarea
                   value={editBio}
                   onChange={(e) => setEditBio(e.target.value)}
@@ -518,7 +577,9 @@ export default function ProfilePage() {
                   value={editEditsText}
                   onChange={(e) => setEditEditsText(e.target.value)}
                   rows={5}
-                  placeholder={"https://www.tiktok.com/@user/video/123...\nhttps://www.tiktok.com/@user/video/456..."}
+                  placeholder={
+                    "https://www.tiktok.com/@user/video/123...\nhttps://www.tiktok.com/@user/video/456..."
+                  }
                   className="w-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg p-2.5 font-mono text-[11px]"
                 />
                 <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-1">
