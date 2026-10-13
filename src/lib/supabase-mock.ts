@@ -310,6 +310,108 @@ export const mockDbStore: Record<string, any[]> = {
   friend_requests: [],
   follows: [],
   likes: [],
+  watchlist: [
+    {
+      id: "wl-1",
+      user_id: DEFAULT_USER.id,
+      anime_id: "178789",
+      estado: "viendo",
+      ultimo_episodio: 3,
+      updated_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+    },
+    {
+      id: "wl-2",
+      user_id: DEFAULT_USER.id,
+      anime_id: "21",
+      estado: "viendo",
+      ultimo_episodio: 2,
+      updated_at: new Date(Date.now() - 3600000 * 5).toISOString(),
+    },
+    {
+      id: "wl-3",
+      user_id: DEFAULT_USER.id,
+      anime_id: "189046",
+      estado: "favorito",
+      ultimo_episodio: 2,
+      updated_at: new Date(Date.now() - 3600000 * 24).toISOString(),
+    },
+  ],
+  comentarios: [
+    {
+      id: "c-1",
+      anime_id: "178789",
+      episodio_id: "ep-178789-1",
+      user_id: DEFAULT_USER.id,
+      user_name: "Aaron Reyes",
+      user_avatar: "https://i.postimg.cc/0j0x4x7G/zerotwo.jpg",
+      contenido: "¡Qué inicio de temporada tan increíble! La animación de Studio Bind sigue estando a otro nivel.",
+      calificacion: 5,
+      likes: 18,
+      dislikes: 0,
+      es_spoiler: false,
+      created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+    },
+    {
+      id: "c-2",
+      anime_id: "178789",
+      episodio_id: null,
+      user_id: "usr_senpai_99",
+      user_name: "KuroNeko",
+      user_avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=KuroNeko",
+      contenido: "Una obra maestra de fantasía e isekai. El desarrollo del personaje de Rudeus es de los mejores que he visto.",
+      calificacion: 5,
+      likes: 29,
+      dislikes: 1,
+      es_spoiler: false,
+      created_at: new Date(Date.now() - 86400000 * 4).toISOString(),
+    },
+    {
+      id: "c-3",
+      anime_id: "21",
+      episodio_id: null,
+      user_id: "usr_nakama_01",
+      user_name: "MugiwaraFan",
+      user_avatar: "https://api.dicebear.com/7.x/bottts/svg?seed=Mugiwara",
+      contenido: "¡El arco de Egghead es cine puro! Cada semana los episodios se superan.",
+      calificacion: 5,
+      likes: 45,
+      dislikes: 2,
+      es_spoiler: false,
+      created_at: new Date(Date.now() - 86400000 * 1).toISOString(),
+    },
+  ],
+  peticiones: [
+    {
+      id: "pet-1",
+      titulo: "Sousou no Frieren Season 2",
+      url: "https://jkanime.net/sousou-no-frieren/",
+      user_id: DEFAULT_USER.id,
+      user_name: "Aaron Reyes",
+      estado: "en_progreso",
+      votos: 64,
+      created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+    },
+    {
+      id: "pet-2",
+      titulo: "Chainsaw Man: Reze Arc",
+      url: "https://jkanime.net/chainsaw-man/",
+      user_id: "usr_denji_4",
+      user_name: "PochitaLover",
+      estado: "pendiente",
+      votos: 52,
+      created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+    },
+    {
+      id: "pet-3",
+      titulo: "Solo Leveling Season 2: Arise from the Shadow",
+      url: "https://jkanime.net/ore-dake-level-up-na-ken/",
+      user_id: "usr_hunter_x",
+      user_name: "ShadowMonarch",
+      estado: "completada",
+      votos: 89,
+      created_at: new Date(Date.now() - 86400000 * 7).toISOString(),
+    },
+  ],
 };
 
 export class MockQueryBuilder {
@@ -469,6 +571,10 @@ export class MockQueryBuilder {
         idx = store.findIndex(
           (x) => x.episodio_id === item.episodio_id && x.user_id === item.user_id
         );
+      } else if (item.anime_id && item.user_id) {
+        idx = store.findIndex(
+          (x) => x.anime_id === item.anime_id && x.user_id === item.user_id
+        );
       } else if (item.episodio_id) {
         idx = store.findIndex((x) => x.episodio_id === item.episodio_id);
       } else if (item.user_id && this.table !== "progreso_episodios") {
@@ -482,9 +588,17 @@ export class MockQueryBuilder {
       }
     });
 
-    if (typeof window !== "undefined" && this.table === "progreso_episodios") {
+    if (typeof window !== "undefined") {
       try {
-        localStorage.setItem("tenko_db_progreso_episodios", JSON.stringify(store));
+        if (this.table === "progreso_episodios") {
+          localStorage.setItem("tenko_db_progreso_episodios", JSON.stringify(store));
+        } else if (this.table === "watchlist") {
+          localStorage.setItem("tenko_db_watchlist", JSON.stringify(store));
+        } else if (this.table === "comentarios") {
+          localStorage.setItem("tenko_db_comentarios", JSON.stringify(store));
+        } else if (this.table === "peticiones") {
+          localStorage.setItem("tenko_db_peticiones", JSON.stringify(store));
+        }
       } catch {}
     }
 

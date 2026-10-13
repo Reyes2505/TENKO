@@ -84,5 +84,52 @@ export interface CustomList {
   animeIds: string[];
 }
 
+export type WatchlistStatus = 'viendo' | 'visto' | 'por_ver' | 'favorito';
+
+export interface WatchlistItem {
+  id: string;
+  user_id: string;
+  anime_id: string;
+  estado: WatchlistStatus;
+  ultimo_episodio?: number;
+  anime?: Anime;
+  updated_at: string;
+}
+
+export interface Comentario {
+  id: string;
+  anime_id: string;
+  episodio_id?: string | null;
+  user_id: string;
+  user_name: string;
+  user_avatar: string;
+  contenido: string;
+  calificacion?: number;
+  likes: number;
+  dislikes: number;
+  es_spoiler?: boolean;
+  created_at: string;
+}
+
+export interface Peticion {
+  id: string;
+  titulo: string;
+  url?: string;
+  user_id: string;
+  user_name: string;
+  estado: 'pendiente' | 'en_progreso' | 'completada' | 'rechazada';
+  votos: number;
+  votado_por_usuario?: boolean;
+  created_at: string;
+}
+
+export interface Valoracion {
+  id: string;
+  anime_id: string;
+  user_id: string;
+  puntuacion: number;
+  created_at: string;
+}
+
 export type FilterSeason = 'all' | string;
 export type SortOrder = 'asc' | 'desc';

@@ -3,8 +3,18 @@
 import { useEffect, useState, use, useMemo } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { Anime, Episodio, ProgresoEpisodio } from '@/types/database';
+import { Anime, Episodio, ProgresoEpisodio, Comentario, WatchlistStatus } from '@/types/database';
 import { fetchWatchProgressForAnime, formatDurationSeconds } from '@/lib/watch-progress';
+import {
+  getAnimeWatchlistStatusAction,
+  addToWatchlistAction,
+  removeFromWatchlistAction,
+} from '@/actions/watchlist';
+import {
+  getComentariosAction,
+  agregarComentarioAction,
+  reaccionarComentarioAction,
+} from '@/actions/comentarios';
 
 export default function AnimeDetailPage({
   params,
@@ -16,6 +26,22 @@ export default function AnimeDetailPage({
   const [episodios, setEpisodios] = useState<Episodio[]>([]);
   const [progresoMap, setProgresoMap] = useState<Record<string, ProgresoEpisodio>>({});
   const [loading, setLoading] = useState(true);
+
+  // Estado de Mi Lista
+  const [watchlistStatus, setWatchlistStatus] = useState<WatchlistStatus | null>(null);
+  const [watchlistDropdownOpen, setWatchlistDropdownOpen] = useState(false);
+  const [watchlistUpdating, setWatchlistUpdating] = useState(false);
+
+  // Estado de Comentarios y Reseñas
+  const [comentarios, setComentarios] = useState<Comentario[]>([]);
+  const [nuevoComentario, setNuevoComentario] = useState('');
+  const [calificacion, setCalificacion] = useState(5);
+  const [esSpoiler, setEsSpoiler] = useState(false);
+  const [enviandoComentario, setEnviandoComentario] = useState(false);
+  const [comentarioExito, setComentarioExito] = useState(false);
+
+  // Animes Relacionados
+  const [animesRelacionados, setAnimesRelacionados] = useState<Anime[]>([]);
 
   useEffect(() => {
     async function loadAnimeDetail() {
@@ -53,6 +79,26 @@ export default function AnimeDetailPage({
             const progress = await fetchWatchProgressForAnime(animeData.id, epIds);
             setProgresoMap(progress);
           }
+
+          // Cargar estado de watchlist
+          const status = await getAnimeWatchlistStatusAction(animeData.id);
+          setWatchlistStatus(status);
+
+          // Cargar comentarios
+          const commsRes = await getComentariosAction(animeData.id);
+          if (commsRes.success) {
+            setComentarios(commsRes.data);
+          }
+
+          // Cargar animes relacionados
+          const { data: related } = await supabase
+            .from('animes')
+            .select('*')
+            .neq('id', animeData.id)
+            .limit(6);
+          if (related) {
+            setAnimesRelacionados(related as Anime[]);
+          }
         }
       } catch {
         setAnime(null);
@@ -60,25 +106,24 @@ export default function AnimeDetailPage({
         setLoading(false);
       }
     }
-    loadAnimeDetail();
-  }, [id]);
 
-  // Actualizar el progreso cuando el usuario regrese a la pestaña o tras cambios
-  useEffect(() => {
-    const handleProgressUpdate = () => {
+    loadAnimeDetail();
+
+    // Re-sincronizar cuando la ventana recibe foco
+    const handleFocus = () => {
       if (anime && episodios.length > 0) {
-        fetchWatchProgressForAnime(anime.id, episodios.map((e) => e.id)).then(setProgresoMap);
+        const epIds = episodios.map((e) => e.id);
+        fetchWatchProgressForAnime(anime.id, epIds).then((progress) => {
+          setProgresoMap(progress);
+        });
       }
     };
 
-    window.addEventListener('tenko-watch-progress-update', handleProgressUpdate);
-    window.addEventListener('focus', handleProgressUpdate);
-
+    window.addEventListener('focus', handleFocus);
     return () => {
-      window.removeEventListener('tenko-watch-progress-update', handleProgressUpdate);
-      window.removeEventListener('focus', handleProgressUpdate);
+      window.removeEventListener('focus', handleFocus);
     };
-  }, [anime, episodios]);
+  }, [id]);
 
   // Contar episodios vistos o completados
   const statsVisualizacion = useMemo(() => {
@@ -120,6 +165,56 @@ export default function AnimeDetailPage({
     // 3. Si no hay nada o todos completados, primer episodio
     return { ep: episodios[0], type: 'start' as const, percent: 0 };
   }, [episodios, progresoMap]);
+
+  // Manejo de Mi Lista
+  const handleSetWatchlist = async (estado: WatchlistStatus | 'remover') => {
+    if (!anime) return;
+    setWatchlistUpdating(true);
+    setWatchlistDropdownOpen(false);
+
+    if (estado === 'remover') {
+      await removeFromWatchlistAction(anime.id);
+      setWatchlistStatus(null);
+    } else {
+      await addToWatchlistAction(anime.id, estado);
+      setWatchlistStatus(estado);
+    }
+    setWatchlistUpdating(false);
+  };
+
+  // Manejo de Envío de Comentario
+  const handleSubmitComentario = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!anime || !nuevoComentario.trim() || enviandoComentario) return;
+
+    setEnviandoComentario(true);
+    const res = await agregarComentarioAction({
+      animeId: anime.id,
+      contenido: nuevoComentario,
+      calificacion,
+      es_spoiler: esSpoiler,
+    });
+
+    if (res.success && res.data) {
+      setComentarios([res.data, ...comentarios]);
+      setNuevoComentario('');
+      setComentarioExito(true);
+      setTimeout(() => setComentarioExito(false), 3000);
+    }
+    setEnviandoComentario(false);
+  };
+
+  // Manejo de Reacción a Comentario
+  const handleReaccionar = async (comentarioId: string, tipo: 'like' | 'dislike') => {
+    const res = await reaccionarComentarioAction(comentarioId, tipo);
+    if (res.success) {
+      setComentarios((prev) =>
+        prev.map((c) =>
+          c.id === comentarioId ? { ...c, likes: res.likes, dislikes: res.dislikes } : c
+        )
+      );
+    }
+  };
 
   if (loading) {
     return (
@@ -210,6 +305,21 @@ export default function AnimeDetailPage({
                 {anime.titulo}
               </h1>
 
+              {/* Géneros interactivos */}
+              {anime.generos && anime.generos.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {anime.generos.map((gen) => (
+                    <Link
+                      key={gen}
+                      href={`/buscar?genero=${encodeURIComponent(gen)}`}
+                      className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[11px] font-mono text-[var(--tenko-text-secondary)] hover:border-[#6c00f4] hover:text-[#00f0ff] transition-colors"
+                    >
+                      #{gen}
+                    </Link>
+                  ))}
+                </div>
+              )}
+
               <p className="text-xs sm:text-sm text-[var(--tenko-text-secondary)] max-w-2xl line-clamp-3 leading-relaxed">
                 {anime.sinopsis || 'Sin descripción disponible.'}
               </p>
@@ -239,9 +349,103 @@ export default function AnimeDetailPage({
                   </button>
                 )}
 
-                <button className="inline-flex items-center gap-2 rounded-xl bg-[var(--tenko-bg-card)] border border-[var(--tenko-border)] px-5 py-3 text-xs font-semibold text-[var(--tenko-text-primary)] hover:bg-[var(--tenko-border)] transition active:scale-95 shadow-sm">
-                  + MI LISTA
-                </button>
+                {/* Apartado Interactivo: Selector de Estado de Mi Lista */}
+                <div className="relative">
+                  <button
+                    onClick={() => setWatchlistDropdownOpen(!watchlistDropdownOpen)}
+                    disabled={watchlistUpdating}
+                    className={`inline-flex items-center gap-2 rounded-xl border px-5 py-3 text-xs font-semibold transition active:scale-95 shadow-sm ${
+                      watchlistStatus
+                        ? 'bg-[#6c00f4]/15 border-[#6c00f4] text-white font-bold'
+                        : 'bg-[var(--tenko-bg-card)] border-[var(--tenko-border)] text-[var(--tenko-text-primary)] hover:bg-[var(--tenko-border)]'
+                    }`}
+                  >
+                    {watchlistUpdating ? (
+                      <span className="inline-block w-3 h-3 rounded-full border-2 border-t-[#6c00f4] border-transparent animate-spin" />
+                    ) : watchlistStatus === 'viendo' ? (
+                      <>
+                        <span className="w-2 h-2 rounded-full bg-blue-400" />
+                        VIENDO
+                      </>
+                    ) : watchlistStatus === 'favorito' ? (
+                      <>
+                        <span className="text-amber-400">★</span>
+                        FAVORITO
+                      </>
+                    ) : watchlistStatus === 'visto' ? (
+                      <>
+                        <span className="text-emerald-400">✓</span>
+                        COMPLETADO
+                      </>
+                    ) : watchlistStatus === 'por_ver' ? (
+                      <>
+                        <span className="w-2 h-2 rounded-full bg-purple-400" />
+                        POR VER
+                      </>
+                    ) : (
+                      <>+ MI LISTA</>
+                    )}
+                    <svg className="w-3 h-3 ml-1 opacity-70" viewBox="0 0 20 20" fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Menú Dropdown de Estados */}
+                  {watchlistDropdownOpen && (
+                    <div className="absolute left-0 mt-2 w-48 rounded-xl border border-[var(--tenko-border)] bg-[var(--tenko-bg-card)] shadow-xl z-30 p-1.5 space-y-1 backdrop-blur-md">
+                      <button
+                        onClick={() => handleSetWatchlist('viendo')}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono transition flex items-center justify-between ${
+                          watchlistStatus === 'viendo' ? 'bg-[#6c00f4] text-white font-bold' : 'hover:bg-white/10 text-[var(--tenko-text-primary)]'
+                        }`}
+                      >
+                        <span>▶ Viendo</span>
+                        {watchlistStatus === 'viendo' && <span>✓</span>}
+                      </button>
+                      <button
+                        onClick={() => handleSetWatchlist('por_ver')}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono transition flex items-center justify-between ${
+                          watchlistStatus === 'por_ver' ? 'bg-[#6c00f4] text-white font-bold' : 'hover:bg-white/10 text-[var(--tenko-text-primary)]'
+                        }`}
+                      >
+                        <span>⏳ Por Ver</span>
+                        {watchlistStatus === 'por_ver' && <span>✓</span>}
+                      </button>
+                      <button
+                        onClick={() => handleSetWatchlist('visto')}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono transition flex items-center justify-between ${
+                          watchlistStatus === 'visto' ? 'bg-[#6c00f4] text-white font-bold' : 'hover:bg-white/10 text-[var(--tenko-text-primary)]'
+                        }`}
+                      >
+                        <span>✓ Completado</span>
+                        {watchlistStatus === 'visto' && <span>✓</span>}
+                      </button>
+                      <button
+                        onClick={() => handleSetWatchlist('favorito')}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-mono transition flex items-center justify-between ${
+                          watchlistStatus === 'favorito' ? 'bg-[#6c00f4] text-white font-bold' : 'hover:bg-white/10 text-[var(--tenko-text-primary)]'
+                        }`}
+                      >
+                        <span>★ Favorito</span>
+                        {watchlistStatus === 'favorito' && <span>✓</span>}
+                      </button>
+                      {watchlistStatus && (
+                        <div className="border-t border-[var(--tenko-border)] pt-1 mt-1">
+                          <button
+                            onClick={() => handleSetWatchlist('remover')}
+                            className="w-full text-left px-3 py-2 rounded-lg text-xs font-mono text-red-400 hover:bg-red-500/10 transition"
+                          >
+                            ✕ Quitar de mi lista
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -401,6 +605,205 @@ export default function AnimeDetailPage({
           </div>
         )}
       </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+          APARTADO: RESEÑAS Y COMENTARIOS DE LA COMUNIDAD
+      ═══════════════════════════════════════════════════════════ */}
+      <section className="mx-auto max-w-7xl px-6 lg:px-8 py-10 space-y-8 border-t border-[var(--tenko-border)]">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span className="font-mono text-[10px] tracking-[0.3em] text-[#6c00f4] font-bold block mb-1">
+              // COMUNIDAD TENKO
+            </span>
+            <h2 className="font-[family-name:var(--font-unbounded)] text-xl font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
+              Reseñas y Comentarios ({comentarios.length})
+            </h2>
+          </div>
+        </div>
+
+        {/* Formulario para publicar comentario o reseña */}
+        <form
+          onSubmit={handleSubmitComentario}
+          className="rounded-2xl border border-[var(--tenko-border)] bg-[var(--tenko-bg-card)] p-5 space-y-4"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono text-[var(--tenko-text-secondary)]">Tu valoración:</span>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setCalificacion(star)}
+                    className={`text-lg transition-transform hover:scale-125 ${
+                      star <= calificacion ? 'text-amber-400' : 'text-gray-600'
+                    }`}
+                  >
+                    ★
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-xs font-mono text-[var(--tenko-text-secondary)] cursor-pointer">
+              <input
+                type="checkbox"
+                checked={esSpoiler}
+                onChange={(e) => setEsSpoiler(e.target.checked)}
+                className="rounded border-[var(--tenko-border)] bg-black/40 text-[#6c00f4] focus:ring-[#6c00f4]"
+              />
+              <span>Contiene Spoilers</span>
+            </label>
+          </div>
+
+          <textarea
+            value={nuevoComentario}
+            onChange={(e) => setNuevoComentario(e.target.value)}
+            rows={3}
+            placeholder="¿Qué te pareció este anime? Comparte tu opinión con la comunidad..."
+            className="w-full rounded-xl border border-[var(--tenko-border)] bg-black/30 p-3 text-xs text-[var(--tenko-text-primary)] placeholder-white/30 outline-none focus:border-[#6c00f4] resize-none"
+          />
+
+          <div className="flex items-center justify-between">
+            {comentarioExito && (
+              <span className="text-xs font-mono text-emerald-400">✓ ¡Comentario publicado con éxito!</span>
+            )}
+            <div className="ml-auto">
+              <button
+                type="submit"
+                disabled={enviandoComentario || !nuevoComentario.trim()}
+                className="rounded-xl bg-[#6c00f4] px-5 py-2.5 font-mono text-xs font-bold text-white hover:bg-[#5800cc] transition disabled:opacity-40"
+              >
+                {enviandoComentario ? 'PUBLICANDO...' : 'PUBLICAR COMENTARIO'}
+              </button>
+            </div>
+          </div>
+        </form>
+
+        {/* Lista de Comentarios */}
+        <div className="space-y-4">
+          {comentarios.length > 0 ? (
+            comentarios.map((comm) => (
+              <div
+                key={comm.id}
+                className="rounded-xl border border-[var(--tenko-border)] bg-[var(--tenko-bg-card)] p-4 space-y-3"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={comm.user_avatar || 'https://i.postimg.cc/0j0x4x7G/zerotwo.jpg'}
+                      alt={comm.user_name}
+                      className="w-8 h-8 rounded-full object-cover border border-[#6c00f4]/40"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-[var(--tenko-text-primary)] block">
+                        {comm.user_name}
+                      </span>
+                      <span className="text-[10px] font-mono text-[var(--tenko-text-secondary)]">
+                        {new Date(comm.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  {comm.calificacion && (
+                    <div className="flex items-center text-amber-400 text-xs">
+                      {'★'.repeat(comm.calificacion)}
+                    </div>
+                  )}
+                </div>
+
+                {comm.es_spoiler ? (
+                  <details className="group">
+                    <summary className="cursor-pointer text-xs font-mono text-amber-400/80 hover:text-amber-300">
+                      ⚠️ Este comentario contiene spoilers. Clic para ver.
+                    </summary>
+                    <p className="mt-2 text-xs text-[var(--tenko-text-secondary)] leading-relaxed pl-2 border-l border-amber-500/30">
+                      {comm.contenido}
+                    </p>
+                  </details>
+                ) : (
+                  <p className="text-xs text-[var(--tenko-text-secondary)] leading-relaxed">
+                    {comm.contenido}
+                  </p>
+                )}
+
+                <div className="flex items-center gap-4 pt-1 text-[11px] font-mono text-[var(--tenko-text-secondary)]">
+                  <button
+                    onClick={() => handleReaccionar(comm.id, 'like')}
+                    className="flex items-center gap-1.5 hover:text-emerald-400 transition"
+                  >
+                    <span>▲</span>
+                    <span>{comm.likes || 0}</span>
+                  </button>
+                  <button
+                    onClick={() => handleReaccionar(comm.id, 'dislike')}
+                    className="flex items-center gap-1.5 hover:text-red-400 transition"
+                  >
+                    <span>▼</span>
+                    <span>{comm.dislikes || 0}</span>
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-10 border border-[var(--tenko-border)] rounded-xl bg-white/[0.01]">
+              <p className="text-xs font-mono text-[var(--tenko-text-secondary)]">
+                Aún no hay comentarios para este anime. ¡Sé el primero en opinar!
+              </p>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════════
+          APARTADO: ANIMES RELACIONADOS Y RECOMENDADOS
+      ═══════════════════════════════════════════════════════════ */}
+      {animesRelacionados.length > 0 && (
+        <section className="mx-auto max-w-7xl px-6 lg:px-8 py-10 space-y-6 border-t border-[var(--tenko-border)] pb-20">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="font-mono text-[10px] tracking-[0.3em] text-[#6c00f4] font-bold block mb-1">
+                // DESCUBRE MÁS
+              </span>
+              <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
+                Títulos Relacionados
+              </h2>
+            </div>
+            <Link
+              href="/buscar"
+              className="text-xs font-mono text-[#6c00f4] hover:underline"
+            >
+              Ver catálogo completo →
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+            {animesRelacionados.map((rel) => (
+              <Link
+                key={rel.id}
+                href={`/anime/${rel.id}`}
+                className="group relative flex flex-col overflow-hidden rounded-xl border border-[var(--tenko-border)] bg-[var(--tenko-bg-card)] hover:border-[#6c00f4] transition"
+              >
+                <div className="aspect-[3/4] w-full overflow-hidden bg-black/40">
+                  <img
+                    src={rel.portada_url}
+                    alt={rel.titulo}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+                <div className="p-2.5">
+                  <h3 className="text-xs font-bold truncate group-hover:text-[#6c00f4] transition">
+                    {rel.titulo}
+                  </h3>
+                  <span className="text-[10px] font-mono text-[var(--tenko-text-secondary)] uppercase block mt-1">
+                    {rel.estado_emision || 'EN EMISIÓN'}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 }
