@@ -15,6 +15,7 @@ import {
   agregarComentarioAction,
   reaccionarComentarioAction,
 } from '@/actions/comentarios';
+import { getAnimeWithFallback, getFallbackCatalog } from '@/lib/catalog-fallback';
 
 export default function AnimeDetailPage({
   params,
@@ -47,60 +48,86 @@ export default function AnimeDetailPage({
     async function loadAnimeDetail() {
       setLoading(true);
       try {
-        const { data: animeData } = await supabase
-          .from('animes')
-          .select('*')
-          .eq('id', id)
-          .single();
+        let currentAnime: Anime | null = null;
+        let currentEpisodios: Episodio[] = [];
 
-        if (animeData) {
-          setAnime(animeData);
-
-          let { data: epsData } = await supabase
-            .from('episodios')
+        // 1. Intentar consultar en Supabase
+        try {
+          const { data: animeData } = await supabase
+            .from('animes')
             .select('*')
-            .eq('anime_id', animeData.id)
-            .order('numero', { ascending: true });
+            .eq('id', id)
+            .single();
 
-          if (!epsData || epsData.length === 0) {
-            const { data: fallbackEps } = await supabase
+          if (animeData) {
+            currentAnime = animeData as Anime;
+
+            const { data: epsData } = await supabase
               .from('episodios')
               .select('*')
-              .eq('anime_id', id)
+              .eq('anime_id', animeData.id)
               .order('numero', { ascending: true });
-            epsData = fallbackEps;
+
+            if (epsData && epsData.length > 0) {
+              currentEpisodios = epsData as Episodio[];
+            }
           }
+        } catch {
+          // Continuar con resolución de catálogo / AniList
+        }
 
-          if (epsData && epsData.length > 0) {
-            setEpisodios(epsData);
+        // 2. Si no se encontró en Supabase, resolver por catálogo local o API de AniList
+        if (!currentAnime) {
+          const fallback = await getAnimeWithFallback(id);
+          if (fallback.anime) {
+            currentAnime = fallback.anime;
+            currentEpisodios = fallback.episodios;
+          }
+        }
 
-            // Cargar tiempo de visualización registrado en la base de datos
-            const epIds = epsData.map((e: Episodio) => e.id);
-            const progress = await fetchWatchProgressForAnime(animeData.id, epIds);
+        if (currentAnime) {
+          setAnime(currentAnime);
+          setEpisodios(currentEpisodios);
+
+          // Cargar tiempo de visualización registrado en la base de datos
+          if (currentEpisodios.length > 0) {
+            const epIds = currentEpisodios.map((e: Episodio) => e.id);
+            const progress = await fetchWatchProgressForAnime(currentAnime.id, epIds);
             setProgresoMap(progress);
           }
 
           // Cargar estado de watchlist
-          const status = await getAnimeWatchlistStatusAction(animeData.id);
+          const status = await getAnimeWatchlistStatusAction(currentAnime.id);
           setWatchlistStatus(status);
 
           // Cargar comentarios
-          const commsRes = await getComentariosAction(animeData.id);
-          if (commsRes.success) {
+          const commsRes = await getComentariosAction(currentAnime.id);
+          if (commsRes.success && commsRes.data) {
             setComentarios(commsRes.data);
           }
 
           // Cargar animes relacionados
-          const { data: related } = await supabase
-            .from('animes')
-            .select('*')
-            .neq('id', animeData.id)
-            .limit(6);
-          if (related) {
-            setAnimesRelacionados(related as Anime[]);
+          try {
+            const { data: related } = await supabase
+              .from('animes')
+              .select('*')
+              .neq('id', currentAnime.id)
+              .limit(6);
+            if (related && related.length > 0) {
+              setAnimesRelacionados(related as Anime[]);
+            } else {
+              const allFallback = getFallbackCatalog();
+              setAnimesRelacionados(allFallback.filter((a) => a.id !== currentAnime?.id).slice(0, 6));
+            }
+          } catch {
+            const allFallback = getFallbackCatalog();
+            setAnimesRelacionados(allFallback.filter((a) => a.id !== currentAnime?.id).slice(0, 6));
           }
+        } else {
+          setAnime(null);
         }
-      } catch {
+      } catch (err) {
+        console.error('Error cargando anime:', err);
         setAnime(null);
       } finally {
         setLoading(false);

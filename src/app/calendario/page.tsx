@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { Anime } from '@/types/database';
+import { getFallbackCatalog } from '@/lib/catalog-fallback';
 
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 const CACHE_KEY = 'anilist_calendario_cache';
@@ -36,9 +38,14 @@ export default function CalendarioPage() {
 
       try {
         const { data: animesBD } = await supabase.from('animes').select('*');
-        if (animesBD) setAnimesEnBD(animesBD);
+        if (animesBD && animesBD.length > 0) {
+          setAnimesEnBD(animesBD);
+        } else {
+          setAnimesEnBD(getFallbackCatalog());
+        }
       } catch (err) {
         console.error('Error cargando Supabase:', err);
+        setAnimesEnBD(getFallbackCatalog());
       }
 
       const cache = localStorage.getItem(CACHE_KEY);
@@ -101,7 +108,12 @@ export default function CalendarioPage() {
     .filter(a => a.dia === diaSeleccionado)
     .sort((a, b) => a.hora.localeCompare(b.hora));
 
-  const encontrarEnBD = (tituloAniList: string) => {
+  const encontrarEnBD = (tituloAniList: string, animeId?: any) => {
+    if (animeId) {
+      const porId = animesEnBD.find(a => String(a.id) === String(animeId));
+      if (porId) return porId;
+    }
+
     const tituloNormalizado = tituloAniList.toLowerCase().replace(/[^a-z0-9\s]/g, '');
     const exacta = animesEnBD.find(a => {
       const tituloBD = a.titulo.toLowerCase().replace(/[^a-z0-9\s]/g, '');
@@ -191,16 +203,13 @@ export default function CalendarioPage() {
         ) : animesDelDia.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {animesDelDia.map((anime) => {
-              const enBD = encontrarEnBD(anime.titulo);
-              const href = enBD ? `/anime/${enBD.id}` : `https://anilist.co/anime/${anime.id}`;
-              const esExterno = !enBD;
+              const enBD = encontrarEnBD(anime.titulo, anime.id);
+              const animeDestinoId = enBD ? enBD.id : String(anime.id);
 
               return (
-                <a
+                <Link
                   key={anime.id}
-                  href={href}
-                  target={esExterno ? '_blank' : undefined}
-                  rel={esExterno ? 'noopener noreferrer' : undefined}
+                  href={`/anime/${animeDestinoId}`}
                   className="group relative overflow-hidden rounded-xl border border-[var(--tenko-border)] bg-white/5 hover:border-[#6c00f4]/60 transition-all hover:-translate-y-1 hover:shadow-[0_0_30px_-10px_rgba(108,0,244,0.5)]"
                 >
                   <div className="aspect-[3/4] overflow-hidden">
@@ -221,14 +230,16 @@ export default function CalendarioPage() {
                       <span className="font-mono text-[10px] text-[var(--tenko-text-secondary)]">{anime.hora} HRS</span>
                       {enBD ? (
                         <span className="font-mono text-[9px] tracking-widest font-bold text-[#6c00f4] bg-[#6c00f4]/15 border border-[#6c00f4]/30 px-1.5 py-0.5 rounded">
-                          ✓ DISPONIBLE
+                          ✓ EN TENKO
                         </span>
                       ) : (
-                        <span className="font-mono text-[9px] tracking-widest text-[var(--tenko-text-muted)]">ANILIST ↗</span>
+                        <span className="font-mono text-[9px] tracking-widest font-bold text-cyan-400 bg-cyan-400/15 border border-cyan-400/30 px-1.5 py-0.5 rounded">
+                          ESTRENO ➔
+                        </span>
                       )}
                     </div>
                   </div>
-                </a>
+                </Link>
               );
             })}
           </div>

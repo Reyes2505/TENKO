@@ -7,6 +7,8 @@ import HeroCarousel from '@/components/HeroCarousel';
 import AnimeCard from '@/components/AnimeCard';
 import ContinueWatchingSection from '@/components/ContinueWatchingSection';
 
+import { getFallbackCatalog } from '@/lib/catalog-fallback';
+
 const ITEMS_POR_PAGINA = 24;
 
 export default function Home() {
@@ -23,9 +25,16 @@ export default function Home() {
           .select('id, titulo, portada_url, banner_url, sinopsis, generos, estado_emision, fecha_estreno')
           .order('fecha_estreno', { ascending: false });
 
-        if (!error && data) setAnimes(data as Anime[]);
+        if (!error && data && data.length > 0) {
+          setAnimes(data as Anime[]);
+        } else {
+          // Si la base de datos de Supabase aún no tiene registros o falló, mostrar el catálogo completo de respaldo
+          const fallback = getFallbackCatalog();
+          setAnimes(fallback);
+        }
       } catch {
-        setAnimes([]);
+        const fallback = getFallbackCatalog();
+        setAnimes(fallback);
       } finally {
         setLoading(false);
       }

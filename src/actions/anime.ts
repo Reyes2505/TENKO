@@ -1,6 +1,7 @@
 // src/actions/anime.ts
 import { supabase } from '@/lib/supabase';
 import { Anime, Valoracion } from '@/types/database';
+import { getFallbackCatalog } from '@/lib/catalog-fallback';
 
 export interface AnimeFilterOptions {
   genero?: string;
@@ -28,13 +29,14 @@ export async function buscarAnimesAction(
       q = q.eq('estado_emision', filters.estado);
     }
 
+    let results: Anime[] = [];
     const { data, error } = await q;
 
-    if (error) {
-      return { success: false, data: [], total: 0, error: error.message };
+    if (!error && data && data.length > 0) {
+      results = data as Anime[];
+    } else {
+      results = getFallbackCatalog();
     }
-
-    let results = (data || []) as Anime[];
 
     // Filtrado en memoria por género si aplica
     if (filters.genero && filters.genero !== 'todos') {

@@ -6,7 +6,8 @@
     "dev": "next dev -p 3000 -H 0.0.0.0",
     "build": "NEXT_DISABLE_TURBOPACK=1 next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed:supabase": "node scripts/seed-supabase.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

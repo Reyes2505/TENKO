@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { Anime } from '@/types/database';
 import AnimeGrid from '@/components/AnimeGrid';
+import { getFallbackCatalog } from '@/lib/catalog-fallback';
 
 const GENEROS_POPULARES = [
   'Todos',
@@ -40,15 +41,18 @@ function BuscarContent() {
     async function cargarCatalogo() {
       setLoading(true);
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('animes')
           .select('id, titulo, portada_url, banner_url, sinopsis, generos, estado_emision, fecha_estreno');
 
-        if (data) {
+        if (!error && data && data.length > 0) {
           setAnimes(data as Anime[]);
+        } else {
+          setAnimes(getFallbackCatalog());
         }
       } catch (err) {
         console.error('Error cargando animes en búsqueda:', err);
+        setAnimes(getFallbackCatalog());
       } finally {
         setLoading(false);
       }
