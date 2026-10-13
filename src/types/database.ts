@@ -52,6 +52,19 @@ export interface WatchProgress {
   lastWatchedAt: number;
 }
 
+export interface ProgresoEpisodio {
+  id: string;
+  user_id: string;
+  anime_id: string;
+  episodio_id: string;
+  numero_episodio: number;
+  tiempo_visto: number;
+  duracion_total: number;
+  porcentaje: number;
+  completado: boolean;
+  updated_at: string;
+}
+
 export interface UserProfile {
   id: string;
   username: string;

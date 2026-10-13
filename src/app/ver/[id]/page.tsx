@@ -263,7 +263,7 @@ export default function Page({ params: paramsPromise }: PageProps) {
                 <div className="animate-spin h-10 w-10 border-2 border-t-[#6c00f4] border-[var(--tenko-border)] rounded-full" />
               </div>
             ) : (
-              <VideoPlayer episodio={episodio} />
+              <VideoPlayer episodio={episodio} animeId={anime?.id} />
             )}
           </div>
         </div>

@@ -1,6 +1,6 @@
 // In-memory mock database & client for Supabase with complete 250-anime catalog and episodes
 import anilistCatalog from '../../animes_emision_anilist.json';
-import { Anime, Episodio, Temporada } from '@/types/database';
+import { Anime, Episodio, Temporada, ProgresoEpisodio } from '@/types/database';
 
 export interface MockUser {
   id: string;
@@ -164,10 +164,124 @@ const ALL_EPISODIOS: Episodio[] = [];
   ALL_EPISODIOS.push(...eps);
 });
 
+// ─── DATOS INICIALES DE PROGRESO DE VISUALIZACIÓN EN BD ─────────────
+const INITIAL_PROGRESO: ProgresoEpisodio[] = [
+  // Mushoku Tensei III (178789)
+  {
+    id: `${DEFAULT_USER.id}_ep-178789-1`,
+    user_id: DEFAULT_USER.id,
+    anime_id: "178789",
+    episodio_id: "ep-178789-1",
+    numero_episodio: 1,
+    tiempo_visto: 1440,
+    duracion_total: 1440,
+    porcentaje: 100,
+    completado: true,
+    updated_at: new Date(Date.now() - 3600000 * 48).toISOString(),
+  },
+  {
+    id: `${DEFAULT_USER.id}_ep-178789-2`,
+    user_id: DEFAULT_USER.id,
+    anime_id: "178789",
+    episodio_id: "ep-178789-2",
+    numero_episodio: 2,
+    tiempo_visto: 950,
+    duracion_total: 1440,
+    porcentaje: 66,
+    completado: false,
+    updated_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+  },
+  {
+    id: `${DEFAULT_USER.id}_ep-178789-3`,
+    user_id: DEFAULT_USER.id,
+    anime_id: "178789",
+    episodio_id: "ep-178789-3",
+    numero_episodio: 3,
+    tiempo_visto: 250,
+    duracion_total: 1440,
+    porcentaje: 17,
+    completado: false,
+    updated_at: new Date(Date.now() - 3600000 * 1).toISOString(),
+  },
+  // ONE PIECE (21)
+  {
+    id: `${DEFAULT_USER.id}_ep-21-1`,
+    user_id: DEFAULT_USER.id,
+    anime_id: "21",
+    episodio_id: "ep-21-1",
+    numero_episodio: 1,
+    tiempo_visto: 1440,
+    duracion_total: 1440,
+    porcentaje: 100,
+    completado: true,
+    updated_at: new Date(Date.now() - 3600000 * 72).toISOString(),
+  },
+  {
+    id: `${DEFAULT_USER.id}_ep-21-2`,
+    user_id: DEFAULT_USER.id,
+    anime_id: "21",
+    episodio_id: "ep-21-2",
+    numero_episodio: 2,
+    tiempo_visto: 1120,
+    duracion_total: 1440,
+    porcentaje: 78,
+    completado: false,
+    updated_at: new Date(Date.now() - 3600000 * 5).toISOString(),
+  },
+  // Re:Zero 4th Season (189046)
+  {
+    id: `${DEFAULT_USER.id}_ep-189046-1`,
+    user_id: DEFAULT_USER.id,
+    anime_id: "189046",
+    episodio_id: "ep-189046-1",
+    numero_episodio: 1,
+    tiempo_visto: 1440,
+    duracion_total: 1440,
+    porcentaje: 100,
+    completado: true,
+    updated_at: new Date(Date.now() - 3600000 * 24).toISOString(),
+  },
+  {
+    id: `${DEFAULT_USER.id}_ep-189046-2`,
+    user_id: DEFAULT_USER.id,
+    anime_id: "189046",
+    episodio_id: "ep-189046-2",
+    numero_episodio: 2,
+    tiempo_visto: 620,
+    duracion_total: 1440,
+    porcentaje: 43,
+    completado: false,
+    updated_at: new Date(Date.now() - 3600000 * 3).toISOString(),
+  },
+];
+
+// Cargar almacenamiento persistente del navegador en memoria al iniciar
+if (typeof window !== "undefined") {
+  try {
+    const rawStored = localStorage.getItem("tenko_db_progreso_episodios");
+    if (rawStored) {
+      const parsed = JSON.parse(rawStored);
+      if (Array.isArray(parsed)) {
+        parsed.forEach((item: ProgresoEpisodio) => {
+          const idx = INITIAL_PROGRESO.findIndex(
+            (x) => x.id === item.id || (x.episodio_id === item.episodio_id && x.user_id === item.user_id)
+          );
+          if (idx >= 0) {
+            INITIAL_PROGRESO[idx] = item;
+          } else {
+            INITIAL_PROGRESO.push(item);
+          }
+        });
+      }
+    }
+  } catch {}
+}
+
 export const mockDbStore: Record<string, any[]> = {
   animes: ALL_ANIMES,
   episodios: ALL_EPISODIOS,
   temporadas: ALL_TEMPORADAS,
+  progreso_episodios: INITIAL_PROGRESO,
   profiles: [
     {
       id: DEFAULT_USER.id,
@@ -220,7 +334,7 @@ export class MockQueryBuilder {
     this.eqConditions[column] = strVal;
 
     let matchedAnimeId: string | null = null;
-    if (this.table === "episodios" && column === "anime_id") {
+    if ((this.table === "episodios" || this.table === "progreso_episodios") && column === "anime_id") {
       const found = mockDbStore.animes.find(
         (a) => String(a.id) === strVal || slugify(a.titulo) === slugify(strVal)
       );
@@ -237,12 +351,22 @@ export class MockQueryBuilder {
         if (slugify(String(item.titulo)) === slugify(strVal)) return true;
       }
 
-      // Soporte inteligente para episodios por slug o ID de anime
+      // Soporte inteligente para episodios y progreso por slug o ID de anime
       if (matchedAnimeId && String(itemVal) === matchedAnimeId) {
         return true;
       }
 
       return false;
+    });
+    return this;
+  }
+
+  in(column: string, values: any[]) {
+    const valSet = new Set((values || []).map((v) => String(v)));
+    this.filters.push((item) => {
+      const itemVal = item[column];
+      if (itemVal === undefined || itemVal === null) return false;
+      return valSet.has(String(itemVal));
     });
     return this;
   }
@@ -338,18 +462,32 @@ export class MockQueryBuilder {
     }
     const store = mockDbStore[this.table];
     items.forEach((item) => {
-      const idKey = item.id ? "id" : item.user_id ? "user_id" : null;
-      if (idKey) {
-        const idx = store.findIndex((x) => x[idKey] === item[idKey]);
-        if (idx >= 0) {
-          store[idx] = { ...store[idx], ...item };
-        } else {
-          store.push(item);
-        }
+      let idx = -1;
+      if (item.id) {
+        idx = store.findIndex((x) => x.id === item.id);
+      } else if (item.episodio_id && item.user_id) {
+        idx = store.findIndex(
+          (x) => x.episodio_id === item.episodio_id && x.user_id === item.user_id
+        );
+      } else if (item.episodio_id) {
+        idx = store.findIndex((x) => x.episodio_id === item.episodio_id);
+      } else if (item.user_id && this.table !== "progreso_episodios") {
+        idx = store.findIndex((x) => x.user_id === item.user_id);
+      }
+
+      if (idx >= 0) {
+        store[idx] = { ...store[idx], ...item };
       } else {
         store.push(item);
       }
     });
+
+    if (typeof window !== "undefined" && this.table === "progreso_episodios") {
+      try {
+        localStorage.setItem("tenko_db_progreso_episodios", JSON.stringify(store));
+      } catch {}
+    }
+
     return Promise.resolve({ data: items, error: null });
   }
 
