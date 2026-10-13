@@ -1,14 +1,25 @@
 "use client";
 
 import { createBrowserClient } from "@supabase/ssr";
+import { createMockSupabase } from "./supabase-mock";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error(
-    "Faltan NEXT_PUBLIC_SUPABASE_URL o NEXT_PUBLIC_SUPABASE_ANON_KEY en .env.local"
-  );
+function initSupabaseClient() {
+  if (
+    supabaseUrl &&
+    supabaseAnonKey &&
+    (supabaseUrl.startsWith("http://") || supabaseUrl.startsWith("https://"))
+  ) {
+    try {
+      return createBrowserClient(supabaseUrl, supabaseAnonKey);
+    } catch (err) {
+      console.warn("[TENKO] Error inicializando Supabase Client, usando mock en memoria:", err);
+    }
+  }
+  return createMockSupabase();
 }
 
-export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+export const supabase: any = initSupabaseClient();
+

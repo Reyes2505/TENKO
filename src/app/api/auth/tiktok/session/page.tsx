@@ -26,7 +26,7 @@ export default function TikTokSessionPage() {
         access_token: accessToken,
         refresh_token: refreshToken,
       })
-      .then(({ error }) => {
+      .then(({ error }: { error?: any }) => {
         if (error) {
           console.error("[session] setSession error:", error);
           setStatus("Error al iniciar sesión. Redirigiendo...");

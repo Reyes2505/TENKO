@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+function getSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseKey) return null;
+  return createClient(supabaseUrl, supabaseKey);
+}
 
 const ANILIST_API_URL = "https://graphql.anilist.co";
 
@@ -90,16 +93,19 @@ export async function POST(req: NextRequest) {
 
     // Si se envía el ID interno de Supabase, actualizamos la fila correspondiente
     if (animeId) {
-      const { error: dbError } = await supabase
-        .from("animes")
-        .update(result)
-        .eq("id", animeId);
+      const sb = getSupabase();
+      if (sb) {
+        const { error: dbError } = await sb
+          .from("animes")
+          .update(result)
+          .eq("id", animeId);
 
-      if (dbError) {
-        return NextResponse.json(
-          { error: "Error al actualizar en base de datos", details: dbError.message },
-          { status: 500 }
-        );
+        if (dbError) {
+          return NextResponse.json(
+            { error: "Error al actualizar en base de datos", details: dbError.message },
+            { status: 500 }
+          );
+        }
       }
     }
 

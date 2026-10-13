@@ -6,6 +6,48 @@ import { supabase } from '@/lib/supabase';
 import { Anime } from '@/types/database';
 import { getTracking, TrackingData } from '@/lib/tracking';
 
+interface SeccionProps {
+  titulo: string;
+  acento: string;
+  items: number;
+  vacio: string;
+  contador?: (a: Anime) => string | null;
+  children: React.ReactNode;
+}
+
+function Seccion({
+  titulo,
+  acento,
+  items,
+  vacio,
+  children,
+}: SeccionProps) {
+  return (
+    <section className="mb-12">
+      <div className="mb-5 flex items-center justify-between border-b border-[var(--tenko-border)] pb-3">
+        <div className="flex items-center gap-3">
+          <span className="h-2 w-2 rounded-full" style={{ background: acento, boxShadow: `0 0 10px ${acento}` }} />
+          <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
+            {titulo}
+          </h2>
+          <span className="font-mono text-[10px] tracking-widest text-[var(--tenko-text-muted)]">
+            {items} {items === 1 ? 'TÍTULO' : 'TÍTULOS'}
+          </span>
+        </div>
+      </div>
+      {items > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {children}
+        </div>
+      ) : (
+        <div className="text-center py-12 border border-[var(--tenko-border)] rounded-xl bg-white/[0.02]">
+          <p className="font-mono text-xs tracking-widest text-[var(--tenko-text-muted)]">{vacio}</p>
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function MiListaPage() {
   const [animes, setAnimes] = useState<Anime[]>([]);
   const [tracking, setTracking] = useState<Record<string, TrackingData>>({});
@@ -35,45 +77,6 @@ export default function MiListaPage() {
       </main>
     );
   }
-
-  const Seccion = ({
-    titulo,
-    acento,
-    items,
-    vacio,
-    contador,
-    children,
-  }: {
-    titulo: string;
-    acento: string;
-    items: number;
-    vacio: string;
-    contador?: (a: Anime) => string | null;
-    children: React.ReactNode;
-  }) => (
-    <section className="mb-12">
-      <div className="mb-5 flex items-center justify-between border-b border-[var(--tenko-border)] pb-3">
-        <div className="flex items-center gap-3">
-          <span className="h-2 w-2 rounded-full" style={{ background: acento, boxShadow: `0 0 10px ${acento}` }} />
-          <h2 className="font-[family-name:var(--font-unbounded)] text-lg font-black uppercase tracking-tight text-[var(--tenko-text-primary)]">
-            {titulo}
-          </h2>
-          <span className="font-mono text-[10px] tracking-widest text-[var(--tenko-text-muted)]">
-            {items} {items === 1 ? 'TÍTULO' : 'TÍTULOS'}
-          </span>
-        </div>
-      </div>
-      {items > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {children}
-        </div>
-      ) : (
-        <div className="text-center py-12 border border-[var(--tenko-border)] rounded-xl bg-white/[0.02]">
-          <p className="font-mono text-xs tracking-widest text-[var(--tenko-text-muted)]">{vacio}</p>
-        </div>
-      )}
-    </section>
-  );
 
   return (
     <main className="min-h-screen bg-[var(--tenko-bg-page)] pb-16">

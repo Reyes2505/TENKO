@@ -4,7 +4,9 @@ export type EstadoEmision = 'emitido' | 'en_espera' | 'suspendido' | 'terminado'
 
 export interface Temporada {
   id: string;
+  anime_id?: string | null;
   nombre: string;
+  numero?: number | null;
   descripcion?: string | null;
   created_at?: string | null;
 }

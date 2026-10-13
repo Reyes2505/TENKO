@@ -28,13 +28,24 @@ export default function AnimeDetailPage({
         if (animeData) {
           setAnime(animeData);
 
-          const { data: epsData } = await supabase
+          let { data: epsData } = await supabase
             .from('episodios')
             .select('*')
-            .eq('anime_id', id)
+            .eq('anime_id', animeData.id)
             .order('numero', { ascending: true });
 
-          if (epsData) setEpisodios(epsData);
+          if (!epsData || epsData.length === 0) {
+            const { data: fallbackEps } = await supabase
+              .from('episodios')
+              .select('*')
+              .eq('anime_id', id)
+              .order('numero', { ascending: true });
+            epsData = fallbackEps;
+          }
+
+          if (epsData && epsData.length > 0) {
+            setEpisodios(epsData);
+          }
         }
       } catch {
         setAnime(null);
@@ -179,11 +190,12 @@ export default function AnimeDetailPage({
                 className="group relative flex flex-col overflow-hidden rounded-xl border border-[var(--tenko-border)] bg-[var(--tenko-bg-card)] hover:border-[#6c00f4] transition shadow-sm"
               >
                 <div className="aspect-video w-full bg-[var(--tenko-bg-page)] relative overflow-hidden">
-                  {ep.thumbnail_url || anime.portada_url ? (
+                  {ep.thumbnail_url || anime.banner_url || anime.portada_url ? (
                     <img
-                      src={ep.thumbnail_url || anime.portada_url}
+                      src={ep.thumbnail_url || anime.banner_url || anime.portada_url}
                       alt={ep.titulo || `Episodio ${ep.numero}`}
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-xs text-[var(--tenko-text-secondary)] font-mono">
@@ -197,8 +209,12 @@ export default function AnimeDetailPage({
 
                 <div className="p-3">
                   <h3 className="text-xs font-bold text-[var(--tenko-text-primary)] group-hover:text-[#6c00f4] transition truncate">
-                    {ep.titulo || `Episodio ${ep.numero}`}
+                    {ep.titulo_episodio || ep.titulo || `Episodio ${ep.numero}`}
                   </h3>
+                  <div className="flex items-center justify-between mt-1.5 text-[11px] font-mono text-[var(--tenko-text-secondary)]">
+                    <span>{ep.duracion || '24m'}</span>
+                    <span className="text-[#6c00f4] group-hover:translate-x-0.5 transition-transform">Reproducir →</span>
+                  </div>
                 </div>
               </Link>
             ))}

@@ -174,7 +174,7 @@ export default function HeroTrailer({ anime, onOpenEditor }: HeroTrailerProps) {
             {/* Action Buttons */}
             <div className="pt-2 flex flex-wrap items-center gap-3">
               <Link
-                                href="/anime/9315fccb-10c8-476e-b6fb-3471f6f36ec2"
+                href={`/anime/${anime.id}`}
                 className="inline-flex items-center gap-2 rounded-xl bg-[#6c00f4] px-5 py-3 text-sm font-bold text-[var(--tenko-text-primary)] shadow-xl shadow-[#6c00f4]/30 hover:bg-white hover:text-black transition-all active:scale-95"
               >
                 <svg className="h-5 w-5 fill-current" viewBox="0 0 24 24">

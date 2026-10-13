@@ -4,10 +4,11 @@ import { createClient } from "@supabase/supabase-js";
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 function getAdmin() {
+  if (!SUPABASE_URL || !SERVICE_ROLE) return null;
   return createClient(SUPABASE_URL, SERVICE_ROLE, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
@@ -48,21 +49,23 @@ export async function GET(req: NextRequest) {
 
   // 1. Intentar leer de caché
   try {
-    const { data: cached } = await admin
-      .from("tiktok_cache")
-      .select("mp4_url, expires_at")
-      .eq("tiktok_url", tiktokUrl)
-      .maybeSingle();
+    if (admin) {
+      const { data: cached } = await admin
+        .from("tiktok_cache")
+        .select("mp4_url, expires_at")
+        .eq("tiktok_url", tiktokUrl)
+        .maybeSingle();
 
-    if (cached && new Date(cached.expires_at) > new Date()) {
-      return NextResponse.json(
-        { success: true, mp4Url: cached.mp4_url, cached: true },
-        {
-          headers: {
-            "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
-          },
-        }
-      );
+      if (cached && new Date(cached.expires_at) > new Date()) {
+        return NextResponse.json(
+          { success: true, mp4Url: cached.mp4_url, cached: true },
+          {
+            headers: {
+              "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
+            },
+          }
+        );
+      }
     }
   } catch (e) {
     console.warn("[tiktok-video] cache read failed:", e);
@@ -85,13 +88,15 @@ export async function GET(req: NextRequest) {
 
   // 3. Guardar en caché (silenciosamente, no bloquear respuesta)
   try {
-    await admin.from("tiktok_cache").upsert({
-      tiktok_url: tiktokUrl,
-      mp4_url: mp4Url,
-      hd,
-      created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-    });
+    if (admin) {
+      await admin.from("tiktok_cache").upsert({
+        tiktok_url: tiktokUrl,
+        mp4_url: mp4Url,
+        hd,
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      });
+    }
   } catch (e) {
     console.warn("[tiktok-video] cache write failed:", e);
   }

@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEpisode } from 'animeav1-api';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin as sb } from '@/lib/supabase-admin';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   try {
-    // ✅ Crear el cliente DENTRO del handler
-    const sb = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
 
     const { episodioId } = await req.json();
 

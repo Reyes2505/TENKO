@@ -9,19 +9,30 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { createMockSupabase } from './supabase-mock';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!url || !serviceKey) {
-  throw new Error(
-    '[supabase-admin] Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en .env.local'
-  );
+function initSupabaseAdmin() {
+  if (
+    url &&
+    serviceKey &&
+    (url.startsWith('http://') || url.startsWith('https://'))
+  ) {
+    try {
+      return createClient(url, serviceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      });
+    } catch (err) {
+      console.warn('[TENKO] Error inicializando Supabase Admin, usando mock:', err);
+    }
+  }
+  return createMockSupabase();
 }
 
-export const supabaseAdmin = createClient(url, serviceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
+export const supabaseAdmin: any = initSupabaseAdmin();
+

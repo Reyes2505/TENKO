@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+import { supabase } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   const nombre = request.nextUrl.searchParams.get('nombre');
@@ -12,7 +9,6 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // Extraer slug de URL o nombre
     let slug = '';

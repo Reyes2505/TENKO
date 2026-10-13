@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+import { supabase } from '@/lib/supabase';
 
 const ROMANIZATION_MAP: Record<string, string> = {
   '君の名は': 'kimi no na wa',
@@ -24,7 +21,6 @@ export async function GET(request: NextRequest) {
   if (!nombre) return NextResponse.json({ success: false, error: 'Nombre requerido' });
 
   try {
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // Extraer slug de URL directa o convertir nombre
     let slug = '';

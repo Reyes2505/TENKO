@@ -47,8 +47,12 @@ export default function Page({ params: paramsPromise }: PageProps) {
     async function getStream() {
       const url = episodio!.url_stream!;
 
-      // ✅ Si ya es UPNShare/Voe → usar directo
+      // ✅ Si ya es MP4 directo / HLS / UPNShare / Voe → usar directo
       if (
+        url.includes('.mp4') ||
+        url.includes('.webm') ||
+        url.includes('.m3u8') ||
+        url.includes('googleapis.com') ||
         url.includes('uns.bio') ||
         url.includes('voe.sx') ||
         url.includes('byselapuix') ||
@@ -105,6 +109,7 @@ export default function Page({ params: paramsPromise }: PageProps) {
             .eq('id', (epData as Episodio).temporada_id)
             .single();
 
+          let loadedAnime: Anime | null = null;
           if (tempData && mounted) {
             const { data: animeData } = await supabase
               .from('animes')
@@ -113,16 +118,38 @@ export default function Page({ params: paramsPromise }: PageProps) {
               .single();
 
             if (animeData && mounted) {
+              loadedAnime = animeData;
               setAnime(animeData);
               registrarVisualizacion(animeData, epData as Episodio, 0);
             }
           }
 
-          const { data: sameSeason } = await supabase
+          if (!loadedAnime && (epData as Episodio).anime_id && mounted) {
+            const { data: animeDataDirect } = await supabase
+              .from('animes')
+              .select('*')
+              .eq('id', (epData as Episodio).anime_id)
+              .single();
+            if (animeDataDirect && mounted) {
+              setAnime(animeDataDirect);
+              registrarVisualizacion(animeDataDirect, epData as Episodio, 0);
+            }
+          }
+
+          let { data: sameSeason } = await supabase
             .from('episodios')
             .select('*')
             .eq('temporada_id', (epData as Episodio).temporada_id)
             .order('numero', { ascending: true });
+
+          if ((!sameSeason || sameSeason.length === 0) && (epData as Episodio).anime_id) {
+            const { data: sameAnimeEps } = await supabase
+              .from('episodios')
+              .select('*')
+              .eq('anime_id', (epData as Episodio).anime_id)
+              .order('numero', { ascending: true });
+            sameSeason = sameAnimeEps;
+          }
 
           if (sameSeason && mounted) {
             setMismaTemporada(sameSeason as Episodio[]);

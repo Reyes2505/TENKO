@@ -47,9 +47,9 @@ export default function EpisodeCard({
       className="group relative flex flex-col overflow-hidden rounded-xl border border-[var(--tenko-border)] bg-white/5 transition-all duration-300 hover:-translate-y-1 hover:border-[#6c00f4]/60 hover:shadow-xl hover:shadow-[#6c00f4]/10"
     >
       <div className="relative aspect-video w-full overflow-hidden bg-zinc-900">
-        {thumbnail ? (
+        {(thumbnail || episodio.thumbnail_url) ? (
           <img
-            src={thumbnail}
+            src={thumbnail || episodio.thumbnail_url || ''}
             alt={`Episodio ${episodio.numero}`}
             className={`h-full w-full object-cover transition-all duration-500 ${isHovered ? 'scale-110 blur-sm brightness-50' : ''}`}
             loading="lazy"

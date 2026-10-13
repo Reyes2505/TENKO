@@ -1,13 +1,11 @@
 {
   "name": "santuario-anime",
   "version": "0.1.0",
-  "main": "electron-main.js",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000 -H 0.0.0.0",
     "build": "NEXT_DISABLE_TURBOPACK=1 next build",
     "start": "next start",
-    "desktop": "electron .",
     "lint": "eslint"
   },
   "dependencies": {
@@ -28,7 +26,6 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
-    "electron": "^26.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "tailwindcss": "^4",

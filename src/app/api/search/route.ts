@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+function getSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!supabaseUrl || !supabaseAnonKey) return null;
+  return createClient(supabaseUrl, supabaseAnonKey);
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -17,7 +20,8 @@ export async function GET(req: NextRequest) {
 
   // 1. Consulta local en Supabase
   try {
-    if (supabaseUrl && supabaseAnonKey) {
+    const supabase = getSupabase();
+    if (supabase) {
       const terms = q.trim().split(/\s+/).filter(Boolean);
       const filterConditions = terms
         .map((term) => `titulo.ilike.%${term}%,sinopsis.ilike.%${term}%`)

@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server';
 import { cookies, headers } from 'next/headers';
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin as admin } from '@/lib/supabase-admin';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-
-const TIKTOK_CLIENT_KEY = process.env.NEXT_PUBLIC_TIKTOK_CLIENT_KEY!;
-const TIKTOK_CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET!;
+const TIKTOK_CLIENT_KEY = process.env.NEXT_PUBLIC_TIKTOK_CLIENT_KEY || '';
+const TIKTOK_CLIENT_SECRET = process.env.TIKTOK_CLIENT_SECRET || '';
 const TIKTOK_REDIRECT_URI =
   process.env.NEXT_PUBLIC_TIKTOK_REDIRECT_URI ||
   'http://localhost:3000/api/auth/tiktok/callback';
@@ -144,10 +141,7 @@ export async function GET(request: Request) {
     // Usamos display_name para el handle.
     const username: string | null = tiktokUser.username || displayName;
 
-    // ─── 6. Cliente admin ─────────────────────────────────────────
-    const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
+    // ─── 6. Cliente admin (importado de @/lib/supabase-admin) ─────
 
     // ─── 7. MODO VINCULAR ─────────────────────────────────────────
     if (isLinking && linkingUserId) {

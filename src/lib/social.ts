@@ -93,7 +93,7 @@ export async function getSuggestedUsers(currentUserId: string, limit = 6) {
     .select("following_id")
     .eq("follower_id", currentUserId);
 
-  const followingIds = (following || []).map((f) => f.following_id);
+  const followingIds = (following || []).map((f: any) => f.following_id);
   followingIds.push(currentUserId);
 
   // Si no hay IDs que excluir, traer solo los más recientes
@@ -253,16 +253,16 @@ export async function getPendingFriendRequests(currentUserId: string): Promise<F
     return [];
   }
 
-  const fromIds = requests.map((r) => r.from_user_id);
+  const fromIds = requests.map((r: any) => r.from_user_id);
   const { data: profiles } = await supabase
     .from("profiles")
     .select("id, name, handle, avatar_url")
     .in("id", fromIds);
 
-  const profileMap = new Map((profiles || []).map((p) => [p.id, p]));
+  const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
 
-  return requests.map((r) => {
-    const p = profileMap.get(r.from_user_id);
+  return requests.map((r: any) => {
+    const p: any = profileMap.get(r.from_user_id);
     return {
       id: r.id,
       from_user_id: r.from_user_id,
@@ -317,7 +317,7 @@ export async function getConversations(currentUserId: string): Promise<Conversat
   }
 
   const summaries: ConversationSummary[] = await Promise.all(
-    convs.map(async (c) => {
+    convs.map(async (c: any) => {
       const otherId = c.user_a_id === currentUserId ? c.user_b_id : c.user_a_id;
 
       const [profileRes, lastMsgRes, unreadRes] = await Promise.all([
@@ -403,7 +403,7 @@ export async function getUnreadCount(currentUserId: string): Promise<number> {
 
   if (!convs || convs.length === 0) return 0;
 
-  const ids = convs.map((c) => c.id);
+  const ids = convs.map((c: any) => c.id);
 
   const { count } = await supabase
     .from("messages")

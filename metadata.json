@@ -1,0 +1,6 @@
+{
+  "name": "TENKO AI - Santuario de Anime",
+  "description": "Plataforma comunitaria de anime, calendarios, tendencias y shorts.",
+  "permissions": [],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -66,7 +66,7 @@ export default function Header() {
   useEffect(() => {
     syncUserSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
       setUser(session?.user ?? null);
       if (session?.user) syncUserSession();
     });
