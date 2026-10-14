@@ -86,3 +86,10 @@ npm-debug.log*
 .DS_Store
 Thumbs.db
 *.bak
+
+# Lock files (usamos solo npm)
+bun.lock
+bun.lockb
+bun.lock.bak
+yarn.lock
+pnpm-lock.yaml
