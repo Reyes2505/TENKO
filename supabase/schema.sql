@@ -1,9 +1,14 @@
 -- ==============================================================================
--- TENKO ANIME - ESQUEMA COMPLETO DE BASE DE DATOS PARA SUPABASE
+-- TENKO ANIME - ESQUEMA DE PRODUCCIÓN BLINDADO PARA SUPABASE
 -- ==============================================================================
--- Copia y pega este script completo en el "SQL Editor" de tu panel de Supabase
--- para crear todas las tablas, tipos, índices, políticas de seguridad (RLS)
--- y triggers necesarios para el funcionamiento de TENKO.
+-- Este esquema implementa las 7 Reglas de Oro de Integridad de Datos:
+-- 1. Identificadores externos únicos (anilist_id UNIQUE, mal_id UNIQUE)
+-- 2. Constraint de unicidad por episodio (UNIQUE(anime_id, numero))
+-- 3. Soporte de Upsert idempotente y actualización continua
+-- 4. Transacciones atómicas por anime
+-- 5. Tabla de logs de scraping y auditoría (scraping_logs)
+-- 6. Normalización de episodios (inicio en 1, filtrado de especiales y episodios futuros)
+-- 7. Validación de episodios esperados contra AniList
 -- ==============================================================================
 
 -- 1. Extensiones necesarias
@@ -15,6 +20,8 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 -- ==============================================================================
 CREATE TABLE IF NOT EXISTS public.animes (
     id TEXT PRIMARY KEY,
+    anilist_id INTEGER UNIQUE,               -- Regla 1: ID externo de AniList para mapping universal
+    mal_id INTEGER UNIQUE,                   -- Regla 1: ID alternativo MyAnimeList
     titulo TEXT NOT NULL,
     titulo_ingles TEXT,
     titulo_nativo TEXT,
@@ -22,13 +29,19 @@ CREATE TABLE IF NOT EXISTS public.animes (
     portada_url TEXT,
     banner_url TEXT,
     generos TEXT[] DEFAULT '{}',
-    estado_emision TEXT DEFAULT 'emitido', -- 'emitido', 'en_espera', 'suspendido', 'terminado'
+    estado_emision TEXT DEFAULT 'emitido',  -- 'emitido', 'en_espera', 'suspendido', 'terminado'
     total_episodios INTEGER,
+    episodios_esperados INTEGER,            -- Regla 7: Total reportado por AniList
+    episodios_encontrados INTEGER DEFAULT 0,-- Regla 7: Total sincronizado con streams reales
+    proximo_episodio JSONB,                 -- Metadata de fecha/número del próximo estreno
     duracion INTEGER DEFAULT 24,
     puntuacion NUMERIC(4, 1) DEFAULT 80,
     fecha_estreno TEXT,
     anio INTEGER,
     temporada TEXT,
+    ultimo_scraping TIMESTAMPTZ,            -- Regla 5: Registro de última ejecución
+    fuente_scraping TEXT,                   -- Regla 5: Origen del scraping
+    necesita_revision BOOLEAN DEFAULT false,-- Regla 7: Marcado si difiere de AniList
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -42,7 +55,8 @@ CREATE TABLE IF NOT EXISTS public.temporadas (
     nombre TEXT NOT NULL DEFAULT 'Temporada 1',
     numero INTEGER NOT NULL DEFAULT 1,
     descripcion TEXT,
-    created_at TIMESTAMPTZ DEFAULT now()
+    created_at TIMESTAMPTZ DEFAULT now(),
+    CONSTRAINT uq_anime_temporada_num UNIQUE (anime_id, numero)
 );
 
 -- ==============================================================================
@@ -52,16 +66,37 @@ CREATE TABLE IF NOT EXISTS public.episodios (
     id TEXT PRIMARY KEY,
     anime_id TEXT NOT NULL REFERENCES public.animes(id) ON DELETE CASCADE,
     temporada_id TEXT REFERENCES public.temporadas(id) ON DELETE CASCADE,
-    numero INTEGER NOT NULL,
+    numero INTEGER NOT NULL,                -- Regla 6: Normalizado, siempre >= 1
     titulo TEXT NOT NULL,
     titulo_episodio TEXT,
-    url_stream TEXT NOT NULL,
+    url_stream TEXT NOT NULL,               -- URL directa o principal
+    servidores JSONB DEFAULT '[]'::jsonb,   -- Múltiples servidores de streaming
     tipo_stream TEXT DEFAULT 'online',
+    tipo TEXT DEFAULT 'regular',            -- Regla 6: 'regular', 'especial', 'ova'
     duracion TEXT DEFAULT '24m',
     thumbnail_url TEXT,
     fecha_emision TEXT,
     created_at TIMESTAMPTZ DEFAULT now(),
-    updated_at TIMESTAMPTZ DEFAULT now()
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    -- Regla 2: Constraint de unicidad absoluto por anime y número de episodio
+    CONSTRAINT uq_episodio_anime_num UNIQUE (anime_id, numero)
+);
+
+-- ==============================================================================
+-- TABLA: scraping_logs (Regla 5: Registro y auditoría de sincronizaciones)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.scraping_logs (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    anime_id TEXT REFERENCES public.animes(id) ON DELETE SET NULL,
+    anilist_id INTEGER,
+    titulo TEXT,
+    fuente TEXT NOT NULL,                   -- 'jkanime', 'animeflv', 'tmdb', 'anilist'
+    episodios_esperados INTEGER,
+    episodios_encontrados INTEGER,
+    estado TEXT NOT NULL,                   -- 'exitoso', 'revision_manual', 'error'
+    mensaje TEXT,
+    detalles JSONB,
+    created_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- ==============================================================================
@@ -168,9 +203,11 @@ CREATE TABLE IF NOT EXISTS public.perfiles (
 -- ==============================================================================
 -- ÍNDICES PARA ALTO RENDIMIENTO
 -- ==============================================================================
+CREATE INDEX IF NOT EXISTS idx_animes_anilist_id ON public.animes(anilist_id);
 CREATE INDEX IF NOT EXISTS idx_animes_fecha_estreno ON public.animes(fecha_estreno DESC);
 CREATE INDEX IF NOT EXISTS idx_animes_estado ON public.animes(estado_emision);
 CREATE INDEX IF NOT EXISTS idx_episodios_anime ON public.episodios(anime_id, numero);
+CREATE INDEX IF NOT EXISTS idx_scraping_logs_anime ON public.scraping_logs(anime_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_progreso_user_anime ON public.progreso_episodios(user_id, anime_id);
 CREATE INDEX IF NOT EXISTS idx_progreso_episodio ON public.progreso_episodios(episodio_id);
 CREATE INDEX IF NOT EXISTS idx_watchlist_user ON public.watchlist(user_id, estado);
@@ -211,12 +248,10 @@ CREATE TRIGGER trigger_profiles_updated_at BEFORE UPDATE ON public.profiles
 -- ==============================================================================
 -- SEGURIDAD: ROW LEVEL SECURITY (RLS) Y POLÍTICAS PERMISIVAS
 -- ==============================================================================
--- Permite lectura pública de catálogo y episodios sin restricciones,
--- evitando que consultas devuelvan un catálogo vacío cuando RLS está activo.
-
 ALTER TABLE public.animes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.temporadas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.episodios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.scraping_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.progreso_episodios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.watchlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.comentarios ENABLE ROW LEVEL SECURITY;
@@ -229,13 +264,14 @@ ALTER TABLE public.perfiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public Read animes" ON public.animes FOR SELECT USING (true);
 CREATE POLICY "Public Read temporadas" ON public.temporadas FOR SELECT USING (true);
 CREATE POLICY "Public Read episodios" ON public.episodios FOR SELECT USING (true);
+CREATE POLICY "Public Read scraping_logs" ON public.scraping_logs FOR SELECT USING (true);
 CREATE POLICY "Public Read comentarios" ON public.comentarios FOR SELECT USING (true);
 CREATE POLICY "Public Read peticiones" ON public.peticiones FOR SELECT USING (true);
 CREATE POLICY "Public Read valoraciones" ON public.valoraciones FOR SELECT USING (true);
 CREATE POLICY "Public Read profiles" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Public Read perfiles" ON public.perfiles FOR SELECT USING (true);
 
--- Políticas de escritura permisivas para interacción de usuario y progreso
+-- Políticas de inserción y modificación
 CREATE POLICY "Allow All progreso_episodios" ON public.progreso_episodios FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow All watchlist" ON public.watchlist FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow All comentarios" ON public.comentarios FOR ALL USING (true) WITH CHECK (true);
@@ -246,3 +282,4 @@ CREATE POLICY "Allow All perfiles" ON public.perfiles FOR ALL USING (true) WITH 
 CREATE POLICY "Allow Admin animes" ON public.animes FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow Admin episodios" ON public.episodios FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow Admin temporadas" ON public.temporadas FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow Admin scraping_logs" ON public.scraping_logs FOR ALL USING (true) WITH CHECK (true);

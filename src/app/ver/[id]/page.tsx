@@ -4,11 +4,12 @@ import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Episodio, Anime } from '@/types/database';
+import { Episodio, Anime, StreamingServer } from '@/types/database';
 import M3U8Player from '@/components/M3U8Player';
 import VideoPlayer from '@/components/VideoPlayer';
 import { registrarVisualizacion } from '@/lib/ai-recommendations';
 import { addWatchTime, markEpisodeAsWatched } from '@/lib/tracking';
+import { getEpisodeWithFallback } from '@/lib/catalog-fallback';
 
 interface PageProps {
   params: Promise<{ id: string }> | { id: string };
@@ -89,74 +90,108 @@ export default function Page({ params: paramsPromise }: PageProps) {
     getStream();
   }, [episodio?.id, episodio?.url_stream]);
 
+  const [servidorIndex, setServidorIndex] = useState(0);
+
+  const handleCambiarServidor = (idx: number, url: string) => {
+    setServidorIndex(idx);
+    if (episodio) {
+      setEpisodio({ ...episodio, url_stream: url });
+    }
+  };
+
   useEffect(() => {
     let mounted = true;
     async function load() {
       setLoading(true);
       try {
-        const { data: epData } = await supabase
-          .from('episodios')
-          .select('*')
-          .eq('id', id)
-          .single();
+        let foundEp: Episodio | null = null;
+        let foundAnime: Anime | null = null;
+        let seasonEps: Episodio[] = [];
 
-        if (epData && mounted) {
-          setEpisodio(epData as Episodio);
-
-          const { data: tempData } = await supabase
-            .from('temporadas')
-            .select('anime_id')
-            .eq('id', (epData as Episodio).temporada_id)
-            .single();
-
-          let loadedAnime: Anime | null = null;
-          if (tempData && mounted) {
-            const { data: animeData } = await supabase
-              .from('animes')
-              .select('*')
-              .eq('id', tempData.anime_id)
-              .single();
-
-            if (animeData && mounted) {
-              loadedAnime = animeData;
-              setAnime(animeData);
-              registrarVisualizacion(animeData, epData as Episodio, 0);
-            }
-          }
-
-          if (!loadedAnime && (epData as Episodio).anime_id && mounted) {
-            const { data: animeDataDirect } = await supabase
-              .from('animes')
-              .select('*')
-              .eq('id', (epData as Episodio).anime_id)
-              .single();
-            if (animeDataDirect && mounted) {
-              setAnime(animeDataDirect);
-              registrarVisualizacion(animeDataDirect, epData as Episodio, 0);
-            }
-          }
-
-          let { data: sameSeason } = await supabase
+        // 1. Intentar consultar en Supabase
+        try {
+          const { data: epData, error: epErr } = await supabase
             .from('episodios')
             .select('*')
-            .eq('temporada_id', (epData as Episodio).temporada_id)
-            .order('numero', { ascending: true });
+            .eq('id', id)
+            .single();
 
-          if ((!sameSeason || sameSeason.length === 0) && (epData as Episodio).anime_id) {
-            const { data: sameAnimeEps } = await supabase
+          if (epData && !epErr) {
+            foundEp = epData as Episodio;
+
+            const { data: tempData } = await supabase
+              .from('temporadas')
+              .select('anime_id')
+              .eq('id', foundEp.temporada_id)
+              .single();
+
+            if (tempData) {
+              const { data: animeData } = await supabase
+                .from('animes')
+                .select('*')
+                .eq('id', tempData.anime_id)
+                .single();
+
+              if (animeData) foundAnime = animeData as Anime;
+            }
+
+            if (!foundAnime && foundEp.anime_id) {
+              const { data: animeDirect } = await supabase
+                .from('animes')
+                .select('*')
+                .eq('id', foundEp.anime_id)
+                .single();
+
+              if (animeDirect) foundAnime = animeDirect as Anime;
+            }
+
+            let { data: sameSeason } = await supabase
               .from('episodios')
               .select('*')
-              .eq('anime_id', (epData as Episodio).anime_id)
+              .eq('temporada_id', foundEp.temporada_id)
               .order('numero', { ascending: true });
-            sameSeason = sameAnimeEps;
-          }
 
-          if (sameSeason && mounted) {
-            setMismaTemporada(sameSeason as Episodio[]);
+            if ((!sameSeason || sameSeason.length === 0) && foundEp.anime_id) {
+              const { data: sameAnimeEps } = await supabase
+                .from('episodios')
+                .select('*')
+                .eq('anime_id', foundEp.anime_id)
+                .order('numero', { ascending: true });
+              sameSeason = sameAnimeEps;
+            }
+
+            if (sameSeason && sameSeason.length > 0) {
+              seasonEps = sameSeason as Episodio[];
+            }
+          }
+        } catch (dbErr) {
+          console.warn('[VER] Error consultando Supabase, recurriendo a fallback:', dbErr);
+        }
+
+        // 2. Si no se encontró en Supabase, resolver mediante el catálogo fallback
+        if (!foundEp) {
+          const fallbackRes = await getEpisodeWithFallback(id);
+          if (fallbackRes.episodio) {
+            foundEp = fallbackRes.episodio;
+            foundAnime = fallbackRes.anime;
+            seasonEps = fallbackRes.mismaTemporada || [];
+          }
+        }
+
+        if (mounted) {
+          if (foundEp) {
+            setEpisodio(foundEp);
+            if (foundAnime) {
+              setAnime(foundAnime);
+              registrarVisualizacion(foundAnime, foundEp, 0);
+            }
+            if (seasonEps.length > 0) {
+              setMismaTemporada(seasonEps);
+            }
           }
         }
       } catch (err) {
-        console.error('Error:', err);
+        console.error('Error general cargando episodio:', err);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -255,6 +290,34 @@ export default function Page({ params: paramsPromise }: PageProps) {
               {tituloEpisodio}
             </h1>
           </div>
+
+          {/* Selector de Servidores */}
+          {episodio.servidores && episodio.servidores.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap py-2 border-t border-b border-[var(--tenko-border)]/50">
+              <span className="font-mono text-[10px] tracking-wider text-[var(--tenko-text-secondary)] font-bold mr-1">
+                SERVIDOR:
+              </span>
+              {episodio.servidores.map((srv, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleCambiarServidor(idx, srv.url)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 ${
+                    servidorIndex === idx
+                      ? 'bg-[#6c00f4] text-white shadow-md shadow-[#6c00f4]/40'
+                      : 'bg-white/5 border border-[var(--tenko-border)] text-[var(--tenko-text-secondary)] hover:bg-white/10 hover:text-[var(--tenko-text-primary)]'
+                  }`}
+                >
+                  <span>{idx === 0 ? '⚡' : idx === 1 ? '🌐' : '🚀'}</span>
+                  <span>{srv.nombre}</span>
+                  {srv.calidad && (
+                    <span className="text-[10px] opacity-75 px-1 py-0.5 bg-black/30 rounded">
+                      {srv.calidad}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Reproductor */}
           <div className="rounded-xl overflow-hidden border border-[var(--tenko-border)] shadow-2xl shadow-black/50">

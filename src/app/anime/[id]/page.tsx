@@ -625,10 +625,23 @@ export default function AnimeDetailPage({
             })}
           </div>
         ) : (
-          <div className="text-center py-12 border border-[var(--tenko-border)] rounded-xl bg-[var(--tenko-bg-card)]">
-            <p className="text-xs font-mono text-[var(--tenko-text-secondary)]">
-              No hay episodios registrados para este título.
+          <div className="text-center py-12 border border-[var(--tenko-border)] rounded-2xl bg-[var(--tenko-bg-card)] p-6 space-y-3">
+            <div className="w-12 h-12 rounded-full bg-[#6c00f4]/20 text-[#6c00f4] flex items-center justify-center mx-auto text-xl">
+              ⏳
+            </div>
+            <h3 className="font-[family-name:var(--font-unbounded)] text-base font-bold text-[var(--tenko-text-primary)]">
+              {anime.estado_emision === 'en_espera' ? 'Anime en Próximo Estreno' : 'Sin Episodios Emitidos Aún'}
+            </h3>
+            <p className="text-xs font-mono text-[var(--tenko-text-secondary)] max-w-md mx-auto">
+              {anime.estado_emision === 'en_espera'
+                ? `Este anime aún no se ha estrenado oficialmente. Siguiendo las reglas de integridad de datos, no se generan episodios ficticios antes del lanzamiento.`
+                : `Los episodios aún no han sido transmitidos o están en proceso de sincronización con la fuente oficial.`}
             </p>
+            {anime.fecha_estreno && (
+              <span className="inline-block font-mono text-[11px] px-3 py-1 rounded-full bg-white/5 border border-[var(--tenko-border)] text-[#00f0ff]">
+                Fecha estimada: {anime.fecha_estreno}
+              </span>
+            )}
           </div>
         )}
       </section>

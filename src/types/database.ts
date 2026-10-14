@@ -11,8 +11,17 @@ export interface Temporada {
   created_at?: string | null;
 }
 
+export interface StreamingServer {
+  nombre: string;
+  url: string;
+  calidad?: string;
+  tipo?: 'direct' | 'embed' | 'hls';
+}
+
 export interface Anime {
   id: string;
+  anilist_id?: number | null;
+  mal_id?: number | null;
   titulo: string;
   sinopsis: string;
   portada_url: string;
@@ -20,9 +29,15 @@ export interface Anime {
   trailer_url?: string | null;
   trailer_type?: StreamType;
   generos?: string[];
+  total_episodios?: number | null;
   fecha_estreno?: string | null;
   fecha_finalizacion?: string | null;
   estado_emision?: EstadoEmision;
+  proximo_episodio?: {
+    numero?: number;
+    fecha?: string;
+    timeUntilAiring?: number;
+  } | null;
   created_at?: string | null;
 }
 
@@ -37,6 +52,7 @@ export interface Episodio {
   fecha_emision?: string | null;
   duracion_total?: number | null;
   url_stream: string;
+  servidores?: StreamingServer[];
   tipo_stream?: StreamType;
   duracion?: string | number | null;
   thumbnail_url?: string | null;
