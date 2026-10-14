@@ -16,7 +16,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 22
+          check-latest: true
+
+      - name: Verificar versión de Node
+        run: |
+          which node
+          node --version
+          npm --version
 
       - name: Instalar dependencias
         run: npm install
@@ -25,7 +32,9 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: node scripts/fix-zilla-batch.mjs 500
+        run: |
+          echo "Node version: $(node --version)"
+          node scripts/fix-zilla-batch.mjs 500
 
       - name: 2. Vincular slugs a Cascarones B
         env:
