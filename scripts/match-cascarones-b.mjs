@@ -1,11 +1,4 @@
-      // Regla extra: exigir al menos 2 tokens en común
-      const tokensA = new Set(normalizeTitle(anime.titulo).split(" ").filter(Boolean));
-      const tituloMejor = mejor ? (mejor.title || mejor.titulo || mejor.name || "") : "";
-      const tokensB = new Set(normalizeTitle(tituloMejor).split(" ").filter(Boolean));
-      let commonTokens = 0;
-      for (const t of tokensA) if (tokensB.has(t)) commonTokens++;
-
-      if (!mejor || mejorScore < MIN_SIMILARITY || commonTokens < 2) {import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@supabase/supabase-js';
 import { searchAnime } from 'animeav1-api';
 
 const supabase = createClient(
@@ -13,28 +6,43 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// ─── Normalización de títulos para comparar ──────────────────────
+// ─── Normalización de títulos ─────────────────────────────────────
 function normalizeTitle(str) {
   return (str || '')
     .toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')   // quitar acentos
-    .replace(/[^a-z0-9\s]/g, ' ')                        // solo alfanumérico
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-// ─── Similitud simple basada en tokens ───────────────────────────
+// ─── Tokens de un título ──────────────────────────────────────────
+function tokens(str) {
+  return new Set(normalizeTitle(str).split(' ').filter(Boolean));
+}
+
+// ─── Similitud por intersección de tokens ─────────────────────────
 function similarity(a, b) {
-  const ta = new Set(normalizeTitle(a).split(' ').filter(Boolean));
-  const tb = new Set(normalizeTitle(b).split(' ').filter(Boolean));
+  const ta = tokens(a);
+  const tb = tokens(b);
   if (ta.size === 0 || tb.size === 0) return 0;
   let common = 0;
-  for (const token of ta) if (tb.has(token)) common++;
+  for (const t of ta) if (tb.has(t)) common++;
   return common / Math.max(ta.size, tb.size);
 }
 
-// ─── Umbral mínimo aceptable (0.5 = 50% de tokens coincidentes) ──
+// ─── Tokens en común ──────────────────────────────────────────────
+function commonTokenCount(a, b) {
+  const ta = tokens(a);
+  const tb = tokens(b);
+  let common = 0;
+  for (const t of ta) if (tb.has(t)) common++;
+  return common;
+}
+
+// ─── Umbrales de validación ───────────────────────────────────────
 const MIN_SIMILARITY = 0.7;
+const MIN_COMMON_TOKENS = 2;
 
 async function matchCascaronesB() {
   const { data: cascaronesB, error } = await supabase
@@ -58,11 +66,10 @@ async function matchCascaronesB() {
 
       if (!resultados || resultados.length === 0) {
         huerfanos++;
-        console.warn(`🔴 Cascarón Tipo C (Huérfano): "${anime.titulo}"`);
+        console.warn(`🔴 Huérfano: "${anime.titulo}"`);
         continue;
       }
 
-      // Buscar el resultado con mejor similitud
       let mejor = null;
       let mejorScore = 0;
 
@@ -75,9 +82,17 @@ async function matchCascaronesB() {
         }
       }
 
-      if (!mejor || mejorScore < MIN_SIMILARITY) {
+      if (!mejor) {
         rechazados++;
-        console.warn(`⚠️ Sin coincidencia válida: "${anime.titulo}" (mejor score: ${mejorScore.toFixed(2)})`);
+        continue;
+      }
+
+      const tituloMejor = mejor.title || mejor.titulo || mejor.name || '';
+      const comunes = commonTokenCount(anime.titulo, tituloMejor);
+
+      if (mejorScore < MIN_SIMILARITY || comunes < MIN_COMMON_TOKENS) {
+        rechazados++;
+        console.warn(`⚠️ Rechazado: "${anime.titulo}" (score: ${mejorScore.toFixed(2)}, tokens comunes: ${comunes})`);
         continue;
       }
 
@@ -94,9 +109,8 @@ async function matchCascaronesB() {
         .eq('id', anime.id);
 
       encontrados++;
-      console.log(`✅ Slug asignado: "${anime.titulo}" → ${slug} (score: ${mejorScore.toFixed(2)})`);
+      console.log(`✅ Asignado: "${anime.titulo}" → ${slug} (score: ${mejorScore.toFixed(2)}, comunes: ${comunes})`);
 
-      // Pequeña pausa para no saturar el sitio
       await new Promise((r) => setTimeout(r, 200));
     } catch (err) {
       console.error(`❌ Error buscando "${anime.titulo}":`, err.message);
@@ -104,9 +118,9 @@ async function matchCascaronesB() {
   }
 
   console.log(`\n📊 Resultados:
-  - Slugs recuperados (Tipo B → Tipo A): ${encontrados}
+  - Slugs recuperados: ${encontrados}
   - Rechazados por baja similitud: ${rechazados}
-  - Animes huérfanos confirmados (Tipo C): ${huerfanos}`);
+  - Animes huérfanos: ${huerfanos}`);
 }
 
 matchCascaronesB();
