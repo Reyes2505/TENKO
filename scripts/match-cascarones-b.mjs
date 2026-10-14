@@ -1,4 +1,11 @@
-import { createClient } from '@supabase/supabase-js';
+      // Regla extra: exigir al menos 2 tokens en común
+      const tokensA = new Set(normalizeTitle(anime.titulo).split(" ").filter(Boolean));
+      const tituloMejor = mejor ? (mejor.title || mejor.titulo || mejor.name || "") : "";
+      const tokensB = new Set(normalizeTitle(tituloMejor).split(" ").filter(Boolean));
+      let commonTokens = 0;
+      for (const t of tokensA) if (tokensB.has(t)) commonTokens++;
+
+      if (!mejor || mejorScore < MIN_SIMILARITY || commonTokens < 2) {import { createClient } from '@supabase/supabase-js';
 import { searchAnime } from 'animeav1-api';
 
 const supabase = createClient(
@@ -27,7 +34,7 @@ function similarity(a, b) {
 }
 
 // ─── Umbral mínimo aceptable (0.5 = 50% de tokens coincidentes) ──
-const MIN_SIMILARITY = 0.5;
+const MIN_SIMILARITY = 0.7;
 
 async function matchCascaronesB() {
   const { data: cascaronesB, error } = await supabase
