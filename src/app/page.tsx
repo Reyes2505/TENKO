@@ -7,8 +7,6 @@ import HeroCarousel from '@/components/HeroCarousel';
 import AnimeCard from '@/components/AnimeCard';
 import ContinueWatchingSection from '@/components/ContinueWatchingSection';
 
-import { getFallbackCatalog } from '@/lib/catalog-fallback';
-
 const ITEMS_POR_PAGINA = 24;
 
 export default function Home() {
@@ -23,18 +21,16 @@ export default function Home() {
         const { data, error } = await supabase
           .from('animes')
           .select('id, titulo, portada_url, banner_url, sinopsis, generos, estado_emision, fecha_estreno')
-          .order('fecha_estreno', { ascending: false });
+          .order('fecha_estreno', { ascending: false, nullsFirst: false });
 
-        if (!error && data && data.length > 0) {
+        if (!error && data) {
           setAnimes(data as Anime[]);
         } else {
-          // Si la base de datos de Supabase aún no tiene registros o falló, mostrar el catálogo completo de respaldo
-          const fallback = getFallbackCatalog();
-          setAnimes(fallback);
+          setAnimes([]);
         }
-      } catch {
-        const fallback = getFallbackCatalog();
-        setAnimes(fallback);
+      } catch (err) {
+        console.error('[Home] Error cargando catálogo:', err);
+        setAnimes([]);
       } finally {
         setLoading(false);
       }
@@ -67,7 +63,7 @@ export default function Home() {
                 <div key={i} className="aspect-[3/4] rounded-xl bg-[var(--tenko-bg-card)] animate-pulse" />
               ))}
             </div>
-          ) : (
+          ) : animes.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {animes.slice(0, 6).map((anime, index) => (
                 <AnimeCard
@@ -79,6 +75,10 @@ export default function Home() {
                 />
               ))}
             </div>
+          ) : (
+            <p className="text-xs font-mono text-[var(--tenko-text-secondary)] py-8 text-center">
+              No hay títulos registrados todavía.
+            </p>
           )}
         </div>
 
