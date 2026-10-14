@@ -87,6 +87,8 @@ npm-debug.log*
 Thumbs.db
 *.bak
 
+
+
 # Lock files (usamos solo npm)
 bun.lock
 bun.lockb
