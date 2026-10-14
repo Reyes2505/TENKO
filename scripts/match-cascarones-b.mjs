@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { search } from 'animeav1-api';
+import { searchAnime } from 'animeav1-api';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -23,7 +23,7 @@ async function matchCascaronesB() {
 
   for (const anime of cascaronesB) {
     try {
-      const resultados = await search(anime.titulo);
+      const resultados = await searchAnime(anime.titulo);
       
       if (resultados && resultados.length > 0) {
         const mejorCoincidencia = resultados[0];
